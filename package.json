@@ -4,7 +4,8 @@
   "description": "Apis a usar en Escuala Americana de Innovación",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "DEBUG=api:* nodemon src/index.js",
+    "lint": "standard"
   },
   "repository": {
     "type": "git",
@@ -14,6 +15,8 @@
   "license": "MIT",
   "homepage": "https://bitbucket.org/devcodela/api#readme",
   "devDependencies": {
+    "chalk": "^3.0.0",
+    "debug": "^4.1.1",
     "nodemon": "^2.0.2",
     "standard": "^14.3.1"
   },
@@ -21,6 +24,7 @@
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "morgan": "^1.9.1"
+    "morgan": "^1.9.1",
+    "config": "file:../config"
   }
 }

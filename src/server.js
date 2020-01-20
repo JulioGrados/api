@@ -26,4 +26,3 @@ server.use(cors())
 routes(server)
 
 module.exports = server
-
