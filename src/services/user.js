@@ -1,6 +1,6 @@
 'use strict'
 
-const {userDB} = require('../db')
+const { userDB } = require('../db')
 
 const listUsers = async (params) => {
   const users = await userDB.list(params)
