@@ -20,7 +20,7 @@ const updateUser = async (req, res) => {
   const userId = req.params.id
   try {
     const user = await serviceUser.updateUser(userId, req.body, req.user)
-    return user
+    return res.status(200).json(user)
   } catch (error) {
     return res.status(error.status).json(error)
   }
@@ -39,7 +39,7 @@ const detailUser = async (req, res) => {
 
   try {
     const user = await serviceUser.detailUser(params)
-    return user
+    return res.status(200).json(user)
   } catch (error) {
     return res.status(error.status).json(error)
   }
