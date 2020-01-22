@@ -29,7 +29,7 @@ const updateSale = async (req, res) => {
 const detailSale = async (req, res) => {
   const saleId = req.params.id
   const params = req.query
-  if(params.query) {
+  if (params.query) {
     params.query._id = saleId
   } else {
     params.query = {
@@ -50,7 +50,7 @@ const deleteSale = async (req, res) => {
   try {
     await serviceSale.deleteSale(saleId, req.sale)
     return res.status(204).json()
-  }catch (error) {
+  } catch (error) {
     return res.status(error.status).json(error)
   }
 }

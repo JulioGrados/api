@@ -1,6 +1,6 @@
 'use strict'
 
-const {agreementDB} = require('../db')
+const { agreementDB } = require('../db')
 
 const listAgreement = async (params) => {
   const sagrements = await agreementDB.list(params)
@@ -13,7 +13,7 @@ const createAgreement = async (body, loggedUser) => {
 }
 
 const updateAgrement = async (agreementId, body, loggedUser) => {
-  console.log("services")
+  console.log('services')
   const agreement = await agreementDB.update(agreementId, body)
   return agreement
 }

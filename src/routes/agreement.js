@@ -9,10 +9,9 @@ router.route('/agreements')
   .get(Api.listAgreements)
   .post(Api.createAgreement)
 
-
 router.route('/agreements/:id')
   .get(Api.detailAgreement)
   .put(Api.updateAgreement)
   .delete(Api.deleteAgreement)
 
-  module.exports = router
+module.exports = router

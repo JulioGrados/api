@@ -14,7 +14,6 @@ const routesEmail = require('./email')
 const routesProgress = require('./progress')
 const routesCourse = require('./course')
 
-
 module.exports = (server) => {
   server.use('/api', routesLog)
   server.use('/api', routesUser)

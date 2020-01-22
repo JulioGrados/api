@@ -29,7 +29,7 @@ const updateAgreement = async (req, res) => {
 const detailAgreement = async (req, res) => {
   const agreementId = req.params.id
   const params = req.query
-  if(params.query) {
+  if (params.query) {
     params.query._id = agreementId
   } else {
     params.query = {
@@ -50,7 +50,7 @@ const deleteAgreement = async (req, res) => {
   try {
     await serviceAgreement.deleteAgreement(agreementId, req.agreement)
     return res.status(204).json()
-  }catch (error) {
+  } catch (error) {
     return res.status(error.status).json(error)
   }
 }

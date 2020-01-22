@@ -9,10 +9,9 @@ router.route('/receipts')
   .get(Api.listReceipts)
   .post(Api.createReceipt)
 
-
 router.route('/receipts/:id')
   .get(Api.detailReceipt)
   .put(Api.updateReceipt)
   .delete(Api.deleteReceipt)
 
-  module.exports = router
+module.exports = router

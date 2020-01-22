@@ -1,6 +1,6 @@
 'use strict'
 
-const {whastsappDB} = require('../db')
+const { whastsappDB } = require('../db')
 
 const listWhatsapps = async (params) => {
   const whatsapps = await whastsappDB.list(params)
@@ -13,7 +13,7 @@ const createWhatsapp = async (body, loggedUser) => {
 }
 
 const updateWhatsapp = async (whatsappId, body, loggedUser) => {
-  console.log("services")
+  console.log('services')
   const whatsapp = await whastsappDB.update(whatsappId, body)
   return whatsapp
 }

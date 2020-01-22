@@ -1,6 +1,6 @@
 'use strict'
 
-const {saleDB} = require('../db')
+const { saleDB } = require('../db')
 
 const listSales = async (params) => {
   const sales = await saleDB.list(params)
@@ -13,7 +13,7 @@ const createSale = async (body, loggedUser) => {
 }
 
 const updateSale = async (saleId, body, loggedUser) => {
-  console.log("services")
+  console.log('services')
   const sale = await saleDB.update(saleId, body)
   return sale
 }
