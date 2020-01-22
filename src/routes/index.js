@@ -9,6 +9,10 @@ const routesCategory = require('./category')
 const routesTemplate = require('./template')
 const routesWhatsapp = require('./whatsapp')
 const routesAgreement = require('./agreement')
+const routesCall = require('./call')
+const routesEmail = require('./email')
+const routesProgress = require('./progress')
+const routesCourse = require('./course')
 
 
 module.exports = (server) => {
@@ -21,4 +25,8 @@ module.exports = (server) => {
   server.use('/api', routesVoucher)
   server.use('/api', routesCategory)
   server.use('/api', routesTemplate)
+  server.use('/api', routesCall)
+  server.use('/api', routesEmail)
+  server.use('/api', routesProgress)
+  server.use('/api', routesCourse)
 }

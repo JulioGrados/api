@@ -11,7 +11,7 @@ router.route('/courses')
 
 router.route('/courses/:id')
   .get(Api.detailCourse)
-  .put(Api.updateCourse
+  .put(Api.updateCourse)
   .delete(Api.deleteCourse)
 
 module.exports = router
