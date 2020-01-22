@@ -1,7 +1,7 @@
 'use strict'
 
 const { Router } = require('express')
-const Api = require('../controllers/couses')
+const Api = require('../controllers/courses')
 
 const router = new Router()
 

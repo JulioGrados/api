@@ -7,6 +7,8 @@ const morgan = require('morgan')
 
 const routes = require('./routes')
 
+const authHandler = require('./auth')
+
 const server = express()
 
 server.use(bodyParser.json({
@@ -23,6 +25,7 @@ server.use(bodyParser.urlencoded({
 server.use(morgan('dev'))
 server.use(cors())
 
+server.use(authHandler)
 routes(server)
 
 module.exports = server

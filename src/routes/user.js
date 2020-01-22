@@ -2,6 +2,7 @@
 
 const { Router } = require('express')
 const Api = require('../controllers/users')
+const { isAdmin } = require('../auth/permissions')
 
 const router = new Router()
 
@@ -12,6 +13,6 @@ router.route('/users')
 router.route('/users/:id')
   .get(Api.detailUser)
   .put(Api.updateUser)
-  .delete(Api.deleteUser)
+  .delete(isAdmin, Api.deleteUser)
 
 module.exports = router
