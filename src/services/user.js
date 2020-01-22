@@ -1,6 +1,6 @@
 'use strict'
 
-const {userDB} = require('../db')
+const { userDB } = require('../db')
 
 const listUsers = async (params) => {
   const users = await userDB.list(params)
@@ -13,7 +13,6 @@ const createUser = async (body, loggedUser) => {
 }
 
 const updateUser = async (userId, body, loggedUser) => {
-  console.log("services")
   const user = await userDB.update(userId, body)
   return user
 }
