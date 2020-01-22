@@ -1,6 +1,6 @@
 'use strict'
 
-const {receiptDB} = require('../db')
+const { receiptDB } = require('../db')
 
 const listReceipts = async (params) => {
   const receipts = await receiptDB.list(params)
@@ -13,7 +13,7 @@ const createReceipt = async (body, loggedUser) => {
 }
 
 const updateReceipt = async (receiptId, body, loggedUser) => {
-  console.log("services")
+  console.log('services')
   const receipt = await receiptDB.update(receiptId, body)
   return receipt
 }

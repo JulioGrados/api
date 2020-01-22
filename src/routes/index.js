@@ -10,7 +10,6 @@ const routesTemplate = require('./template')
 const routesWhatsapp = require('./whatsapp')
 const routesAgreement = require('./agreement')
 
-
 module.exports = (server) => {
   server.use('/api', routesLog)
   server.use('/api', routesUser)

@@ -29,7 +29,7 @@ const updateReceipt = async (req, res) => {
 const detailReceipt = async (req, res) => {
   const receiptId = req.params.id
   const params = req.query
-  if(params.query) {
+  if (params.query) {
     params.query._id = receiptId
   } else {
     params.query = {
@@ -50,7 +50,7 @@ const deleteReceipt = async (req, res) => {
   try {
     await serviceReceipt.deleteReceipt(receiptId, req.whatsapp)
     return res.status(204).json()
-  }catch (error) {
+  } catch (error) {
     return res.status(error.status).json(error)
   }
 }

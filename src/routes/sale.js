@@ -9,10 +9,9 @@ router.route('/sales')
   .get(Api.listSales)
   .post(Api.createSales)
 
-
 router.route('/sales/:id')
   .get(Api.detailSale)
   .put(Api.updateSale)
   .delete(Api.deleteSale)
 
-  module.exports = router
+module.exports = router
