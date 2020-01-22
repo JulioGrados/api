@@ -29,7 +29,7 @@ const updateUser = async (req, res) => {
 const detailUser = async (req, res) => {
   const userId = req.params.id
   const params = req.query
-  if(params.query) {
+  if (params.query) {
     params.query._id = userId
   } else {
     params.query = {
@@ -50,7 +50,7 @@ const deleteUser = async (req, res) => {
   try {
     await serviceUser.deleteUser(userId, req.user)
     return res.status(204).json()
-  }catch (error) {
+  } catch (error) {
     return res.status(error.status).json(error)
   }
 }

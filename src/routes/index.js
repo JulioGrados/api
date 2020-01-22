@@ -1,16 +1,24 @@
 'use strict'
 
+const routesLog = require('./log')
 const routesUser = require('./user')
-const routesWhatsapp = require('./whatsapp')
-const routesReceipt = require('./receipt')
 const routesSale = require('./sale')
+const routesReceipt = require('./receipt')
+const routesVoucher = require('./voucher')
+const routesCategory = require('./category')
+const routesTemplate = require('./template')
+const routesWhatsapp = require('./whatsapp')
 const routesAgreement = require('./agreement')
 
 
 module.exports = (server) => {
+  server.use('/api', routesLog)
   server.use('/api', routesUser)
   server.use('/api', routesWhatsapp)
   server.use('/api', routesReceipt)
   server.use('/api', routesSale)
   server.use('/api', routesAgreement)
+  server.use('/api', routesVoucher)
+  server.use('/api', routesCategory)
+  server.use('/api', routesTemplate)
 }
