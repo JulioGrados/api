@@ -39,7 +39,7 @@ const detailUser = async (req, res) => {
 
   try {
     const user = await serviceUser.detailUser(params)
-    return user
+    return res.status(200).json(user)
   } catch (error) {
     return res.status(error.status).json(error)
   }
