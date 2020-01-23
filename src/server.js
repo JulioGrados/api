@@ -6,6 +6,7 @@ const cors = require('cors')
 const morgan = require('morgan')
 
 const routes = require('./routes')
+const routesOpen = require('./routes/open')
 
 const authHandler = require('./auth')
 
@@ -25,6 +26,7 @@ server.use(bodyParser.urlencoded({
 server.use(morgan('dev'))
 server.use(cors())
 
+routesOpen(server)
 server.use(authHandler)
 routes(server)
 
