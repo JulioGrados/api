@@ -13,7 +13,6 @@ const createSale = async (body, loggedUser) => {
 }
 
 const updateSale = async (saleId, body, loggedUser) => {
-  console.log('services')
   const sale = await saleDB.update(saleId, body)
   return sale
 }

@@ -13,7 +13,6 @@ const createCourse = async (body, loggedCourse) => {
 }
 
 const updateCourse = async (courseId, body, loggedCourse) => {
-  console.log('services')
   const course = await courseDB.update(courseId, body)
   return course
 }

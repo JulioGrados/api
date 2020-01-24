@@ -15,6 +15,9 @@ const createUser = async (body, loggedUser) => {
 }
 
 const updateUser = async (userId, body, loggedUser) => {
+  if ( body.password ) {
+    body.password = generateHash(body.password)
+  }
   const user = await userDB.update(userId, body)
   return user
 }

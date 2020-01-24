@@ -13,7 +13,6 @@ const createCall = async (body, loggedCall) => {
 }
 
 const updateCall = async (callId, body, loggedCall) => {
-  console.log('services')
   const call = await callDB.update(callId, body)
   return call
 }

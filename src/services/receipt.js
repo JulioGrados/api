@@ -13,7 +13,6 @@ const createReceipt = async (body, loggedUser) => {
 }
 
 const updateReceipt = async (receiptId, body, loggedUser) => {
-  console.log('services')
   const receipt = await receiptDB.update(receiptId, body)
   return receipt
 }

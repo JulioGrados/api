@@ -13,7 +13,6 @@ const createAgreement = async (body, loggedUser) => {
 }
 
 const updateAgrement = async (agreementId, body, loggedUser) => {
-  console.log('services')
   const agreement = await agreementDB.update(agreementId, body)
   return agreement
 }

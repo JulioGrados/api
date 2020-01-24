@@ -13,7 +13,6 @@ const createEmail = async (body, loggedEmail) => {
 }
 
 const updateEmail = async (emailId, body, loggedEmail) => {
-  console.log('services')
   const email = await emailDB.update(emailId, body)
   return email
 }

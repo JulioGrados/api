@@ -17,12 +17,18 @@ const loginUser = async (username, password) => {
 
   const selectedFields = 'username personalInfo firstName lastName password role'
 
-  const user = await userDB.detail({
-    query: {
-      username
-    },
-    select: selectedFields
-  })
+  let user = null
+
+  try {
+    user = await userDB.detail({
+      query: {
+        username
+      },
+      select: selectedFields
+    })
+  } catch (error) {
+    throw error
+  }
 
   if (!user) {
     const error = {
@@ -42,7 +48,7 @@ const loginUser = async (username, password) => {
     throw error
   }
 
-  const token = jwt.sign(user, config.auth.secret, {
+  const token = jwt.sign(user.toJSON(), config.auth.secret, {
     expiresIn: '1d'
   })
 
@@ -57,3 +63,4 @@ const loginUser = async (username, password) => {
 module.exports = {
   loginUser
 }
+  

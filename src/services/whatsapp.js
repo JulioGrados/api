@@ -13,7 +13,6 @@ const createWhatsapp = async (body, loggedUser) => {
 }
 
 const updateWhatsapp = async (whatsappId, body, loggedUser) => {
-  console.log('services')
   const whatsapp = await whastsappDB.update(whatsappId, body)
   return whatsapp
 }

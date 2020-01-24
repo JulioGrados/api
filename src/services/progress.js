@@ -13,7 +13,6 @@ const createProgress = async (body, loggedProgress) => {
 }
 
 const updateProgress = async (progressId, body, loggedProgress) => {
-  console.log('services')
   const progress = await progressDB.update(progressId, body)
   return progress
 }
