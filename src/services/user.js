@@ -1,7 +1,7 @@
 'use strict'
 
 const { userDB } = require('../db')
-const { generateHash } = require('utils').transform
+const { generateHash } = require('utils').auth
 
 const listUsers = async (params) => {
   const users = await userDB.list(params)

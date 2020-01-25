@@ -21,7 +21,6 @@
     "standard": "^14.3.1"
   },
   "dependencies": {
-    "bcrypt": "^3.0.7",
     "body-parser": "^1.19.0",
     "config": "file:../config",
     "cors": "^2.8.5",
