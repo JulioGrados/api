@@ -10,8 +10,10 @@ const listUsers = async (req, res) => {
 const createUser = async (req, res) => {
   try {
     const user = await serviceUser.createUser(req.body, req.user)
+    console.log(user)
     return res.status(201).json(user)
   } catch (error) {
+    console.log(error)
     return res.status(error.status).json(error)
   }
 }
