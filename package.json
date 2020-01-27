@@ -28,8 +28,6 @@
     "db": "file:../db",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
-    "mongoose-beautiful-unique-validation": "^7.1.1",
-    "mongoose-validation-error-transform": "0.0.5",
     "morgan": "^1.9.1",
     "node-gyp": "^6.1.0",
     "utils": "file:../utils"
