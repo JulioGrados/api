@@ -49,7 +49,7 @@ const deleteEmail = async (req, res) => {
   const emailId = req.params.id
   try {
     await serviceEmail.deleteEmail(emailId, req.email)
-    return res.status(204).json()
+    return res.status(201).json()
   } catch (error) {
     return res.status(error.status).json(error)
   }

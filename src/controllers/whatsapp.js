@@ -49,7 +49,7 @@ const deleteWhatsapp = async (req, res) => {
   const whatsappId = req.params.id
   try {
     await serviceWhatsapp.deleteWhatsapp(whatsappId, req.whatsapp)
-    return res.status(204).json()
+    return res.status(201).json()
   } catch (error) {
     return res.status(error.status).json(error)
   }
