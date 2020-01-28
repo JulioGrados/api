@@ -9,7 +9,7 @@ const listUsers = async (params) => {
 }
 
 const createUser = async (body, loggedUser) => {
-  body.password = body.password ? generateHash(body.password) : undefined 
+  body.password = body.password ? generateHash(body.password) : undefined
   const user = await userDB.create(body)
   return user
 }
