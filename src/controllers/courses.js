@@ -49,7 +49,7 @@ const deleteCourse = async (req, res) => {
   const courseId = req.params.id
   try {
     await serviceCourse.deleteCourse(courseId, req.course)
-    return res.status(204).json()
+    return res.status(201).json()
   } catch (error) {
     return res.status(error.status).json(error)
   }

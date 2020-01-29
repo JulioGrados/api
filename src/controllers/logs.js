@@ -49,7 +49,7 @@ const deleteLog = async (req, res) => {
   const logId = req.params.id
   try {
     await serviceLog.deleteLog(logId, req.user)
-    return res.status(204).json()
+    return res.status(201).json()
   } catch (error) {
     return res.status(error.status).json(error)
   }

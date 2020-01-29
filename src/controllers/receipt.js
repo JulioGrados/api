@@ -49,7 +49,7 @@ const deleteReceipt = async (req, res) => {
   const receiptId = req.params.id
   try {
     await serviceReceipt.deleteReceipt(receiptId, req.whatsapp)
-    return res.status(204).json()
+    return res.status(201).json()
   } catch (error) {
     return res.status(error.status).json(error)
   }

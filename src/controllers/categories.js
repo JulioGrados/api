@@ -49,7 +49,7 @@ const deleteCategory = async (req, res) => {
   const categoryId = req.params.id
   try {
     await serviceCategory.deleteCategory(categoryId, req.user)
-    return res.status(204).json()
+    return res.status(201).json()
   } catch (error) {
     return res.status(error.status).json(error)
   }

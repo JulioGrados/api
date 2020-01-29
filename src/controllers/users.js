@@ -50,8 +50,8 @@ const detailUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   const userId = req.params.id
   try {
-    await serviceUser.deleteUser(userId, req.user)
-    return res.status(204).json()
+    const user = await serviceUser.deleteUser(userId, req.user)
+    return res.status(201).json(user)
   } catch (error) {
     return res.status(error.status).json(error)
   }

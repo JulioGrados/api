@@ -49,7 +49,7 @@ const deleteCall = async (req, res) => {
   const callId = req.params.id
   try {
     await serviceCall.deleteCall(callId, req.call)
-    return res.status(204).json()
+    return res.status(201).json()
   } catch (error) {
     return res.status(error.status).json(error)
   }

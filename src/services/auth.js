@@ -19,16 +19,12 @@ const loginUser = async (username, password) => {
 
   let user = null
 
-  try {
-    user = await userDB.detail({
-      query: {
-        username
-      },
-      select: selectedFields
-    })
-  } catch (error) {
-    throw error
-  }
+  user = await userDB.detail({
+    query: {
+      username
+    },
+    select: selectedFields
+  })
 
   if (!user) {
     const error = {
@@ -63,4 +59,3 @@ const loginUser = async (username, password) => {
 module.exports = {
   loginUser
 }
-  

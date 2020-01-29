@@ -49,7 +49,7 @@ const deleteAgreement = async (req, res) => {
   const agreementId = req.params.id
   try {
     await serviceAgreement.deleteAgreement(agreementId, req.agreement)
-    return res.status(204).json()
+    return res.status(201).json()
   } catch (error) {
     return res.status(error.status).json(error)
   }
