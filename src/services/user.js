@@ -3,7 +3,7 @@
 const { userDB } = require('../db')
 const { generateHash } = require('utils').auth
 
-const listUsers = async (params) => {
+const listUsers = async params => {
   const users = await userDB.list(params)
   return users
 }
@@ -22,7 +22,7 @@ const updateUser = async (userId, body, loggedUser) => {
   return user
 }
 
-const detailUser = async (params) => {
+const detailUser = async params => {
   const user = await userDB.detail(params)
   return user
 }
