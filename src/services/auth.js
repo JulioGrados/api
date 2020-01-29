@@ -2,7 +2,7 @@
 
 const jwt = require('jsonwebtoken')
 const config = require('config')
-const bcrypt = require('bcrypt')
+const { comparePass } = require('utils').auth
 
 const { userDB } = require('../db')
 
@@ -39,7 +39,7 @@ const loginUser = async (username, password) => {
     throw error
   }
 
-  const passCorrect = bcrypt.compareSync(password, user.password)
+  const passCorrect = comparePass(password, user.password)
   if (!passCorrect) {
     const error = {
       status: 401,
