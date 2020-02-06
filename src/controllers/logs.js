@@ -48,8 +48,8 @@ const detailLog = async (req, res) => {
 const deleteLog = async (req, res) => {
   const logId = req.params.id
   try {
-    await serviceLog.deleteLog(logId, req.user)
-    return res.status(201).json()
+    const log = await serviceLog.deleteLog(logId, req.user)
+    return res.status(201).json(log)
   } catch (error) {
     return res.status(error.status).json(error)
   }

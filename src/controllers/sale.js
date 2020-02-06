@@ -48,8 +48,8 @@ const detailSale = async (req, res) => {
 const deleteSale = async (req, res) => {
   const saleId = req.params.id
   try {
-    await serviceSale.deleteSale(saleId, req.sale)
-    return res.status(201).json()
+    const sale = await serviceSale.deleteSale(saleId, req.sale)
+    return res.status(201).json(sales)
   } catch (error) {
     return res.status(error.status).json(error)
   }

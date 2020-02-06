@@ -19,7 +19,11 @@ const createTemplate = async (req, res) => {
 const updateTemplate = async (req, res) => {
   const templateId = req.params.id
   try {
-    const template = await serviceTemplate.updateTemplate(templateId, req.body, req.user)
+    const template = await serviceTemplate.updateTemplate(
+      templateId,
+      req.body,
+      req.user
+    )
     return res.status(200).json(template)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -48,8 +52,8 @@ const detailTemplate = async (req, res) => {
 const deleteTemplate = async (req, res) => {
   const templateId = req.params.id
   try {
-    await serviceTemplate.deleteTemplate(templateId, req.user)
-    return res.status(201).json()
+    const template = await serviceTemplate.deleteTemplate(templateId, req.user)
+    return res.status(201).json(template)
   } catch (error) {
     return res.status(error.status).json(error)
   }

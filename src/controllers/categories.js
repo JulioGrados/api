@@ -9,7 +9,11 @@ const listCategories = async (req, res) => {
 
 const createCategory = async (req, res) => {
   try {
-    const category = await serviceCategory.createCategory(req.body, req.user)
+    const body = JSON.parse(req.body.data)
+    const file = req.files.image
+    console.log('body', body)
+    console.log('file', file)
+    const category = await serviceCategory.createCategory(body, file, req.user)
     return res.status(201).json(category)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -19,7 +23,11 @@ const createCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
   const categoryId = req.params.id
   try {
-    const category = await serviceCategory.updateCategory(categoryId, req.body, req.user)
+    const category = await serviceCategory.updateCategory(
+      categoryId,
+      req.body,
+      req.user
+    )
     return res.status(200).json(category)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -48,8 +56,8 @@ const detailCategory = async (req, res) => {
 const deleteCategory = async (req, res) => {
   const categoryId = req.params.id
   try {
-    await serviceCategory.deleteCategory(categoryId, req.user)
-    return res.status(201).json()
+    const category = await serviceCategory.deleteCategory(categoryId, req.user)
+    return res.status(201).json(category)
   } catch (error) {
     return res.status(error.status).json(error)
   }
