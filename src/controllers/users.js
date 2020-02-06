@@ -1,25 +1,30 @@
 'use strict'
 
-const serviceUser = require('../services/user')
+const service = require('../services/user')
 
 const listUsers = async (req, res) => {
-  const users = await serviceUser.listUsers(req.query)
+  const users = await service.listUsers(req.query)
   return res.status(200).json(users)
 }
 
 const createUser = async (req, res) => {
+  const body = JSON.parse(req.body.data)
+  const file = req.files && req.files.photo
   try {
-    const user = await serviceUser.createUser(req.body, req.user)
+    const user = await service.createUser(body, file, req.user)
     return res.status(201).json(user)
   } catch (error) {
+    console.log(error)
     return res.status(error.status).json(error)
   }
 }
 
 const updateUser = async (req, res) => {
   const userId = req.params.id
+  const body = JSON.parse(req.body.data)
+  const file = req.files && req.files.photo
   try {
-    const user = await serviceUser.updateUser(userId, req.body, req.user)
+    const user = await service.updateUser(userId, body, file, req.user)
     return res.status(200).json(user)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -38,7 +43,7 @@ const detailUser = async (req, res) => {
   }
 
   try {
-    const user = await serviceUser.detailUser(params)
+    const user = await service.detailUser(params)
     return res.status(200).json(user)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -48,7 +53,7 @@ const detailUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   const userId = req.params.id
   try {
-    const user = await serviceUser.deleteUser(userId, req.user)
+    const user = await service.deleteUser(userId, req.user)
     return res.status(201).json(user)
   } catch (error) {
     return res.status(error.status).json(error)

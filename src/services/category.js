@@ -9,14 +9,19 @@ const listCategories = async params => {
 }
 
 const createCategory = async (body, file, loggedUser) => {
-  const route = await saveFile(file, '/categories/' + file.name)
-  console.log('respuesta', route)
-  body.image = route
+  if (file) {
+    const route = await saveFile(file, '/categories')
+    body.image = route
+  }
   const category = await categoryDB.create(body)
   return category
 }
 
-const updateCategory = async (categoryId, body, loggedUser) => {
+const updateCategory = async (categoryId, body, file, loggedUser) => {
+  if (file) {
+    const route = await saveFile(file, '/categories')
+    body.image = route
+  }
   const category = await categoryDB.update(categoryId, body)
   return category
 }
