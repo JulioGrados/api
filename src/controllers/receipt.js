@@ -19,7 +19,11 @@ const createReceipt = async (req, res) => {
 const updateReceipt = async (req, res) => {
   const receiptId = req.params.id
   try {
-    const whatsapp = await serviceReceipt.updateReceipt(receiptId, req.body, req.whatsapp)
+    const whatsapp = await serviceReceipt.updateReceipt(
+      receiptId,
+      req.body,
+      req.whatsapp
+    )
     return res.status(200).json(whatsapp)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -48,8 +52,8 @@ const detailReceipt = async (req, res) => {
 const deleteReceipt = async (req, res) => {
   const receiptId = req.params.id
   try {
-    await serviceReceipt.deleteReceipt(receiptId, req.whatsapp)
-    return res.status(201).json()
+    const receipt = await serviceReceipt.deleteReceipt(receiptId, req.whatsapp)
+    return res.status(201).json(receipt)
   } catch (error) {
     return res.status(error.status).json(error)
   }

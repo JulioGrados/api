@@ -9,7 +9,10 @@ const listAgreements = async (req, res) => {
 
 const createAgreement = async (req, res) => {
   try {
-    const agreement = await serviceAgreement.createAgreement(req.body, req.agreement)
+    const agreement = await serviceAgreement.createAgreement(
+      req.body,
+      req.agreement
+    )
     return res.status(201).json(agreement)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -19,7 +22,11 @@ const createAgreement = async (req, res) => {
 const updateAgreement = async (req, res) => {
   const agreementId = req.params.id
   try {
-    const agreement = await serviceAgreement.updateAgreement(agreementId, req.body, req.agreement)
+    const agreement = await serviceAgreement.updateAgreement(
+      agreementId,
+      req.body,
+      req.agreement
+    )
     return res.status(200).json(agreement)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -48,8 +55,11 @@ const detailAgreement = async (req, res) => {
 const deleteAgreement = async (req, res) => {
   const agreementId = req.params.id
   try {
-    await serviceAgreement.deleteAgreement(agreementId, req.agreement)
-    return res.status(201).json()
+    const agreement = await serviceAgreement.deleteAgreement(
+      agreementId,
+      req.agreement
+    )
+    return res.status(201).json(agreement)
   } catch (error) {
     return res.status(error.status).json(error)
   }

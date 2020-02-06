@@ -48,8 +48,8 @@ const detailEmail = async (req, res) => {
 const deleteEmail = async (req, res) => {
   const emailId = req.params.id
   try {
-    await serviceEmail.deleteEmail(emailId, req.email)
-    return res.status(201).json()
+    const email = await serviceEmail.deleteEmail(emailId, req.email)
+    return res.status(201).json(email)
   } catch (error) {
     return res.status(error.status).json(error)
   }

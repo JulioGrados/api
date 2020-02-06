@@ -19,7 +19,11 @@ const createCourse = async (req, res) => {
 const updateCourse = async (req, res) => {
   const courseId = req.params.id
   try {
-    const course = await serviceCourse.updateCourse(courseId, req.body, req.course)
+    const course = await serviceCourse.updateCourse(
+      courseId,
+      req.body,
+      req.course
+    )
     return res.status(200).json(course)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -48,8 +52,8 @@ const detailCourse = async (req, res) => {
 const deleteCourse = async (req, res) => {
   const courseId = req.params.id
   try {
-    await serviceCourse.deleteCourse(courseId, req.course)
-    return res.status(201).json()
+    const course = await serviceCourse.deleteCourse(courseId, req.course)
+    return res.status(201).json(course)
   } catch (error) {
     return res.status(error.status).json(error)
   }
