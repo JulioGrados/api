@@ -1,18 +1,17 @@
 'use strict'
 
-const serviceAgreement = require('../services/agreement')
+const service = require('../services/agreement')
 
 const listAgreements = async (req, res) => {
-  const agreements = await serviceAgreement.listAgreements(req.query)
+  const agreements = await service.listAgreements(req.query)
   return res.status(200).json(agreements)
 }
 
 const createAgreement = async (req, res) => {
+  const body = JSON.parse(req.body.data)
+  const file = req.files && req.files.image
   try {
-    const agreement = await serviceAgreement.createAgreement(
-      req.body,
-      req.agreement
-    )
+    const agreement = await service.createAgreement(body, file, req.user)
     return res.status(201).json(agreement)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -21,14 +20,18 @@ const createAgreement = async (req, res) => {
 
 const updateAgreement = async (req, res) => {
   const agreementId = req.params.id
+  const body = JSON.parse(req.body.data)
+  const file = req.files && req.files.image
   try {
-    const agreement = await serviceAgreement.updateAgreement(
+    const agreement = await service.updateAgreement(
       agreementId,
-      req.body,
-      req.agreement
+      body,
+      file,
+      req.user
     )
     return res.status(200).json(agreement)
   } catch (error) {
+    console.log(error)
     return res.status(error.status).json(error)
   }
 }
@@ -45,7 +48,7 @@ const detailAgreement = async (req, res) => {
   }
 
   try {
-    const agreement = await serviceAgreement.detailAgreement(params)
+    const agreement = await service.detailAgreement(params)
     return res.status(200).json(agreement)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -55,10 +58,7 @@ const detailAgreement = async (req, res) => {
 const deleteAgreement = async (req, res) => {
   const agreementId = req.params.id
   try {
-    const agreement = await serviceAgreement.deleteAgreement(
-      agreementId,
-      req.agreement
-    )
+    const agreement = await service.deleteAgreement(agreementId, req.user)
     return res.status(201).json(agreement)
   } catch (error) {
     return res.status(error.status).json(error)

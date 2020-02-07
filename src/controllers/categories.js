@@ -8,9 +8,9 @@ const listCategories = async (req, res) => {
 }
 
 const createCategory = async (req, res) => {
+  const body = JSON.parse(req.body.data)
+  const file = req.files && req.files.image
   try {
-    const body = JSON.parse(req.body.data)
-    const file = req.files && req.files.image
     const category = await service.createCategory(body, file, req.user)
     return res.status(201).json(category)
   } catch (error) {
