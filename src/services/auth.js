@@ -15,7 +15,7 @@ const loginUser = async (username, password) => {
     throw error
   }
 
-  const selectedFields = 'username personalInfo firstName lastName password role'
+  const select = 'username personalInfo firstName lastName role password photo'
 
   let user = null
 
@@ -23,7 +23,7 @@ const loginUser = async (username, password) => {
     query: {
       username
     },
-    select: selectedFields
+    select
   })
 
   if (!user) {
@@ -43,6 +43,8 @@ const loginUser = async (username, password) => {
     }
     throw error
   }
+
+  delete user.password
 
   const token = jwt.sign(user.toJSON(), config.auth.secret, {
     expiresIn: '1d'

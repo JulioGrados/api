@@ -1,19 +1,17 @@
 'use strict'
 
-const serviceCategory = require('../services/category')
+const service = require('../services/category')
 
 const listCategories = async (req, res) => {
-  const categories = await serviceCategory.listCategories(req.query)
+  const categories = await service.listCategories(req.query)
   return res.status(200).json(categories)
 }
 
 const createCategory = async (req, res) => {
   try {
     const body = JSON.parse(req.body.data)
-    const file = req.files.image
-    console.log('body', body)
-    console.log('file', file)
-    const category = await serviceCategory.createCategory(body, file, req.user)
+    const file = req.files && req.files.image
+    const category = await service.createCategory(body, file, req.user)
     return res.status(201).json(category)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -22,10 +20,13 @@ const createCategory = async (req, res) => {
 
 const updateCategory = async (req, res) => {
   const categoryId = req.params.id
+  const body = JSON.parse(req.body.data)
+  const file = req.files && req.files.image
   try {
-    const category = await serviceCategory.updateCategory(
+    const category = await service.updateCategory(
       categoryId,
-      req.body,
+      body,
+      file,
       req.user
     )
     return res.status(200).json(category)
@@ -46,7 +47,7 @@ const detailCategory = async (req, res) => {
   }
 
   try {
-    const category = await serviceCategory.detailCategory(params)
+    const category = await service.detailCategory(params)
     return res.status(200).json(category)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -56,7 +57,7 @@ const detailCategory = async (req, res) => {
 const deleteCategory = async (req, res) => {
   const categoryId = req.params.id
   try {
-    const category = await serviceCategory.deleteCategory(categoryId, req.user)
+    const category = await service.deleteCategory(categoryId, req.user)
     return res.status(201).json(category)
   } catch (error) {
     return res.status(error.status).json(error)

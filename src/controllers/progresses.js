@@ -55,8 +55,11 @@ const detailProgress = async (req, res) => {
 const deleteProgress = async (req, res) => {
   const progressId = req.params.id
   try {
-    await serviceProgress.deleteProgress(progressId, req.progress)
-    return res.status(201).json()
+    const progress = await serviceProgress.deleteProgress(
+      progressId,
+      req.progress
+    )
+    return res.status(201).json(progress)
   } catch (error) {
     return res.status(error.status).json(error)
   }
