@@ -7,7 +7,7 @@ const router = new Router()
 
 router
   .route('/progresses')
-  .get(Api.listProgresss)
+  .get(Api.listProgresses)
   .post(Api.createProgress)
 
 router

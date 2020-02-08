@@ -2,7 +2,7 @@
 
 const { progressDB } = require('../db')
 
-const listProgresss = async (params) => {
+const listProgresses = async params => {
   const progresss = await progressDB.list(params)
   return progresss
 }
@@ -17,7 +17,7 @@ const updateProgress = async (progressId, body, loggedProgress) => {
   return progress
 }
 
-const detailProgress = async (params) => {
+const detailProgress = async params => {
   const progress = await progressDB.detail(params)
   return progress
 }
@@ -28,7 +28,7 @@ const deleteProgress = async (progressId, loggedProgress) => {
 }
 
 module.exports = {
-  listProgresss,
+  listProgresses,
   createProgress,
   updateProgress,
   detailProgress,

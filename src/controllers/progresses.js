@@ -2,14 +2,17 @@
 
 const serviceProgress = require('../services/progress')
 
-const listProgresss = async (req, res) => {
-  const progresss = await serviceProgress.listProgresss(req.query)
-  return res.status(200).json(progresss)
+const listProgresses = async (req, res) => {
+  const progresses = await serviceProgress.listProgresses(req.query)
+  return res.status(200).json(progresses)
 }
 
 const createProgress = async (req, res) => {
   try {
-    const progress = await serviceProgress.createProgress(req.body, req.progress)
+    const progress = await serviceProgress.createProgress(
+      req.body,
+      req.progress
+    )
     return res.status(201).json(progress)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -19,7 +22,11 @@ const createProgress = async (req, res) => {
 const updateProgress = async (req, res) => {
   const progressId = req.params.id
   try {
-    const progress = await serviceProgress.updateProgress(progressId, req.body, req.progress)
+    const progress = await serviceProgress.updateProgress(
+      progressId,
+      req.body,
+      req.progress
+    )
     return res.status(200).json(progress)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -48,15 +55,18 @@ const detailProgress = async (req, res) => {
 const deleteProgress = async (req, res) => {
   const progressId = req.params.id
   try {
-    await serviceProgress.deleteProgress(progressId, req.progress)
-    return res.status(201).json()
+    const progress = await serviceProgress.deleteProgress(
+      progressId,
+      req.progress
+    )
+    return res.status(201).json(progress)
   } catch (error) {
     return res.status(error.status).json(error)
   }
 }
 
 module.exports = {
-  listProgresss,
+  listProgresses,
   createProgress,
   updateProgress,
   detailProgress,
