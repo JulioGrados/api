@@ -1,15 +1,17 @@
 'use strict'
 
-const serviceCourse = require('../services/course')
+const service = require('../services/course')
 
 const listCourses = async (req, res) => {
-  const courses = await serviceCourse.listCourses(req.query)
+  const courses = await service.listCourses(req.query)
   return res.status(200).json(courses)
 }
 
 const createCourse = async (req, res) => {
+  const body = JSON.parse(req.body.data)
+  const files = req.files
   try {
-    const course = await serviceCourse.createCourse(req.body, req.course)
+    const course = await service.createCourse(body, files, req.user)
     return res.status(201).json(course)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -18,12 +20,10 @@ const createCourse = async (req, res) => {
 
 const updateCourse = async (req, res) => {
   const courseId = req.params.id
+  const body = JSON.parse(req.body.data)
+  const files = req.files
   try {
-    const course = await serviceCourse.updateCourse(
-      courseId,
-      req.body,
-      req.course
-    )
+    const course = await service.updateCourse(courseId, body, files, req.user)
     return res.status(200).json(course)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -42,7 +42,7 @@ const detailCourse = async (req, res) => {
   }
 
   try {
-    const course = await serviceCourse.detailCourse(params)
+    const course = await service.detailCourse(params)
     return res.status(200).json(course)
   } catch (error) {
     return res.status(error.status).json(error)
@@ -52,7 +52,7 @@ const detailCourse = async (req, res) => {
 const deleteCourse = async (req, res) => {
   const courseId = req.params.id
   try {
-    const course = await serviceCourse.deleteCourse(courseId, req.course)
+    const course = await service.deleteCourse(courseId, req.user)
     return res.status(201).json(course)
   } catch (error) {
     return res.status(error.status).json(error)
