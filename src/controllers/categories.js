@@ -14,7 +14,7 @@ const createCategory = async (req, res) => {
     const category = await service.createCategory(body, file, req.user)
     return res.status(201).json(category)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -31,7 +31,7 @@ const updateCategory = async (req, res) => {
     )
     return res.status(200).json(category)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -50,7 +50,7 @@ const detailCategory = async (req, res) => {
     const category = await service.detailCategory(params)
     return res.status(200).json(category)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -60,7 +60,7 @@ const deleteCategory = async (req, res) => {
     const category = await service.deleteCategory(categoryId, req.user)
     return res.status(201).json(category)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

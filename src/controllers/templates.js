@@ -12,7 +12,7 @@ const createTemplate = async (req, res) => {
     const template = await serviceTemplate.createTemplate(req.body, req.user)
     return res.status(201).json(template)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -26,7 +26,7 @@ const updateTemplate = async (req, res) => {
     )
     return res.status(200).json(template)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -45,7 +45,7 @@ const detailTemplate = async (req, res) => {
     const template = await serviceTemplate.detailTemplate(params)
     return res.status(200).json(template)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -55,7 +55,7 @@ const deleteTemplate = async (req, res) => {
     const template = await serviceTemplate.deleteTemplate(templateId, req.user)
     return res.status(201).json(template)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

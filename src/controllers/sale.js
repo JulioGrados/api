@@ -1,28 +1,28 @@
 'use strict'
 
-const serviceSale = require('../services/sale')
+const service = require('../services/sale')
 
 const listSales = async (req, res) => {
-  const sales = await serviceSale.listSales(req.query)
+  const sales = await service.listSales(req.query)
   return res.status(200).json(sales)
 }
 
 const createSales = async (req, res) => {
   try {
-    const sale = await serviceSale.createSales(req.body, req.sale)
+    const sale = await service.createSale(req.body, req.sale)
     return res.status(201).json(sale)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
 const updateSale = async (req, res) => {
   const saleId = req.params.id
   try {
-    const sale = await serviceSale.updateSale(saleId, req.body, req.sale)
+    const sale = await service.updateSale(saleId, req.body, req.sale)
     return res.status(200).json(sale)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -38,20 +38,20 @@ const detailSale = async (req, res) => {
   }
 
   try {
-    const sale = await serviceSale.detailSale(params)
+    const sale = await service.detailSale(params)
     return res.status(200).json(sale)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
 const deleteSale = async (req, res) => {
   const saleId = req.params.id
   try {
-    const sale = await serviceSale.deleteSale(saleId, req.sale)
+    const sale = await service.deleteSale(saleId, req.sale)
     return res.status(201).json(sales)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

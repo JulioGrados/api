@@ -14,7 +14,7 @@ const createAgreement = async (req, res) => {
     const agreement = await service.createAgreement(body, file, req.user)
     return res.status(201).json(agreement)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -32,7 +32,7 @@ const updateAgreement = async (req, res) => {
     return res.status(200).json(agreement)
   } catch (error) {
     console.log(error)
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -51,7 +51,7 @@ const detailAgreement = async (req, res) => {
     const agreement = await service.detailAgreement(params)
     return res.status(200).json(agreement)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -61,7 +61,7 @@ const deleteAgreement = async (req, res) => {
     const agreement = await service.deleteAgreement(agreementId, req.user)
     return res.status(201).json(agreement)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

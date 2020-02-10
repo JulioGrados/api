@@ -12,7 +12,7 @@ const createVoucher = async (req, res) => {
     const voucher = await serviceVoucher.createVoucher(req.body, req.user)
     return res.status(201).json(voucher)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -26,7 +26,7 @@ const updateVoucher = async (req, res) => {
     )
     return res.status(200).json(voucher)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -45,7 +45,7 @@ const detailVoucher = async (req, res) => {
     const voucher = await serviceVoucher.detailVoucher(params)
     return res.status(200).json(voucher)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -55,7 +55,7 @@ const deleteVoucher = async (req, res) => {
     const voucher = await serviceVoucher.deleteVoucher(voucherId, req.user)
     return res.status(201).json(voucher)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

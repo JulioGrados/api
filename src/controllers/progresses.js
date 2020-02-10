@@ -15,7 +15,7 @@ const createProgress = async (req, res) => {
     )
     return res.status(201).json(progress)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -29,7 +29,7 @@ const updateProgress = async (req, res) => {
     )
     return res.status(200).json(progress)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -48,7 +48,7 @@ const detailProgress = async (req, res) => {
     const progress = await serviceProgress.detailProgress(params)
     return res.status(200).json(progress)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -61,7 +61,7 @@ const deleteProgress = async (req, res) => {
     )
     return res.status(201).json(progress)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

@@ -12,7 +12,7 @@ const createCall = async (req, res) => {
     const call = await serviceCall.createCall(req.body, req.call)
     return res.status(201).json(call)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -22,7 +22,7 @@ const updateCall = async (req, res) => {
     const call = await serviceCall.updateCall(callId, req.body, req.call)
     return res.status(200).json(call)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -41,7 +41,7 @@ const detailCall = async (req, res) => {
     const call = await serviceCall.detailCall(params)
     return res.status(200).json(call)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -51,7 +51,7 @@ const deleteCall = async (req, res) => {
     const call = await serviceCall.deleteCall(callId, req.call)
     return res.status(201).json(call)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

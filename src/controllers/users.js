@@ -15,7 +15,7 @@ const createUser = async (req, res) => {
     return res.status(201).json(user)
   } catch (error) {
     console.log(error)
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -27,7 +27,7 @@ const updateUser = async (req, res) => {
     const user = await service.updateUser(userId, body, file, req.user)
     return res.status(200).json(user)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -46,7 +46,7 @@ const detailUser = async (req, res) => {
     const user = await service.detailUser(params)
     return res.status(200).json(user)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -56,7 +56,7 @@ const deleteUser = async (req, res) => {
     const user = await service.deleteUser(userId, req.user)
     return res.status(201).json(user)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

@@ -15,7 +15,7 @@ const createWhatsapp = async (req, res) => {
     )
     return res.status(201).json(whatsapp)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -29,7 +29,7 @@ const updateWhatsapp = async (req, res) => {
     )
     return res.status(200).json(whatsapp)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -48,7 +48,7 @@ const detailWhatsapp = async (req, res) => {
     const whatsapp = await serviceWhatsapp.detailWhatsapp(params)
     return res.status(200).json(whatsapp)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -61,7 +61,7 @@ const deleteWhatsapp = async (req, res) => {
     )
     return res.status(201).json(whatsapp)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

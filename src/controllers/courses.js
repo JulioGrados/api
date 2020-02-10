@@ -14,7 +14,7 @@ const createCourse = async (req, res) => {
     const course = await service.createCourse(body, files, req.user)
     return res.status(201).json(course)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -26,7 +26,7 @@ const updateCourse = async (req, res) => {
     const course = await service.updateCourse(courseId, body, files, req.user)
     return res.status(200).json(course)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -45,7 +45,7 @@ const detailCourse = async (req, res) => {
     const course = await service.detailCourse(params)
     return res.status(200).json(course)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -55,7 +55,7 @@ const deleteCourse = async (req, res) => {
     const course = await service.deleteCourse(courseId, req.user)
     return res.status(201).json(course)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 

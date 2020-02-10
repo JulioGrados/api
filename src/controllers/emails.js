@@ -12,7 +12,7 @@ const createEmail = async (req, res) => {
     const email = await serviceEmail.createemail(req.body, req.email)
     return res.status(201).json(email)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -22,7 +22,7 @@ const updateEmail = async (req, res) => {
     const email = await serviceEmail.updateEmail(emailId, req.body, req.email)
     return res.status(200).json(email)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -41,7 +41,7 @@ const detailEmail = async (req, res) => {
     const email = await serviceEmail.detailEmail(params)
     return res.status(200).json(email)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
@@ -51,7 +51,7 @@ const deleteEmail = async (req, res) => {
     const email = await serviceEmail.deleteEmail(emailId, req.email)
     return res.status(201).json(email)
   } catch (error) {
-    return res.status(error.status).json(error)
+    return res.status(error.status || 500).json(error)
   }
 }
 
