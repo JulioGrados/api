@@ -1,10 +1,10 @@
 'use strict'
 
 const { Router } = require('express')
-const Api = require('../../controllers/auth')
+const Api = require('../../controllers/categories')
 
 const router = new Router()
 
-router.route('/auth/login').post(Api.loginUser)
+router.route('/categories').get(Api.listCategories)
 
 module.exports = router

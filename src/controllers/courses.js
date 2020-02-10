@@ -59,10 +59,22 @@ const deleteCourse = async (req, res) => {
   }
 }
 
+const listOpenCourses = async (req, res) => {
+  const params = {
+    ...req.query,
+    select: {
+      clases: 0
+    }
+  }
+  const courses = await service.listCourses(params)
+  return res.status(200).json(courses)
+}
+
 module.exports = {
   listCourses,
   createCourse,
   updateCourse,
   detailCourse,
-  deleteCourse
+  deleteCourse,
+  listOpenCourses
 }

@@ -14,7 +14,6 @@ const createUser = async (req, res) => {
     const user = await service.createUser(body, file, req.user)
     return res.status(201).json(user)
   } catch (error) {
-    console.log(error)
     return res.status(error.status || 500).json(error)
   }
 }
@@ -60,10 +59,34 @@ const deleteUser = async (req, res) => {
   }
 }
 
+// Open Controllers
+const listTeachers = async (req, res) => {
+  const params = {
+    query: {
+      role: 'teacher'
+    },
+    select: 'names firstName lastName description photo country'
+  }
+  const users = await service.listUsers(params)
+  return res.status(200).json(users)
+}
+
+const createOrUpdateUser = async (req, res) => {
+  const body = req.body
+  try {
+    const user = await service.createOrUpdateUser(body)
+    return res.status(201).json(user)
+  } catch (error) {
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 module.exports = {
   listUsers,
   createUser,
   updateUser,
   detailUser,
-  deleteUser
+  deleteUser,
+  listTeachers,
+  createOrUpdateUser
 }
