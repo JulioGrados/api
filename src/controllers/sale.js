@@ -49,7 +49,7 @@ const deleteSale = async (req, res) => {
   const saleId = req.params.id
   try {
     const sale = await service.deleteSale(saleId, req.sale)
-    return res.status(201).json(sales)
+    return res.status(201).json(sale)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }

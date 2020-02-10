@@ -1,6 +1,5 @@
 'use strict'
 
-const moment = require('moment-timezone')
 const { agreementDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 

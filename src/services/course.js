@@ -10,7 +10,7 @@ const listCourses = async params => {
 
 const createCourse = async (body, files, loggedCourse) => {
   if (files) {
-    for (let label in files) {
+    for (const label in files) {
       const route = await saveFile(files[label], '/courses')
       body[label] = route
     }
@@ -21,7 +21,7 @@ const createCourse = async (body, files, loggedCourse) => {
 
 const updateCourse = async (courseId, body, files, loggedCourse) => {
   if (files) {
-    for (let label in files) {
+    for (const label in files) {
       const route = await saveFile(files[label], '/courses')
       body[label] = route
     }
