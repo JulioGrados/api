@@ -36,7 +36,13 @@ const deleteCategory = async (categoryId, loggedUser) => {
   return category
 }
 
+const countDocuments = async params => {
+  const count = await categoryDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listCategories,
   createCategory,
   updateCategory,

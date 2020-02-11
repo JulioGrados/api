@@ -27,7 +27,13 @@ const deleteProgress = async (progressId, loggedProgress) => {
   return progress
 }
 
+const countDocuments = async params => {
+  const count = await progressDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listProgresses,
   createProgress,
   updateProgress,

@@ -68,7 +68,13 @@ const createOrUpdateUser = async body => {
   }
 }
 
+const countDocuments = async params => {
+  const count = await userDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listUsers,
   createUser,
   updateUser,

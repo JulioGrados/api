@@ -2,7 +2,7 @@
 
 const { saleDB } = require('../db')
 
-const listSales = async (params) => {
+const listSales = async params => {
   const sales = await saleDB.list(params)
   return sales
 }
@@ -17,7 +17,7 @@ const updateSale = async (saleId, body, loggedUser) => {
   return sale
 }
 
-const detailSale = async (params) => {
+const detailSale = async params => {
   const sale = await saleDB.detail(params)
   return sale
 }
@@ -27,7 +27,13 @@ const deleteSale = async (saleId, loggedUser) => {
   return sale
 }
 
+const countDocuments = async params => {
+  const count = await saleDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listSales,
   createSale,
   updateSale,

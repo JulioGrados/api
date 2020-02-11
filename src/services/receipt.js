@@ -2,7 +2,7 @@
 
 const { receiptDB } = require('../db')
 
-const listReceipts = async (params) => {
+const listReceipts = async params => {
   const receipts = await receiptDB.list(params)
   return receipts
 }
@@ -17,7 +17,7 @@ const updateReceipt = async (receiptId, body, loggedUser) => {
   return receipt
 }
 
-const detailReceipt = async (params) => {
+const detailReceipt = async params => {
   const receipt = await receiptDB.detail(params)
   return receipt
 }
@@ -27,7 +27,13 @@ const deleteReceipt = async (receiptId, loggedUser) => {
   return receipt
 }
 
+const countDocuments = async params => {
+  const count = await receiptDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listReceipts,
   createReceipt,
   updateReceipt,

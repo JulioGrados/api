@@ -36,7 +36,13 @@ const deleteAgreement = async (agreementId, loggedUser) => {
   return agreement
 }
 
+const countDocuments = async params => {
+  const count = await agreementDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listAgreements,
   createAgreement,
   updateAgreement,

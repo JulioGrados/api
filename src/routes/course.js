@@ -5,11 +5,15 @@ const Api = require('../controllers/courses')
 
 const router = new Router()
 
-router.route('/courses')
+router.route('/courses/count').get(Api.countDocuments)
+
+router
+  .route('/courses')
   .get(Api.listCourses)
   .post(Api.createCourse)
 
-router.route('/courses/:id')
+router
+  .route('/courses/:id')
   .get(Api.detailCourse)
   .put(Api.updateCourse)
   .delete(Api.deleteCourse)

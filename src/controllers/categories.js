@@ -64,7 +64,13 @@ const deleteCategory = async (req, res) => {
   }
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 module.exports = {
+  countDocuments,
   listCategories,
   createCategory,
   updateCategory,

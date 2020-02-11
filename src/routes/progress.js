@@ -5,6 +5,8 @@ const Api = require('../controllers/progresses')
 
 const router = new Router()
 
+router.route('/progresses/count').get(Api.countDocuments)
+
 router
   .route('/progresses')
   .get(Api.listProgresses)

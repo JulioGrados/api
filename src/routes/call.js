@@ -5,11 +5,15 @@ const Api = require('../controllers/calls')
 
 const router = new Router()
 
-router.route('/calls')
+router.route('/calls/count').get(Api.countDocuments)
+
+router
+  .route('/calls')
   .get(Api.listCalls)
   .post(Api.createCall)
 
-router.route('/calls/:id')
+router
+  .route('/calls/:id')
   .get(Api.detailCall)
   .put(Api.updateCall)
   .delete(Api.deleteCall)

@@ -1,15 +1,15 @@
 'use strict'
 
-const serviceEmail = require('../services/email')
+const service = require('../services/email')
 
 const listEmails = async (req, res) => {
-  const emails = await serviceEmail.listEmails(req.query)
+  const emails = await service.listEmails(req.query)
   return res.status(200).json(emails)
 }
 
 const createEmail = async (req, res) => {
   try {
-    const email = await serviceEmail.createemail(req.body, req.email)
+    const email = await service.createemail(req.body, req.email)
     return res.status(201).json(email)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -19,7 +19,7 @@ const createEmail = async (req, res) => {
 const updateEmail = async (req, res) => {
   const emailId = req.params.id
   try {
-    const email = await serviceEmail.updateEmail(emailId, req.body, req.email)
+    const email = await service.updateEmail(emailId, req.body, req.email)
     return res.status(200).json(email)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -38,7 +38,7 @@ const detailEmail = async (req, res) => {
   }
 
   try {
-    const email = await serviceEmail.detailEmail(params)
+    const email = await service.detailEmail(params)
     return res.status(200).json(email)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -48,14 +48,20 @@ const detailEmail = async (req, res) => {
 const deleteEmail = async (req, res) => {
   const emailId = req.params.id
   try {
-    const email = await serviceEmail.deleteEmail(emailId, req.email)
+    const email = await service.deleteEmail(emailId, req.email)
     return res.status(201).json(email)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 module.exports = {
+  countDocuments,
   listEmails,
   createEmail,
   updateEmail,

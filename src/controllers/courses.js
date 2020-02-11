@@ -70,7 +70,13 @@ const listOpenCourses = async (req, res) => {
   return res.status(200).json(courses)
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 module.exports = {
+  countDocuments,
   listCourses,
   createCourse,
   updateCourse,

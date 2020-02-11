@@ -2,7 +2,7 @@
 
 const { callDB } = require('../db')
 
-const listCalls = async (params) => {
+const listCalls = async params => {
   const calls = await callDB.list(params)
   return calls
 }
@@ -17,7 +17,7 @@ const updateCall = async (callId, body, loggedCall) => {
   return call
 }
 
-const detailCall = async (params) => {
+const detailCall = async params => {
   const call = await callDB.detail(params)
   return call
 }
@@ -27,7 +27,13 @@ const deleteCall = async (callId, loggedCall) => {
   return call
 }
 
+const countDocuments = async params => {
+  const count = await callDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listCalls,
   createCall,
   updateCall,

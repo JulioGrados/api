@@ -1,15 +1,15 @@
 'use strict'
 
-const serviceVoucher = require('../services/voucher')
+const service = require('../services/voucher')
 
 const listVouchers = async (req, res) => {
-  const vouchers = await serviceVoucher.listVouchers(req.query)
+  const vouchers = await service.listVouchers(req.query)
   return res.status(200).json(vouchers)
 }
 
 const createVoucher = async (req, res) => {
   try {
-    const voucher = await serviceVoucher.createVoucher(req.body, req.user)
+    const voucher = await service.createVoucher(req.body, req.user)
     return res.status(201).json(voucher)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -19,11 +19,7 @@ const createVoucher = async (req, res) => {
 const updateVoucher = async (req, res) => {
   const voucherId = req.params.id
   try {
-    const voucher = await serviceVoucher.updateVoucher(
-      voucherId,
-      req.body,
-      req.user
-    )
+    const voucher = await service.updateVoucher(voucherId, req.body, req.user)
     return res.status(200).json(voucher)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -42,7 +38,7 @@ const detailVoucher = async (req, res) => {
   }
 
   try {
-    const voucher = await serviceVoucher.detailVoucher(params)
+    const voucher = await service.detailVoucher(params)
     return res.status(200).json(voucher)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -52,14 +48,20 @@ const detailVoucher = async (req, res) => {
 const deleteVoucher = async (req, res) => {
   const voucherId = req.params.id
   try {
-    const voucher = await serviceVoucher.deleteVoucher(voucherId, req.user)
+    const voucher = await service.deleteVoucher(voucherId, req.user)
     return res.status(201).json(voucher)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 module.exports = {
+  countDocuments,
   listVouchers,
   createVoucher,
   updateVoucher,

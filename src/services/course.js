@@ -40,7 +40,13 @@ const deleteCourse = async (courseId, loggedCourse) => {
   return course
 }
 
+const countDocuments = async params => {
+  const count = await courseDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listCourses,
   createCourse,
   updateCourse,

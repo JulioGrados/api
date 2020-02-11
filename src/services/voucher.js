@@ -2,7 +2,7 @@
 
 const { voucherDB } = require('../db')
 
-const listVouchers = async (params) => {
+const listVouchers = async params => {
   const vouchers = await voucherDB.list(params)
   return vouchers
 }
@@ -17,7 +17,7 @@ const updateVoucher = async (voucherId, body, loggedUser) => {
   return voucher
 }
 
-const detailVoucher = async (params) => {
+const detailVoucher = async params => {
   const voucher = await voucherDB.detail(params)
   return voucher
 }
@@ -27,7 +27,13 @@ const deleteVoucher = async (voucherId, loggedUser) => {
   return voucher
 }
 
+const countDocuments = async params => {
+  const count = await voucherDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listVouchers,
   createVoucher,
   updateVoucher,

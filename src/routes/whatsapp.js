@@ -5,11 +5,15 @@ const Api = require('../controllers/whatsapp')
 
 const router = new Router()
 
-router.route('/whatsapps')
+router.route('/whatsapps/count').get(Api.countDocuments)
+
+router
+  .route('/whatsapps')
   .get(Api.listWhatsapps)
   .post(Api.createWhatsapp)
 
-router.route('/whatsapps/:id')
+router
+  .route('/whatsapps/:id')
   .get(Api.detailWhatsapp)
   .put(Api.updateWhatsapp)
   .delete(Api.deleteWhatsapp)

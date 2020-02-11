@@ -2,7 +2,7 @@
 
 const { whastsappDB } = require('../db')
 
-const listWhatsapps = async (params) => {
+const listWhatsapps = async params => {
   const whatsapps = await whastsappDB.list(params)
   return whatsapps
 }
@@ -17,7 +17,7 @@ const updateWhatsapp = async (whatsappId, body, loggedUser) => {
   return whatsapp
 }
 
-const detailWhatsapp = async (params) => {
+const detailWhatsapp = async params => {
   const whatsapp = await whastsappDB.detail(params)
   return whatsapp
 }
@@ -27,7 +27,13 @@ const deleteWhatsapp = async (whatsappId, loggedUser) => {
   return whatsapp
 }
 
+const countDocuments = async params => {
+  const count = await whastsappDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listWhatsapps,
   createWhatsapp,
   updateWhatsapp,

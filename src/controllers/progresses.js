@@ -1,18 +1,15 @@
 'use strict'
 
-const serviceProgress = require('../services/progress')
+const service = require('../services/progress')
 
 const listProgresses = async (req, res) => {
-  const progresses = await serviceProgress.listProgresses(req.query)
+  const progresses = await service.listProgresses(req.query)
   return res.status(200).json(progresses)
 }
 
 const createProgress = async (req, res) => {
   try {
-    const progress = await serviceProgress.createProgress(
-      req.body,
-      req.progress
-    )
+    const progress = await service.createProgress(req.body, req.progress)
     return res.status(201).json(progress)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -22,7 +19,7 @@ const createProgress = async (req, res) => {
 const updateProgress = async (req, res) => {
   const progressId = req.params.id
   try {
-    const progress = await serviceProgress.updateProgress(
+    const progress = await service.updateProgress(
       progressId,
       req.body,
       req.progress
@@ -45,7 +42,7 @@ const detailProgress = async (req, res) => {
   }
 
   try {
-    const progress = await serviceProgress.detailProgress(params)
+    const progress = await service.detailProgress(params)
     return res.status(200).json(progress)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -55,17 +52,20 @@ const detailProgress = async (req, res) => {
 const deleteProgress = async (req, res) => {
   const progressId = req.params.id
   try {
-    const progress = await serviceProgress.deleteProgress(
-      progressId,
-      req.progress
-    )
+    const progress = await service.deleteProgress(progressId, req.progress)
     return res.status(201).json(progress)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 module.exports = {
+  countDocuments,
   listProgresses,
   createProgress,
   updateProgress,

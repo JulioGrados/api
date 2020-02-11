@@ -2,7 +2,7 @@
 
 const { templateDB } = require('../db')
 
-const listTemplates = async (params) => {
+const listTemplates = async params => {
   const templates = await templateDB.list(params)
   return templates
 }
@@ -17,7 +17,7 @@ const updateTemplate = async (templateId, body, loggedUser) => {
   return template
 }
 
-const detailTemplate = async (params) => {
+const detailTemplate = async params => {
   const template = await templateDB.detail(params)
   return template
 }
@@ -27,7 +27,13 @@ const deleteTemplate = async (templateId, loggedUser) => {
   return template
 }
 
+const countDocuments = async params => {
+  const count = await templateDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listTemplates,
   createTemplate,
   updateTemplate,

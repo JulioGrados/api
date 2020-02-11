@@ -2,7 +2,7 @@
 
 const { emailDB } = require('../db')
 
-const listEmails = async (params) => {
+const listEmails = async params => {
   const emails = await emailDB.list(params)
   return emails
 }
@@ -17,7 +17,7 @@ const updateEmail = async (emailId, body, loggedEmail) => {
   return email
 }
 
-const detailEmail = async (params) => {
+const detailEmail = async params => {
   const email = await emailDB.detail(params)
   return email
 }
@@ -27,7 +27,13 @@ const deleteEmail = async (emailId, loggedEmail) => {
   return email
 }
 
+const countDocuments = async params => {
+  const count = await emailDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listEmails,
   createEmail,
   updateEmail,

@@ -1,15 +1,15 @@
 'use strict'
 
-const serviceTemplate = require('../services/template')
+const service = require('../services/template')
 
 const listTemplates = async (req, res) => {
-  const templates = await serviceTemplate.listTemplates(req.query)
+  const templates = await service.listTemplates(req.query)
   return res.status(200).json(templates)
 }
 
 const createTemplate = async (req, res) => {
   try {
-    const template = await serviceTemplate.createTemplate(req.body, req.user)
+    const template = await service.createTemplate(req.body, req.user)
     return res.status(201).json(template)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -19,7 +19,7 @@ const createTemplate = async (req, res) => {
 const updateTemplate = async (req, res) => {
   const templateId = req.params.id
   try {
-    const template = await serviceTemplate.updateTemplate(
+    const template = await service.updateTemplate(
       templateId,
       req.body,
       req.user
@@ -42,7 +42,7 @@ const detailTemplate = async (req, res) => {
   }
 
   try {
-    const template = await serviceTemplate.detailTemplate(params)
+    const template = await service.detailTemplate(params)
     return res.status(200).json(template)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -52,14 +52,20 @@ const detailTemplate = async (req, res) => {
 const deleteTemplate = async (req, res) => {
   const templateId = req.params.id
   try {
-    const template = await serviceTemplate.deleteTemplate(templateId, req.user)
+    const template = await service.deleteTemplate(templateId, req.user)
     return res.status(201).json(template)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 module.exports = {
+  countDocuments,
   listTemplates,
   createTemplate,
   updateTemplate,

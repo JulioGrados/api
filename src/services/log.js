@@ -2,7 +2,7 @@
 
 const { logDB } = require('../db')
 
-const listLogs = async (params) => {
+const listLogs = async params => {
   const logs = await logDB.list(params)
   return logs
 }
@@ -17,7 +17,7 @@ const updateLog = async (logId, body, loggedUser) => {
   return log
 }
 
-const detailLog = async (params) => {
+const detailLog = async params => {
   const log = await logDB.detail(params)
   return log
 }
@@ -27,7 +27,13 @@ const deleteLog = async (logId, loggedUser) => {
   return log
 }
 
+const countDocuments = async params => {
+  const count = await logDB.count(params)
+  return count
+}
+
 module.exports = {
+  countDocuments,
   listLogs,
   createLog,
   updateLog,

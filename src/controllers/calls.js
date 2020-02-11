@@ -1,15 +1,15 @@
 'use strict'
 
-const serviceCall = require('../services/call')
+const service = require('../services/call')
 
 const listCalls = async (req, res) => {
-  const calls = await serviceCall.listCalls(req.query)
+  const calls = await service.listCalls(req.query)
   return res.status(200).json(calls)
 }
 
 const createCall = async (req, res) => {
   try {
-    const call = await serviceCall.createCall(req.body, req.call)
+    const call = await service.createCall(req.body, req.call)
     return res.status(201).json(call)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -19,7 +19,7 @@ const createCall = async (req, res) => {
 const updateCall = async (req, res) => {
   const callId = req.params.id
   try {
-    const call = await serviceCall.updateCall(callId, req.body, req.call)
+    const call = await service.updateCall(callId, req.body, req.call)
     return res.status(200).json(call)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -38,7 +38,7 @@ const detailCall = async (req, res) => {
   }
 
   try {
-    const call = await serviceCall.detailCall(params)
+    const call = await service.detailCall(params)
     return res.status(200).json(call)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -48,14 +48,20 @@ const detailCall = async (req, res) => {
 const deleteCall = async (req, res) => {
   const callId = req.params.id
   try {
-    const call = await serviceCall.deleteCall(callId, req.call)
+    const call = await service.deleteCall(callId, req.call)
     return res.status(201).json(call)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 module.exports = {
+  countDocuments,
   listCalls,
   createCall,
   updateCall,

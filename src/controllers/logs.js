@@ -1,15 +1,15 @@
 'use strict'
 
-const serviceLog = require('../services/log')
+const service = require('../services/log')
 
 const listLogs = async (req, res) => {
-  const logs = await serviceLog.listLogs(req.query)
+  const logs = await service.listLogs(req.query)
   return res.status(200).json(logs)
 }
 
 const createLog = async (req, res) => {
   try {
-    const log = await serviceLog.createLog(req.body, req.user)
+    const log = await service.createLog(req.body, req.user)
     return res.status(201).json(log)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -19,7 +19,7 @@ const createLog = async (req, res) => {
 const updateLog = async (req, res) => {
   const logId = req.params.id
   try {
-    const log = await serviceLog.updateLog(logId, req.body, req.user)
+    const log = await service.updateLog(logId, req.body, req.user)
     return res.status(200).json(log)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -38,7 +38,7 @@ const detailLog = async (req, res) => {
   }
 
   try {
-    const log = await serviceLog.detailLog(params)
+    const log = await service.detailLog(params)
     return res.status(200).json(log)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -48,14 +48,20 @@ const detailLog = async (req, res) => {
 const deleteLog = async (req, res) => {
   const logId = req.params.id
   try {
-    const log = await serviceLog.deleteLog(logId, req.user)
+    const log = await service.deleteLog(logId, req.user)
     return res.status(201).json(log)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 module.exports = {
+  countDocuments,
   listLogs,
   createLog,
   updateLog,
