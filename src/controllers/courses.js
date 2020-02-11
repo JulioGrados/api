@@ -62,9 +62,9 @@ const deleteCourse = async (req, res) => {
 const listOpenCourses = async (req, res) => {
   const params = {
     ...req.query,
-    select: {
-      clases: 0
-    }
+    select: req.query.select
+      ? req.query.select.replace('clases', '')
+      : { clases: 0 }
   }
   const courses = await service.listCourses(params)
   return res.status(200).json(courses)

@@ -42,16 +42,21 @@ const deleteUser = async (userId, loggedUser) => {
   return user
 }
 
-const creteOrUpdateUser = async body => {
+const createOrUpdateUser = async body => {
   const params = createQueryEmailMobile(body)
   try {
     const existUser = await userDB.detail(params)
-    existUser.personalInfo = body.personalInfo
-    existUser.status = 'Interesado'
+    body.status = 'Interesado'
     if (body.courses) {
-      existUser.courses = [...existUser.courses, ...body.courses]
+      const courses = existUser.courses.filter(course => {
+        const index = body.courses.findIndex(item => {
+          return item.ref.toString() === course.ref.toString()
+        })
+        return index === -1
+      })
+      body.courses = [...courses, ...body.courses]
     }
-    const user = await userDB.update(existUser)
+    const user = await userDB.update(existUser._id, body)
     return user
   } catch (error) {
     if (error.status === 404) {
@@ -69,5 +74,5 @@ module.exports = {
   updateUser,
   detailUser,
   deleteUser,
-  creteOrUpdateUser
+  createOrUpdateUser
 }

@@ -77,6 +77,7 @@ const createOrUpdateUser = async (req, res) => {
     const user = await service.createOrUpdateUser(body)
     return res.status(201).json(user)
   } catch (error) {
+    console.log('error', error)
     return res.status(error.status || 500).json(error)
   }
 }
