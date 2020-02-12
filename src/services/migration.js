@@ -101,6 +101,8 @@ const migrateCourses = async data => {
       }
       const author = {
         ...authorItem.toJSON(),
+        names: authorItem.personalInfo.names,
+        email: authorItem.personalInfo.email,
         ref: authorItem._id
       }
 
