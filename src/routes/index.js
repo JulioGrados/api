@@ -13,8 +13,9 @@ const routesCall = require('./call')
 const routesEmail = require('./email')
 const routesProgress = require('./progress')
 const routesCourse = require('./course')
+const routesMigrate = require('./migration')
 
-module.exports = (server) => {
+module.exports = server => {
   server.use('/api', routesLog)
   server.use('/api', routesUser)
   server.use('/api', routesWhatsapp)
@@ -28,4 +29,5 @@ module.exports = (server) => {
   server.use('/api', routesEmail)
   server.use('/api', routesProgress)
   server.use('/api', routesCourse)
+  server.use('/api', routesMigrate)
 }
