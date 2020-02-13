@@ -62,10 +62,8 @@ const deleteUser = async (req, res) => {
 // Open Controllers
 const listTeachers = async (req, res) => {
   const params = {
-    query: {
-      role: 'teacher'
-    },
-    select: 'names firstName lastName description photo country'
+    ...req.query,
+    select: 'personalInfo firstName lastName description photo country username'
   }
   const users = await service.listUsers(params)
   return res.status(200).json(users)
