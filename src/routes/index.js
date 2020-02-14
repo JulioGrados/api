@@ -14,6 +14,7 @@ const routesEmail = require('./email')
 const routesProgress = require('./progress')
 const routesCourse = require('./course')
 const routesMigrate = require('./migration')
+const routesContact = require('./contact')
 
 module.exports = server => {
   server.use('/api', routesLog)
@@ -30,4 +31,5 @@ module.exports = server => {
   server.use('/api', routesProgress)
   server.use('/api', routesCourse)
   server.use('/api', routesMigrate)
+  server.use('/api', routesContact)
 }
