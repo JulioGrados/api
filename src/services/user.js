@@ -61,9 +61,7 @@ const createOrUpdateUser = async body => {
       name: progress.name,
       ref: progress._id
     }
-    console.log('body', body)
     const user = await userDB.update(existUser._id, body)
-    console.log('user', user)
     return user
   } catch (error) {
     if (error.status === 404) {
