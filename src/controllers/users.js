@@ -8,7 +8,7 @@ const listUsers = async (req, res) => {
 }
 
 const createUser = async (req, res) => {
-  const body = JSON.parse(req.body.data)
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.photo
   try {
     const user = await service.createUser(body, file, req.user)
@@ -20,7 +20,7 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   const userId = req.params.id
-  const body = JSON.parse(req.body.data)
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.photo
   try {
     const user = await service.updateUser(userId, body, file, req.user)

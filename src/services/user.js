@@ -1,6 +1,6 @@
 'use strict'
 
-const { userDB } = require('../db')
+const { userDB, progressDB } = require('../db')
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
 const { createQueryEmailMobile } = require('utils/functions/user')
@@ -44,6 +44,7 @@ const deleteUser = async (userId, loggedUser) => {
 
 const createOrUpdateUser = async body => {
   const params = createQueryEmailMobile(body)
+  const progress = await progressDB.detail({ query: { order: 1 } })
   try {
     const existUser = await userDB.detail(params)
     body.status = 'Interesado'
@@ -56,10 +57,20 @@ const createOrUpdateUser = async body => {
       })
       body.courses = [...courses, ...body.courses]
     }
+    body.statusProgress = {
+      name: progress.name,
+      ref: progress._id
+    }
+    console.log('body', body)
     const user = await userDB.update(existUser._id, body)
+    console.log('user', user)
     return user
   } catch (error) {
     if (error.status === 404) {
+      body.statusProgress = {
+        name: progress.name,
+        ref: progress._id
+      }
       const user = await userDB.create(body)
       return user
     } else {
