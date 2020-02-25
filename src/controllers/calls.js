@@ -18,8 +18,9 @@ const createCall = async (req, res) => {
 
 const updateCall = async (req, res) => {
   const callId = req.params.id
+
   try {
-    const call = await service.updateCall(callId, req.body, req.call)
+    const call = await service.updateCall(callId, req.body, req.user)
     return res.status(200).json(call)
   } catch (error) {
     return res.status(error.status || 500).json(error)
