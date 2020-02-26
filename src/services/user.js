@@ -6,7 +6,9 @@ const { saveFile } = require('utils/files/save')
 const { createQueryEmailMobile } = require('utils/functions/user')
 
 const listUsers = async params => {
+  console.log('params', params)
   const users = await userDB.list(params)
+  console.log(users)
   return users
 }
 
@@ -61,6 +63,7 @@ const createOrUpdateUser = async body => {
       name: progress.name,
       ref: progress._id
     }
+    console.log(body)
     const user = await userDB.update(existUser._id, body)
     return user
   } catch (error) {
