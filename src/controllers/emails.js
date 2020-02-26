@@ -9,7 +9,7 @@ const listEmails = async (req, res) => {
 
 const createEmail = async (req, res) => {
   try {
-    const email = await service.createemail(req.body, req.email)
+    const email = await service.createEmail(req.body, req.email)
     return res.status(201).json(email)
   } catch (error) {
     return res.status(error.status || 500).json(error)
