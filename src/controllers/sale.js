@@ -9,19 +9,21 @@ const listSales = async (req, res) => {
 
 const createSales = async (req, res) => {
   try {
-    const sale = await service.createSale(req.body, req.sale)
-    console.log('sale', sale)
+    const body = req.body.data ? JSON.parse(req.body.data) : req.body
+    const files = req.files
+    const sale = await service.createSale(body, files, req.user)
     return res.status(201).json(sale)
   } catch (error) {
-    console.log(error)
     return res.status(error.status || 500).json(error)
   }
 }
 
 const updateSale = async (req, res) => {
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
+  const files = req.files
   const saleId = req.params.id
   try {
-    const sale = await service.updateSale(saleId, req.body, req.sale)
+    const sale = await service.updateSale(saleId, body, files, req.user)
     return res.status(200).json(sale)
   } catch (error) {
     return res.status(error.status || 500).json(error)
