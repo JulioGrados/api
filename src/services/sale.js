@@ -9,9 +9,9 @@ const listSales = async params => {
   return sales
 }
 
-const createSale = async (body, loggedUser) => {
+const createSale = async (body, files, loggedUser) => {
   const copyOrders = JSON.parse(JSON.stringify(body.orders))
-  body.orders = await prepareOrders(body)
+  body.orders = await prepareOrders(body, files)
   body.status = getStatusSale(body)
   const sale = await saleDB.create(body)
   try {
@@ -24,10 +24,10 @@ const createSale = async (body, loggedUser) => {
   return sale
 }
 
-const updateSale = async (saleId, body, loggedUser) => {
+const updateSale = async (saleId, body, files, loggedUser) => {
   if (body.status === 'Pendiente' || body.status === 'Pagando') {
     const copyOrders = JSON.parse(JSON.stringify(body.orders))
-    body.orders = await prepareOrders(body)
+    body.orders = await prepareOrders(body, files)
     body.status = getStatusSale(body)
     const sale = await saleDB.update(saleId, body)
     sale.orders = await editVoucher(sale.orders, copyOrders)
@@ -86,7 +86,7 @@ const editVoucher = async (orders, dataOrders) => {
   }
 }
 
-const prepareOrders = async ({ orders, amount, user }) => {
+const prepareOrders = async ({ orders, amount, user }, files) => {
   let sum = sumAmountOrders(orders)
 
   if (sum !== amount) {
@@ -101,7 +101,7 @@ const prepareOrders = async ({ orders, amount, user }) => {
   let results
   try {
     results = await Promise.all(
-      orders.map(async order => await changeOrder(order, user))
+      orders.map(async order => await changeOrder(order, user, files))
     )
   } catch (error) {
     const errorMessage = {
@@ -115,13 +115,18 @@ const prepareOrders = async ({ orders, amount, user }) => {
   return results
 }
 
-const changeOrder = async (order, linked) => {
+const changeOrder = async (order, linked, files) => {
   try {
     if (order.status === 'Por Pagar') {
       if (order.voucher) {
         order.status = 'Pagada'
         order.paymentDate = Date()
-        const voucher = await findOrAddVoucher(order.voucher, order.assigned)
+        const voucher = await findOrAddVoucher(
+          order.voucher,
+          order.amount,
+          order.assigned,
+          files
+        )
         order.voucher.code = voucher.code
         order.voucher.ref = voucher
 
@@ -150,16 +155,27 @@ const changeOrder = async (order, linked) => {
   }
 }
 
-const findOrAddVoucher = async (voucher, assigned) => {
+const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
   try {
     const dbVoucher = await voucherDB.detail({ query: { code: voucher.code } })
-    /*  */
     return dbVoucher
   } catch (error) {
     if (error.status && error.status === 404) {
       try {
+        getResidueVoucher(voucher.amount, orderAmount)
+        if (files) {
+          const file = files[voucher.code]
+          if (file) {
+            const route = await saveFile(file, '/vouchers')
+            vocher.image = route
+          }
+        }
         const newVoucher = await voucherDB.create({
           ...voucher,
+          bank: voucher.bank && {
+            ...voucher.bank,
+            name: voucher.bank.label
+          },
           assigned,
           residue: voucher.amount,
           isUsed: false
