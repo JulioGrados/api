@@ -2,6 +2,7 @@
 
 const { saleDB, voucherDB, receiptDB } = require('../db')
 const { sumAmountOrders } = require('utils/functions/sale')
+const { saveFile } = require('utils/files/save')
 
 /* Basicos */
 const listSales = async params => {
@@ -167,7 +168,7 @@ const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
           const file = files[voucher.code]
           if (file) {
             const route = await saveFile(file, '/vouchers')
-            vocher.image = route
+            voucher.image = route
           }
         }
         const newVoucher = await voucherDB.create({
