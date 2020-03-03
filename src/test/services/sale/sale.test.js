@@ -1,11 +1,8 @@
 'use strict'
 
-const {
-  createSale,
-  updateSale,
-  sumOrders,
-  sumCourses
-} = require('../../../services/sale')
+const { createSale, updateSale } = require('../../../services/sale')
+
+const { sumPriceCourses, sumAmountOrders } = require('utils/functions/sale')
 
 const { case1, case2, case3, case4, case5, case6 } = require('./data')
 
@@ -18,8 +15,8 @@ const saleValidate = sale => {
   expect(sale).toHaveProperty('user.ref')
   expect(sale).toHaveProperty('assigned.ref')
   expect(sale.amount).toBeGreaterThan(0)
-  expect(sale.amount).toEqual(sumCourses(sale.courses))
-  expect(sale.amount).toEqual(sumOrders(sale.orders))
+  expect(sale.amount).toEqual(sumPriceCourses(sale.courses))
+  expect(sale.amount).toEqual(sumAmountOrders(sale.orders))
   expect(sale).toHaveProperty('currency', 'pen')
   expect(sale).toHaveProperty('dateOfSale')
 }
@@ -83,7 +80,7 @@ test('Case 1', async () => {
 
   //sale
   saleValidate(sale)
-  expect(sale.amount).toEqual(sumOrders(sale.orders, 'Pagada'))
+  expect(sale.amount).toEqual(sumAmountOrders(sale.orders, 'Pagada'))
   expect(sale.status).toBe('Finalizada')
 
   const order = sale.orders[0]
@@ -91,7 +88,7 @@ test('Case 1', async () => {
   //order 1
   orderValidate(order)
   expect(order.quotaNumber).toBe(1)
-  expect(order.amount).toEqual(sumCourses(sale.courses))
+  expect(order.amount).toEqual(sumPriceCourses(sale.courses))
   expect(order.status).toBe('Pagada')
 
   //voucher
@@ -108,14 +105,14 @@ test('Case 2', async () => {
   const sale = await createSale(case2)
   //sale
   saleValidate(sale)
-  expect(sale.amount).not.toEqual(sumOrders(sale.orders, 'Pagada'))
+  expect(sale.amount).not.toEqual(sumAmountOrders(sale.orders, 'Pagada'))
   expect(sale.status).toBe('Pagando')
 
   //order 1
   const order1 = sale.orders[0]
   orderValidate(order1)
   expect(order1.quotaNumber).toBe(1)
-  expect(order1.amount).not.toEqual(sumCourses(sale.courses))
+  expect(order1.amount).not.toEqual(sumPriceCourses(sale.courses))
   expect(order1.status).toBe('Pagada')
 
   //voucher
@@ -131,7 +128,7 @@ test('Case 2', async () => {
   const order2 = sale.orders[1]
   orderValidate(order2)
   expect(order2.quotaNumber).toBe(2)
-  expect(order2.amount).not.toEqual(sumCourses(sale.courses))
+  expect(order2.amount).not.toEqual(sumPriceCourses(sale.courses))
   expect(order2.status).toBe('Por Pagar')
 })
 
@@ -139,7 +136,7 @@ test('Case 3', async () => {
   const sale1 = await createSale(case3[0])
   //sale1
   saleValidate(sale1)
-  expect(sale1.amount).toEqual(sumOrders(sale1.orders, 'Pagada'))
+  expect(sale1.amount).toEqual(sumAmountOrders(sale1.orders, 'Pagada'))
   expect(sale1.status).toBe('Finalizada')
 
   const order1 = sale1.orders[0]
@@ -147,7 +144,7 @@ test('Case 3', async () => {
   //order1 1
   orderValidate(order1)
   expect(order1.quotaNumber).toBe(1)
-  expect(order1.amount).toEqual(sumCourses(sale1.courses))
+  expect(order1.amount).toEqual(sumPriceCourses(sale1.courses))
   expect(order1.status).toBe('Pagada')
 
   //voucher1
@@ -163,7 +160,7 @@ test('Case 3', async () => {
 
   //sale2
   saleValidate(sale2)
-  expect(sale2.amount).toEqual(sumOrders(sale2.orders, 'Pagada'))
+  expect(sale2.amount).toEqual(sumAmountOrders(sale2.orders, 'Pagada'))
   expect(sale2.status).toBe('Finalizada')
 
   const order2 = sale2.orders[0]
@@ -171,7 +168,7 @@ test('Case 3', async () => {
   //order2 1
   orderValidate(order2)
   expect(order2.quotaNumber).toBe(2)
-  expect(order2.amount).toEqual(sumCourses(sale2.courses))
+  expect(order2.amount).toEqual(sumPriceCourses(sale2.courses))
   expect(order2.status).toBe('Pagada')
   //voucher2
   const voucher2 = order2.voucher.ref
@@ -187,14 +184,14 @@ test('Case 4', async () => {
   const sale = await createSale(case4.sale)
   //sale
   saleValidate(sale)
-  expect(sale.amount).not.toEqual(sumOrders(sale.orders, 'Pagada'))
+  expect(sale.amount).not.toEqual(sumAmountOrders(sale.orders, 'Pagada'))
   expect(sale.status).toBe('Pagando')
 
   //order 1
   const order1 = sale.orders[0]
   orderValidate(order1)
   expect(order1.quotaNumber).toBe(1)
-  expect(order1.amount).not.toEqual(sumCourses(sale.courses))
+  expect(order1.amount).not.toEqual(sumPriceCourses(sale.courses))
   expect(order1.status).toBe('Pagada')
 
   //voucher
@@ -210,7 +207,7 @@ test('Case 4', async () => {
   const order2 = sale.orders[1]
   orderValidate(order2)
   expect(order2.quotaNumber).toBe(2)
-  expect(order2.amount).not.toEqual(sumCourses(sale.courses))
+  expect(order2.amount).not.toEqual(sumPriceCourses(sale.courses))
   expect(order2.status).toBe('Por Pagar')
 
   //payment order 2
@@ -222,14 +219,14 @@ test('Case 4', async () => {
 
   //sale
   saleValidate(sale2)
-  expect(sale2.amount).toEqual(sumOrders(sale2.orders, 'Pagada'))
+  expect(sale2.amount).toEqual(sumAmountOrders(sale2.orders, 'Pagada'))
   expect(sale2.status).toBe('Finalizada')
 
   //order 1
   const order21 = sale2.orders[0]
   orderValidate(order21)
   expect(order21.quotaNumber).toBe(1)
-  expect(order21.amount).not.toEqual(sumCourses(sale2.courses))
+  expect(order21.amount).not.toEqual(sumPriceCourses(sale2.courses))
   expect(order21.status).toBe('Pagada')
 
   //voucher
@@ -241,7 +238,7 @@ test('Case 4', async () => {
   const order22 = sale2.orders[1]
   orderValidate(order22)
   expect(order22.quotaNumber).toBe(2)
-  expect(order22.amount).not.toEqual(sumCourses(sale2.courses))
+  expect(order22.amount).not.toEqual(sumPriceCourses(sale2.courses))
   expect(order22.status).toBe('Pagada')
 
   //voucher
@@ -258,14 +255,14 @@ test('Case 5', async () => {
   const sale = await createSale(case5.sale)
   //sale
   saleValidate(sale)
-  expect(sale.amount).not.toEqual(sumOrders(sale.orders, 'Pagada'))
+  expect(sale.amount).not.toEqual(sumAmountOrders(sale.orders, 'Pagada'))
   expect(sale.status).toBe('Pagando')
 
   //order 1
   const order1 = sale.orders[0]
   orderValidate(order1)
   expect(order1.quotaNumber).toBe(1)
-  expect(order1.amount).not.toEqual(sumCourses(sale.courses))
+  expect(order1.amount).not.toEqual(sumPriceCourses(sale.courses))
   expect(order1.status).toBe('Pagada')
 
   //voucher
@@ -281,7 +278,7 @@ test('Case 5', async () => {
   const order2 = sale.orders[1]
   orderValidate(order2)
   expect(order2.quotaNumber).toBe(2)
-  expect(order2.amount).not.toEqual(sumCourses(sale.courses))
+  expect(order2.amount).not.toEqual(sumPriceCourses(sale.courses))
   expect(order2.status).toBe('Por Pagar')
 
   //payment order 2
@@ -295,14 +292,14 @@ test('Case 5', async () => {
 
   //sale
   saleValidate(sale2)
-  expect(sale2.amount).not.toEqual(sumOrders(sale2.orders, 'Pagada'))
+  expect(sale2.amount).not.toEqual(sumAmountOrders(sale2.orders, 'Pagada'))
   expect(sale2.status).toBe('Pagando')
 
   //order 1
   const order21 = sale2.orders[0]
   orderValidate(order21)
   expect(order21.quotaNumber).toBe(1)
-  expect(order21.amount).not.toEqual(sumCourses(sale2.courses))
+  expect(order21.amount).not.toEqual(sumPriceCourses(sale2.courses))
   expect(order21.status).toBe('Pagada')
 
   //voucher
@@ -314,7 +311,7 @@ test('Case 5', async () => {
   const order22 = sale2.orders[1]
   orderValidate(order22)
   expect(order22.quotaNumber).toBe(2)
-  expect(order22.amount).not.toEqual(sumCourses(sale2.courses))
+  expect(order22.amount).not.toEqual(sumPriceCourses(sale2.courses))
   expect(order22.status).toBe('Pagada')
 
   //voucher
@@ -330,7 +327,7 @@ test('Case 5', async () => {
   const order23 = sale2.orders[2]
   orderValidate(order23)
   expect(order23.quotaNumber).toBe(3)
-  expect(order23.amount).not.toEqual(sumCourses(sale2.courses))
+  expect(order23.amount).not.toEqual(sumPriceCourses(sale2.courses))
   expect(order23.status).toBe('Por Pagar')
 })
 
@@ -340,7 +337,7 @@ test('Case 6', async () => {
   const sale = await createSale(saleData1)
   //sale
   saleValidate(sale)
-  expect(sale.amount).toEqual(sumOrders(sale.orders, 'Pagada'))
+  expect(sale.amount).toEqual(sumAmountOrders(sale.orders, 'Pagada'))
   expect(sale.status).toBe('Finalizada')
 
   const order = sale.orders[0]
@@ -348,7 +345,7 @@ test('Case 6', async () => {
   //order 1
   orderValidate(order)
   expect(order.quotaNumber).toBe(1)
-  expect(order.amount).toEqual(sumCourses(sale.courses))
+  expect(order.amount).toEqual(sumPriceCourses(sale.courses))
   expect(order.status).toBe('Pagada')
 
   //voucher
@@ -365,14 +362,14 @@ test('Case 6', async () => {
   const sale2 = await createSale(saleData2)
   //sale2
   saleValidate(sale2)
-  expect(sale2.amount).not.toEqual(sumOrders(sale2.orders, 'Pagada'))
+  expect(sale2.amount).not.toEqual(sumAmountOrders(sale2.orders, 'Pagada'))
   expect(sale2.status).toBe('Pagando')
 
   //order 1
   const order21 = sale2.orders[0]
   orderValidate(order21)
   expect(order21.quotaNumber).toBe(1)
-  expect(order21.amount).not.toEqual(sumCourses(sale2.courses))
+  expect(order21.amount).not.toEqual(sumPriceCourses(sale2.courses))
   expect(order21.status).toBe('Pagada')
 
   //voucher2
@@ -388,6 +385,6 @@ test('Case 6', async () => {
   const order22 = sale2.orders[1]
   orderValidate(order22)
   expect(order22.quotaNumber).toBe(2)
-  expect(order22.amount).not.toEqual(sumCourses(sale2.courses))
+  expect(order22.amount).not.toEqual(sumPriceCourses(sale2.courses))
   expect(order22.status).toBe('Por Pagar')
 })
