@@ -10,8 +10,10 @@ const listSales = async (req, res) => {
 const createSales = async (req, res) => {
   try {
     const sale = await service.createSale(req.body, req.sale)
+    console.log('sale', sale)
     return res.status(201).json(sale)
   } catch (error) {
+    console.log(error)
     return res.status(error.status || 500).json(error)
   }
 }
