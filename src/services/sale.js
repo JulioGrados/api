@@ -159,6 +159,15 @@ const changeOrder = async (order, linked, files) => {
 const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
   try {
     const dbVoucher = await voucherDB.detail({ query: { code: voucher.code } })
+    if (dbVoucher.isUsed) {
+      const error = {
+        status: 402,
+        message: 'Ya existe un voaucher con el mismo codigo y ya esta usado.'
+      }
+      throw error
+    }
+    getResidueVoucher(dbVoucher.residue, orderAmount)
+
     return dbVoucher
   } catch (error) {
     if (error.status && error.status === 404) {
