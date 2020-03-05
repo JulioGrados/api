@@ -59,6 +59,11 @@ const deleteUser = async (req, res) => {
   }
 }
 
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
 // Open Controllers
 const listTeachers = async (req, res) => {
   const params = {
@@ -78,11 +83,6 @@ const createOrUpdateUser = async (req, res) => {
     console.log('error', error)
     return res.status(error.status || 500).json(error)
   }
-}
-
-const countDocuments = async (req, res) => {
-  const count = await service.countDocuments(req.query)
-  return res.json(count)
 }
 
 module.exports = {

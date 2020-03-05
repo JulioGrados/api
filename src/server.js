@@ -9,7 +9,7 @@ const morgan = require('morgan')
 const routes = require('./routes')
 const routesOpen = require('./routes/open')
 
-const authHandler = require('./auth')
+const { authHandler } = require('./auth')
 
 const server = express()
 

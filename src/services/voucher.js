@@ -7,12 +7,25 @@ const listVouchers = async params => {
   return vouchers
 }
 
-const createVoucher = async (body, loggedUser) => {
+const createVoucher = async (body, files, loggedUser) => {
+  if (files) {
+    for (const label in files) {
+      const route = await saveFile(files[label], '/courses')
+      body[label] = route
+    }
+  }
+
   const voucher = await voucherDB.create(body)
   return voucher
 }
 
-const updateVoucher = async (voucherId, body, loggedUser) => {
+const updateVoucher = async (voucherId, body, files, loggedUser) => {
+  if (files) {
+    for (const label in files) {
+      const route = await saveFile(files[label], '/courses')
+      body[label] = route
+    }
+  }
   const voucher = await voucherDB.update(voucherId, body)
   return voucher
 }

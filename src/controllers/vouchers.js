@@ -8,8 +8,10 @@ const listVouchers = async (req, res) => {
 }
 
 const createVoucher = async (req, res) => {
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
+  const files = req.files
   try {
-    const voucher = await service.createVoucher(req.body, req.user)
+    const voucher = await service.createVoucher(body, files, req.user)
     return res.status(201).json(voucher)
   } catch (error) {
     return res.status(error.status || 500).json(error)
@@ -18,8 +20,15 @@ const createVoucher = async (req, res) => {
 
 const updateVoucher = async (req, res) => {
   const voucherId = req.params.id
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
+  const files = req.files
   try {
-    const voucher = await service.updateVoucher(voucherId, req.body, req.user)
+    const voucher = await service.updateVoucher(
+      voucherId,
+      body,
+      files,
+      req.user
+    )
     return res.status(200).json(voucher)
   } catch (error) {
     return res.status(error.status || 500).json(error)
