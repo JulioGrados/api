@@ -12,6 +12,7 @@ const createEmail = async (req, res) => {
     const email = await service.createEmail(req.body, req.email)
     return res.status(201).json(email)
   } catch (error) {
+    console.log(error)
     return res.status(error.status || 500).json(error)
   }
 }

@@ -217,7 +217,6 @@ const prepareCourses = (lead, oldCourses, newCourses) => {
 
 const sendSocket = (type, lead) => {
   try {
-    console.log('emit')
     const io = getSocket()
     io.to(lead.assessor.ref).emit(type, lead)
   } catch (error) {

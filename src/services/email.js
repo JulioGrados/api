@@ -1,6 +1,7 @@
 'use strict'
 
 const { emailDB } = require('../db')
+const { sendEmail } = require('utils/lib/sendgrid')
 
 const listEmails = async params => {
   const emails = await emailDB.list(params)
@@ -9,6 +10,17 @@ const listEmails = async params => {
 
 const createEmail = async (body, loggedEmail) => {
   const email = await emailDB.create(body)
+  //console.log(email)
+  const userEmail = {
+    to: body.linked.ref.email,
+    from: email.from,
+    subject: email.preheader,
+    html: email.content,
+    args: {
+      emailId: email._id
+    }
+  }
+  sendEmail(userEmail)
   return email
 }
 
