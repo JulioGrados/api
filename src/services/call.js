@@ -4,6 +4,8 @@ const { callDB, userDB, notificationDB } = require('../db')
 const moment = require('moment-timezone')
 const { getSocket } = require('../lib/io')
 
+const { getNewActivityState, getFullDate } = require('utils/functions/call')
+
 const listCalls = async params => {
   const calls = await callDB.list(params)
   return calls
@@ -86,22 +88,6 @@ const getLeadFromCall = async call => {
   return lead
 }
 
-const getNewActivityState = call => {
-  let statusActivity = ''
-  if (!call.isCompleted) {
-    const date = getFullDate(call)
-    if (moment().isAfter(date)) {
-      statusActivity = 'delay'
-    } else {
-      statusActivity = 'todo'
-    }
-  } else {
-    statusActivity = 'done'
-  }
-
-  return statusActivity
-}
-
 const updateStatusUser = async (lead, statusActivity) => {
   try {
     const updatedLead = await userDB.update(lead._id, { statusActivity }, false)
@@ -143,14 +129,6 @@ const emitNotification = notification => {
     const io = getSocket()
     io.to(notification.assigned).emit('notification', notification)
   }
-}
-
-const getFullDate = call => {
-  const singleDate = moment(call.date)
-    .utc()
-    .format('YYYY-MM-DD')
-  const fullDate = singleDate + ' ' + call.hour
-  return moment(fullDate, 'YYYY-MM-DD HH:mm')
 }
 
 module.exports = {
