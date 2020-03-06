@@ -10,7 +10,6 @@ const listEmails = async params => {
 
 const createEmail = async (body, loggedEmail) => {
   const email = await emailDB.create(body)
-  //console.log(email)
   const userEmail = {
     to: body.linked.ref.email,
     from: email.from,

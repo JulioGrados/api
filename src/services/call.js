@@ -121,8 +121,10 @@ const emitLead = lead => {
 const sendNotification = async call => {
   const date = getFullDate(call)
   const data = {
-    asigned: call.asigned.ref,
+    assigned: call.assigned.ref,
     linked: call.linked.ref,
+    type: 'Llamada',
+    typeRef: call._id,
     title: `Llamar a ${call.linked.names}`,
     content: `Se programo una llamada a ${
       call.linked.names

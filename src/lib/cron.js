@@ -3,7 +3,7 @@ const CronJob = require('cron').CronJob
 const { getDelayCalls } = require('../services/call')
 
 const job = new CronJob(
-  '0 */30 9-19 * * *',
+  '0 */2 9-19 * * *',
   getDelayCalls,
   null,
   true,
