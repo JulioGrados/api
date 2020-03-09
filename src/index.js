@@ -12,6 +12,8 @@ const filePath = 'api:src:index'
 
 const main = async () => {
   moment.locale('es')
+  moment.tz.setDefault('America/Bogota')
+
   const serverApp = await server.listen(config.server.port)
   connectIO(serverApp)
   handleMessage(`[Api Server] running in port ${config.server.port}`, filePath)

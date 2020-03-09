@@ -1,37 +1,33 @@
 'use strict'
 
 const { timelineDB } = require('../db')
+const { getSocket } = require('../lib/io')
 
 const listTimelines = async params => {
   const timelines = await timelineDB.list(params)
   return timelines
 }
 
-const createTimeline = async ({ lead, loggedUser, assigned, ...body }) => {
-  if (lead) {
-    body.lead = lead._id || lead
-  }
-
-  if (loggedUser) {
-    body.loggedUser = {
-      username: loggedUser.username,
-      ref: loggedUser._id
+const createTimeline = async ({ linked, assigned, ...body }) => {
+  if (linked) {
+    body.linked = {
+      names: linked.names,
+      ref: linked._id || linked.ref
     }
-    body.assigned = body.loggedUser
   }
 
   if (assigned) {
     body.assigned = {
       username: assigned.username,
-      ref: assigned._id
+      ref: assigned._id || assigned.ref
     }
   }
 
   try {
     const timeline = await timelineDB.create(body)
+    emitTimeline(timeline)
     return timeline
   } catch (error) {
-    //avisar del error
     console.log('error timeline', body, error)
   }
 }
@@ -44,6 +40,19 @@ const detailTimeline = async params => {
 const countDocuments = async params => {
   const count = await timelineDB.count(params)
   return count
+}
+
+/* functions */
+
+const emitTimeline = timeline => {
+  try {
+    if (timeline.assigned) {
+      const io = getSocket()
+      io.to(timeline.assigned.ref).emit('timeline', timeline)
+    }
+  } catch (error) {
+    console.log('error sockets', timeline, error)
+  }
 }
 
 module.exports = {

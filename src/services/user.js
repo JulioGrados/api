@@ -4,8 +4,10 @@ const _ = require('lodash')
 const moment = require('moment-timezone')
 
 const { getSocket } = require('../lib/io')
-
 const { userDB, progressDB, callDB } = require('../db')
+
+const { createTimeline } = require('./timeline')
+const { createEmail } = require('./email')
 
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
@@ -13,8 +15,6 @@ const { createFindQuery, payloadToData } = require('utils/functions/user')
 const courseFunc = require('utils/functions/course')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
 const { MEDIA_PATH } = require('utils/files/path')
-const { createTimeline } = require('./timeline')
-const { createEmail } = require('./email')
 
 const listUsers = async params => {
   const users = await userDB.list(params)
@@ -32,15 +32,14 @@ const createUser = async (body, file, loggedUser) => {
 }
 
 const updateUser = async (userId, body, file, loggedUser) => {
-  if (file) {
-    const route = await saveFile(file, '/users')
-    body.photo = route
+  const user = await userDB.detail({ query: { _id: userId } })
+  let dataUser = await saveImage(body, file)
+  if (dataUser.password) {
+    dataUser.password = generateHash(dataUser.password)
   }
-  if (body.password) {
-    body.password = generateHash(body.password)
-  }
-  const user = await userDB.update(userId, body)
-  return user
+  const updateUser = await userDB.update(userId, dataUser, false)
+  timelineProgress(updateUser, user, loggedUser)
+  return updateUser
 }
 
 const detailUser = async params => {
@@ -79,11 +78,11 @@ const createLead = async body => {
   const dataLead = await addInitialStatus(body)
   dataLead.assessor = await assignedAssessor(dataLead)
   const lead = await userDB.create(dataLead)
+  sendSocket(lead)
+  createTimeline({ linked: lead, type: 'Cuenta', name: 'Persona creada' })
   addCall(lead, body.courses)
   prepareCourses(lead.toJSON(), [], body.courses)
   incProspects(lead)
-  createTimeline({ lead, type: 'Cuenta', subtype: 'Creación' })
-  sendSocket(lead)
   return lead
 }
 
@@ -96,12 +95,12 @@ const editLead = async (lead, body) => {
     dataLead.assessor = await assignedAssessor(dataLead)
     incProspects(dataLead)
   } else if (lead.type === 'User') {
-    incProspects(lead)
+    incProspects(dataLead)
   }
   dataLead.courses = prepareCourses(dataLead, lead.courses, body.courses)
   const updateLead = await userDB.update(lead._id, dataLead)
-  addCall(updateLead, body.courses)
   sendSocket(updateLead)
+  addCall(updateLead, body.courses)
   return updateLead
 }
 
@@ -160,8 +159,10 @@ const getMinAssessor = assessors => {
 const addCall = async (lead, courses) => {
   const coursesName = courses.map(course => course.name).join(', ')
   const dataCall = {
-    name: `Llamada de contacto (${coursesName})`,
-    hour: moment().format('HH:mm'),
+    name: `Llamada de contacto [${coursesName}]`,
+    hour: moment()
+      .add(2, 'minutes')
+      .format('HH:mm'),
     date: moment(),
     assigned: lead.assessor,
     linked: {
@@ -172,7 +173,6 @@ const addCall = async (lead, courses) => {
   try {
     const call = await callDB.create(dataCall)
     emitCall(call)
-    createTimeline({ lead, type: 'Llamada', subtype: 'Agenda' })
   } catch (error) {
     console.log('error save call', dataCall, error)
   }
@@ -213,15 +213,21 @@ const prepareCourses = (lead, oldCourses, newCourses) => {
     return index === -1
   })
   newCourses.forEach(course => {
-    sendEmailCourse(lead, course)
-    createTimeline({ lead, type: 'Curso', subtype: 'Preguntó', extra: course })
+    setTimeout(() => {
+      createTimeline({
+        linked: lead,
+        type: 'Curso',
+        name: `Preguntó por el curso ${course.name}`,
+        extra: course
+      })
+      sendEmailCourse(lead, course)
+    }, 2000)
   })
   return [...newCourses, ...courses]
 }
 
 const sendSocket = lead => {
   try {
-    console.log('emit socket lead')
     const io = getSocket()
     io.to(lead.assessor.ref).emit('lead', lead)
   } catch (error) {
@@ -231,7 +237,6 @@ const sendSocket = lead => {
 
 const emitCall = call => {
   try {
-    console.log('emit socket lead')
     const io = getSocket()
     io.to(call.assigned.ref).emit('call', call)
   } catch (error) {
@@ -288,6 +293,31 @@ const getSubstitutions = ({ course, linked, assigned }) => {
   }
 
   return substitutions
+}
+
+const saveImage = async (user, file) => {
+  if (file) {
+    const route = await saveFile(file, '/users')
+    user.photo = route
+  }
+  return user
+}
+
+const timelineProgress = (dataUser, lead, assigned) => {
+  if (dataUser.statusProgress && lead.statusProgress) {
+    const oldRef = lead.statusProgress.ref.toString()
+    const oldName = lead.statusProgress.name
+    const newRef = dataUser.statusProgress.ref.toString()
+    const newName = dataUser.statusProgress.name
+    if (oldRef !== newRef) {
+      createTimeline({
+        linked: lead,
+        assigned,
+        type: 'Progreso',
+        name: `${oldName} -> ${newName}`
+      })
+    }
+  }
 }
 
 module.exports = {
