@@ -2,6 +2,8 @@
 
 const { emailDB } = require('../db')
 const { sendEmail } = require('utils/lib/sendgrid')
+const { MEDIA_PATH } = require('utils/files/path')
+const { getSocket } = require('../lib/io')
 
 const listEmails = async params => {
   const emails = await emailDB.list(params)
@@ -9,10 +11,12 @@ const listEmails = async params => {
 }
 
 const createEmail = async (body, loggedUser) => {
-  console.log(body)
   const dataEmail = prepareEmail(body)
   const email = await emailDB.create(dataEmail)
-  sendEmailSengrid(email)
+  emitEmail(email)
+  if (email.template && email.template._id) {
+    sendEmailSengrid(email)
+  }
   return email
 }
 
@@ -36,6 +40,8 @@ const countDocuments = async params => {
   return count
 }
 
+/* functions */
+
 const prepareEmail = ({ linked, assigned, template, from, ...args }) => {
   const { content, preheader } = replacleContent({
     ...args,
@@ -43,14 +49,14 @@ const prepareEmail = ({ linked, assigned, template, from, ...args }) => {
     template,
     assigned
   })
-
+  console.log('template', template)
   const data = {
     content,
     preheader,
     from,
     to: linked.email,
-    sender: template.sender,
-    template: {
+    sender: template ? template.sender : 'cursos@eai.edu.pe',
+    template: template && {
       name: template.name,
       ref: template._id
     },
@@ -76,13 +82,29 @@ const replacleContent = ({
   linked,
   assigned
 }) => {
+  if (!template) {
+    return {
+      content,
+      preheader
+    }
+  }
+
   template.variables.map(variable => {
     const model = variable.field.split('.')[0]
     const nameField = variable.field.split('.')[1]
-    const regex = new RegExp(`{${variable.name}}`, 'gi')
+    const regex = new RegExp(`{{${variable.name}}}`, 'gi')
     if (model === 'course' && course) {
-      content = content.replace(regex, course[nameField])
-      preheader = preheader.replace(regex, course[nameField])
+      if (nameField == 'brochure') {
+        const url = MEDIA_PATH + course[nameField]
+        content = content.replace(
+          regex,
+          `<a href="${url}" target="_blank">${course['name']}</a>`
+        )
+        preheader = preheader.replace(regex, url)
+      } else {
+        content = content.replace(regex, course[nameField])
+        preheader = preheader.replace(regex, course[nameField])
+      }
     }
     if (model === 'linked' && linked) {
       content = content.replace(regex, linked[nameField])
@@ -114,11 +136,53 @@ const sendEmailSengrid = ({ to, from, preheader, content, _id }) => {
   sendEmail(userEmail)
 }
 
+const updateStatusEmail = async ({ emailId, event }) => {
+  console.log({ emailId, event })
+  const email = await emailDB.detail({
+    query: { _id: emailId },
+    select: 'status'
+  })
+  const status = getNewStatus(event)
+  console.log('email', email.status)
+  console.log('status', status)
+  if (email.status !== status) {
+    console.log('change')
+    const updateEmail = await emailDB.update(email._id, { status })
+    emitEmail(updateEmail)
+  }
+}
+
+const getNewStatus = event => {
+  switch (event) {
+    case 'delivered':
+      return 'Entregado'
+    case 'open':
+      return 'Abierto'
+    case 'click':
+      return 'Interacción'
+    case 'spamreport':
+      return 'Spam'
+    case 'bounce':
+      return 'Rechazado'
+    default:
+      return event
+  }
+}
+
+const emitEmail = email => {
+  console.log('emit email')
+  if (email.assigned) {
+    const io = getSocket()
+    io.to(email.assigned.ref).emit('email', email)
+  }
+}
+
 module.exports = {
   countDocuments,
   listEmails,
   createEmail,
   updateEmail,
   detailEmail,
-  deleteEmail
+  deleteEmail,
+  updateStatusEmail
 }

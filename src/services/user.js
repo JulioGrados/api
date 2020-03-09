@@ -9,9 +9,12 @@ const { userDB, progressDB, callDB } = require('../db')
 
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
-const { createFindQuery } = require('utils/functions/user')
-
+const { createFindQuery, payloadToData } = require('utils/functions/user')
+const courseFunc = require('utils/functions/course')
+const { sendMailTemplate } = require('utils/lib/sendgrid')
+const { MEDIA_PATH } = require('utils/files/path')
 const { createTimeline } = require('./timeline')
+const { createEmail } = require('./email')
 
 const listUsers = async params => {
   const users = await userDB.list(params)
@@ -53,7 +56,7 @@ const deleteUser = async (userId, loggedUser) => {
 const createOrUpdateUser = async body => {
   let user
   try {
-    const params = createFindQuery(body)
+    const params = createFindQuery(body, '', { path: 'assessor.ref' })
     const lead = await userDB.detail(params)
     user = await editLead(lead.toJSON(), body)
   } catch (error) {
@@ -63,7 +66,6 @@ const createOrUpdateUser = async body => {
       throw error
     }
   }
-
   return user
 }
 
@@ -78,10 +80,10 @@ const createLead = async body => {
   dataLead.assessor = await assignedAssessor(dataLead)
   const lead = await userDB.create(dataLead)
   addCall(lead, body.courses)
-  prepareCourses(lead, [], body.courses)
+  prepareCourses(lead.toJSON(), [], body.courses)
   incProspects(lead)
   createTimeline({ lead, type: 'Cuenta', subtype: 'Creación' })
-  sendSocket('lead', lead)
+  sendSocket(lead)
   return lead
 }
 
@@ -96,9 +98,10 @@ const editLead = async (lead, body) => {
   } else if (lead.type === 'User') {
     incProspects(lead)
   }
-  dataLead.courses = prepareCourses(lead, lead.courses, body.courses)
+  dataLead.courses = prepareCourses(dataLead, lead.courses, body.courses)
   const updateLead = await userDB.update(lead._id, dataLead)
   addCall(updateLead, body.courses)
+  sendSocket(updateLead)
   return updateLead
 }
 
@@ -112,8 +115,7 @@ const assignedAssessor = async lead => {
           ref: { $in: coursesId }
         }
       }
-    },
-    select: { username: 1, prospects: 1 }
+    }
   })
 
   const assessorCourse = getMinAssessor(assessors)
@@ -146,7 +148,7 @@ const getMinAssessor = assessors => {
   if (min) {
     const assessor = {
       username: min.username,
-      ref: min._id
+      ref: min
     }
 
     return assessor
@@ -168,7 +170,8 @@ const addCall = async (lead, courses) => {
     }
   }
   try {
-    await callDB.create(dataCall)
+    const call = await callDB.create(dataCall)
+    emitCall(call)
     createTimeline({ lead, type: 'Llamada', subtype: 'Agenda' })
   } catch (error) {
     console.log('error save call', dataCall, error)
@@ -210,18 +213,81 @@ const prepareCourses = (lead, oldCourses, newCourses) => {
     return index === -1
   })
   newCourses.forEach(course => {
+    sendEmailCourse(lead, course)
     createTimeline({ lead, type: 'Curso', subtype: 'Preguntó', extra: course })
   })
   return [...newCourses, ...courses]
 }
 
-const sendSocket = (type, lead) => {
+const sendSocket = lead => {
   try {
+    console.log('emit socket lead')
     const io = getSocket()
-    io.to(lead.assessor.ref).emit(type, lead)
+    io.to(lead.assessor.ref).emit('lead', lead)
   } catch (error) {
-    console.log('error sockets', type, error)
+    console.log('error sockets', lead, error)
   }
+}
+
+const emitCall = call => {
+  try {
+    console.log('emit socket lead')
+    const io = getSocket()
+    io.to(call.assigned.ref).emit('call', call)
+  } catch (error) {
+    console.log('error sockets', call, error)
+  }
+}
+
+const sendEmailCourse = async (lead, dataCourse) => {
+  const linked = payloadToData(lead)
+  const assigned = payloadToData(lead.assessor.ref)
+  const course = courseFunc.payloadToData(dataCourse)
+  const to = linked.email
+  const from = 'cursos@eai.edu.pe'
+  const template_id = 'd-fe5148580749466aa59f69e5eab99c9a'
+  const preheader = `Información del curso ${course.name}`
+  const content = `Se envio informacion del curso de la plantilla pre definida en sengrid.`
+  const substitutions = getSubstitutions({
+    course,
+    linked,
+    assigned
+  })
+  try {
+    const email = await createEmail({
+      linked,
+      assigned,
+      from,
+      preheader,
+      content
+    })
+    sendMailTemplate({
+      to,
+      from,
+      substitutions,
+      template_id,
+      args: {
+        emailId: email._id
+      }
+    })
+  } catch (error) {
+    console.log('error create email', error)
+  }
+}
+
+const getSubstitutions = ({ course, linked, assigned }) => {
+  const substitutions = {
+    nombre: linked.shortName,
+    curso: course.name,
+    inicio: course.startCourse,
+    precio: course.price,
+    precio_oferta: course.priceOffert,
+    horas: course.academicHours,
+    brochure: MEDIA_PATH + course.brochure,
+    celular: assigned.mobile
+  }
+
+  return substitutions
 }
 
 module.exports = {

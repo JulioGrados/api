@@ -1,16 +1,24 @@
 'use strict'
 
-//const service = require('../services/course')
+const { updateStatusEmail } = require('../services/email')
 
 const eventWebhook = async (req, res) => {
   //
   const events = req.body
-  events.forEach(function (event) {
-    // Here, you now have each event and can process them how you like
-    console.log(event)
-  })
-  console.log('resived')
-  return res.status(200)
+  console.log('****************************************')
+  Promise.all(
+    events.map(async event => {
+      if (event.emailId) {
+        try {
+          await updateStatusEmail(event)
+        } catch (error) {
+          console.log('error al actualizar el stado email', event, error)
+        }
+      }
+      console.log(event)
+    })
+  )
+  return res.status(200).json({ success: true })
 }
 
 module.exports = {
