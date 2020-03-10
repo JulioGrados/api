@@ -5,7 +5,6 @@ const { updateStatusEmail } = require('../services/email')
 const eventWebhook = async (req, res) => {
   //
   const events = req.body
-  console.log('****************************************')
   Promise.all(
     events.map(async event => {
       if (event.emailId) {
@@ -15,7 +14,6 @@ const eventWebhook = async (req, res) => {
           console.log('error al actualizar el stado email', event, error)
         }
       }
-      console.log(event)
     })
   )
   return res.status(200).json({ success: true })

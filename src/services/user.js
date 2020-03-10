@@ -27,6 +27,10 @@ const createUser = async (body, file, loggedUser) => {
     body.photo = route
   }
   body.password = body.password ? generateHash(body.password) : undefined
+  if (body.assessor) {
+    const user = await createLead(body)
+    return user
+  }
   const user = await userDB.create(body)
   return user
 }
@@ -37,8 +41,9 @@ const updateUser = async (userId, body, file, loggedUser) => {
   if (dataUser.password) {
     dataUser.password = generateHash(dataUser.password)
   }
+  dataUser = await changeStatusUser(dataUser, user)
   const updateUser = await userDB.update(userId, dataUser, false)
-  timelineProgress(updateUser, user, loggedUser)
+  timelineProgress(updateUser, user, loggedUser, body)
   return updateUser
 }
 
@@ -76,9 +81,11 @@ const countDocuments = async params => {
 /* functions */
 const createLead = async body => {
   const dataLead = await addInitialStatus(body)
-  dataLead.assessor = await assignedAssessor(dataLead)
+  if (!body.assessor) {
+    dataLead.assessor = await assignedAssessor(dataLead)
+  }
   const lead = await userDB.create(dataLead)
-  sendSocket(lead)
+  emitLead(lead)
   createTimeline({ linked: lead, type: 'Cuenta', name: 'Persona creada' })
   addCall(lead, body.courses)
   prepareCourses(lead.toJSON(), [], body.courses)
@@ -99,7 +106,7 @@ const editLead = async (lead, body) => {
   }
   dataLead.courses = prepareCourses(dataLead, lead.courses, body.courses)
   const updateLead = await userDB.update(lead._id, dataLead)
-  sendSocket(updateLead)
+  emitLead(updateLead)
   addCall(updateLead, body.courses)
   return updateLead
 }
@@ -179,18 +186,8 @@ const addCall = async (lead, courses) => {
 }
 
 const addInitialStatus = async user => {
-  try {
-    const progress = await progressDB.detail({ query: { order: 1 } })
-    user.statusProgress = {
-      name: progress.name,
-      ref: progress._id
-    }
-  } catch (error) {
-    if (error.status !== 404) {
-      throw error
-    }
-  }
-  user.type = 'Lead'
+  user.statusProgress = await changeStatusProgress('initial', user)
+  user.isComplete = false
   user.statusActivity = 'todo'
   user.status = 'Interesado'
 
@@ -202,6 +199,14 @@ const incProspects = async lead => {
     await userDB.update(lead.assessor.ref, { $inc: { prospects: 1 } })
   } catch (error) {
     console.log('error inc prospects', lead.assessor, error)
+  }
+}
+
+const decProspects = async lead => {
+  try {
+    await userDB.update(lead.assessor.ref, { $inc: { prospects: -1 } })
+  } catch (error) {
+    console.log('error dec prospects', lead.assessor, error)
   }
 }
 
@@ -226,7 +231,7 @@ const prepareCourses = (lead, oldCourses, newCourses) => {
   return [...newCourses, ...courses]
 }
 
-const sendSocket = lead => {
+const emitLead = lead => {
   try {
     const io = getSocket()
     io.to(lead.assessor.ref).emit('lead', lead)
@@ -303,20 +308,70 @@ const saveImage = async (user, file) => {
   return user
 }
 
-const timelineProgress = (dataUser, lead, assigned) => {
-  if (dataUser.statusProgress && lead.statusProgress) {
-    const oldRef = lead.statusProgress.ref.toString()
-    const oldName = lead.statusProgress.name
-    const newRef = dataUser.statusProgress.ref.toString()
-    const newName = dataUser.statusProgress.name
+const timelineProgress = (updateUser, user, assigned, body) => {
+  if (updateUser.statusProgress && user.statusProgress) {
+    const oldRef = user.statusProgress.ref.toString()
+    const oldName = user.statusProgress.name
+    const newRef = updateUser.statusProgress.ref.toString()
+    const newName = updateUser.statusProgress.name
     if (oldRef !== newRef) {
-      createTimeline({
-        linked: lead,
-        assigned,
-        type: 'Progreso',
-        name: `${oldName} -> ${newName}`
-      })
+      if (updateUser.status === 'Perdido') {
+        createTimeline({
+          linked: updateUser,
+          assigned,
+          type: 'Cuenta',
+          name: `[Perdido] ${body.lostReason}`,
+          note: body.lostNote
+        })
+      } else {
+        createTimeline({
+          linked: updateUser,
+          assigned,
+          type: 'Progreso',
+          name: `${oldName} -> ${newName}`
+        })
+      }
     }
+  }
+}
+
+const changeStatusUser = async (dataUser, user) => {
+  if (dataUser.status === 'Perdido') {
+    dataUser.statusProgress = await changeStatusProgress('lost', dataUser)
+    dataUser.isComplete = true
+    dataUser.statusActivity = 'done'
+    dataUser.status = 'Perdido'
+    dataUser.courses = user.courses.map(course => {
+      if (course.status === 'Interesado') {
+        course.status = 'Perdido'
+      }
+      return course
+    })
+    decProspects(user)
+  }
+  if (user.status !== 'Interesado' && dataUser.status === 'Interesado') {
+    dataUser.statusProgress = await changeStatusProgress('initial', dataUser)
+    dataUser.isComplete = false
+    dataUser.statusActivity = 'todo'
+    dataUser.status = 'Interesado'
+    incProspects(user)
+  }
+  return dataUser
+}
+
+const changeStatusProgress = async (key, dataUser) => {
+  try {
+    const progress = await progressDB.detail({ query: { key } })
+    const statusProgress = {
+      name: progress.name,
+      ref: progress._id
+    }
+    return statusProgress
+  } catch (error) {
+    if (error.status !== 404) {
+      throw error
+    }
+    return dataUser.statusProgress
   }
 }
 
@@ -327,5 +382,6 @@ module.exports = {
   updateUser,
   detailUser,
   deleteUser,
-  createOrUpdateUser
+  createOrUpdateUser,
+  emitLead
 }
