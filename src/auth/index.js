@@ -27,7 +27,7 @@ const authHandler = (req, res, next) => {
 }
 
 const socketHandler = (socket, next) => {
-  let token = socket.handshake.query.token
+  const token = socket.handshake.query.token
   if (token) {
     jwt.verify(token, config.auth.secret, (err, decoded) => {
       if (err) {

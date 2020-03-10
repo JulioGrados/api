@@ -94,11 +94,11 @@ const replacleContent = ({
     const nameField = variable.field.split('.')[1]
     const regex = new RegExp(`{{${variable.name}}}`, 'gi')
     if (model === 'course' && course) {
-      if (nameField == 'brochure') {
+      if (nameField === 'brochure') {
         const url = MEDIA_PATH + course[nameField]
         content = content.replace(
           regex,
-          `<a href="${url}" target="_blank">${course['name']}</a>`
+          `<a href="${url}" target="_blank">${course.name}</a>`
         )
         preheader = preheader.replace(regex, url)
       } else {

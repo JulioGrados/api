@@ -86,12 +86,20 @@ const editVoucher = async (orders, dataOrders) => {
     )
     return newOrders
   } catch (error) {
-    throw error
+    if (error.status && error.message) {
+      throw error
+    } else {
+      const errorMsg = {
+        status: 500,
+        message: 'error al gurdar las ordenes'
+      }
+      throw errorMsg
+    }
   }
 }
 
 const prepareOrders = async ({ orders, amount, user }, files) => {
-  let sum = sumAmountOrders(orders)
+  const sum = sumAmountOrders(orders)
 
   if (sum !== amount) {
     const error = {
@@ -105,7 +113,10 @@ const prepareOrders = async ({ orders, amount, user }, files) => {
   let results
   try {
     results = await Promise.all(
-      orders.map(async order => await changeOrder(order, user, files))
+      orders.map(async order => {
+        const orderRes = await changeOrder(order, user, files)
+        return orderRes
+      })
     )
   } catch (error) {
     const errorMessage = {
@@ -155,7 +166,15 @@ const changeOrder = async (order, linked, files) => {
     }
     return order
   } catch (error) {
-    throw error
+    if (error.status && error.message) {
+      throw error
+    } else {
+      const errorMsg = {
+        status: 500,
+        message: 'error al guardar la orden'
+      }
+      throw errorMsg
+    }
   }
 }
 
@@ -174,29 +193,25 @@ const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
     return dbVoucher
   } catch (error) {
     if (error.status && error.status === 404) {
-      try {
-        getResidueVoucher(voucher.amount, orderAmount)
-        if (files) {
-          const file = files[voucher.code]
-          if (file) {
-            const route = await saveFile(file, '/vouchers')
-            voucher.image = route
-          }
+      getResidueVoucher(voucher.amount, orderAmount)
+      if (files) {
+        const file = files[voucher.code]
+        if (file) {
+          const route = await saveFile(file, '/vouchers')
+          voucher.image = route
         }
-        const newVoucher = await voucherDB.create({
-          ...voucher,
-          bank: voucher.bank && {
-            ...voucher.bank,
-            name: voucher.bank.label
-          },
-          assigned,
-          residue: voucher.amount,
-          isUsed: false
-        })
-        return newVoucher
-      } catch (error) {
-        throw error
       }
+      const newVoucher = await voucherDB.create({
+        ...voucher,
+        bank: voucher.bank && {
+          ...voucher.bank,
+          name: voucher.bank.label
+        },
+        assigned,
+        residue: voucher.amount,
+        isUsed: false
+      })
+      return newVoucher
     } else {
       throw error
     }
@@ -227,16 +242,12 @@ const findOrAddReceipt = async (receipt, assigned, linked) => {
     return dbReceipt
   } catch (error) {
     if (error.status && error.status === 404) {
-      try {
-        const newReceipt = await receiptDB.create({
-          ...receipt,
-          assigned,
-          linked
-        })
-        return newReceipt
-      } catch (error) {
-        throw error
-      }
+      const newReceipt = await receiptDB.create({
+        ...receipt,
+        assigned,
+        linked
+      })
+      return newReceipt
     } else {
       throw error
     }
@@ -244,7 +255,7 @@ const findOrAddReceipt = async (receipt, assigned, linked) => {
 }
 
 const getStatusSale = ({ orders, amount }) => {
-  let sum = sumAmountOrders(orders, 'Pagada')
+  const sum = sumAmountOrders(orders, 'Pagada')
 
   if (sum === amount) {
     return 'Finalizada'

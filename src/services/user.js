@@ -255,9 +255,10 @@ const sendEmailCourse = async (lead, dataCourse) => {
   const course = courseFunc.payloadToData(dataCourse)
   const to = linked.email
   const from = 'cursos@eai.edu.pe'
-  const template_id = 'd-fe5148580749466aa59f69e5eab99c9a'
+  const templateId = 'd-fe5148580749466aa59f69e5eab99c9a'
   const preheader = `Información del curso ${course.name}`
-  const content = `Se envio informacion del curso de la plantilla pre definida en sengrid.`
+  const content =
+    'Se envio informacion del curso de la plantilla pre definida en sengrid.'
   const substitutions = getSubstitutions({
     course,
     linked,
@@ -275,7 +276,7 @@ const sendEmailCourse = async (lead, dataCourse) => {
       to,
       from,
       substitutions,
-      template_id,
+      template_id: templateId,
       args: {
         emailId: email._id
       }

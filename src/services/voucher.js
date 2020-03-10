@@ -1,6 +1,7 @@
 'use strict'
 
 const { voucherDB } = require('../db')
+const { saveFile } = require('utils/files/save')
 
 const listVouchers = async params => {
   const vouchers = await voucherDB.list(params)
@@ -10,7 +11,7 @@ const listVouchers = async params => {
 const createVoucher = async (body, files, loggedUser) => {
   if (files) {
     for (const label in files) {
-      const route = await saveFile(files[label], '/courses')
+      const route = await saveFile(files[label], '/vouchers')
       body[label] = route
     }
   }
@@ -22,7 +23,7 @@ const createVoucher = async (body, files, loggedUser) => {
 const updateVoucher = async (voucherId, body, files, loggedUser) => {
   if (files) {
     for (const label in files) {
-      const route = await saveFile(files[label], '/courses')
+      const route = await saveFile(files[label], '/vouchers')
       body[label] = route
     }
   }
