@@ -33,9 +33,9 @@ const updateCourse = async (req, res) => {
 const detailCourse = async (req, res) => {
   const courseId = req.params.id
   const params = req.query
-  if (params.query) {
+  if (params.query && courseId) {
     params.query._id = courseId
-  } else {
+  } else if (courseId) {
     params.query = {
       _id: courseId
     }
