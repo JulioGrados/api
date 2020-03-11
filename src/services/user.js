@@ -329,7 +329,7 @@ const timelineProgress = (updateUser, user, assigned, body) => {
           linked: updateUser,
           assigned,
           type: 'Progreso',
-          name: `${oldName} -> ${newName}`
+          name: `${oldName} → ${newName}`
         })
       }
     }
