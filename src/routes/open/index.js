@@ -7,6 +7,7 @@ const routesContact = require('./contact')
 const routesSendgrid = require('./sendgrid')
 const routesCategory = require('./category')
 const routesAgrement = require('./agreement')
+const routesPayment = require('./payment')
 
 module.exports = server => {
   server.use('/api/open', routesAuth)
@@ -16,4 +17,5 @@ module.exports = server => {
   server.use('/api/open', routesSendgrid)
   server.use('/api/open', routesCategory)
   server.use('/api/open', routesAgrement)
+  server.use('/api/open', routesPayment)
 }
