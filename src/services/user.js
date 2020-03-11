@@ -276,7 +276,7 @@ const sendEmailCourse = async (lead, dataCourse) => {
       to,
       from,
       substitutions,
-      template_id: templateId,
+      templateId: templateId,
       args: {
         emailId: email._id
       }
