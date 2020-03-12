@@ -1,6 +1,7 @@
 'use strict'
 
 const toSlug = require('slug')
+const cheerio = require('cheerio')
 const moment = require('moment-timezone')
 const { downloadFile } = require('utils/files/save')
 const { userDB, categoryDB, courseDB } = require('../db')
@@ -70,7 +71,7 @@ const migrateCourses = async data => {
       }
       const published = moment(item.published, 'YYYY-MM-DD')
       const categoryItem = categories.find(
-        cate => toSlug(cate.name) === toSlug(item.category)
+        cate => toSlug(cate.name || '') === toSlug(item.category)
       )
       if (!categoryItem) {
         const error = {
@@ -106,6 +107,9 @@ const migrateCourses = async data => {
         ref: authorItem._id
       }
 
+      const descriptionGeneral = getDescriptionGeneral(item.content)
+      const lessons = getModules(item.content)
+
       const courseData = {
         ...item,
         image,
@@ -113,6 +117,8 @@ const migrateCourses = async data => {
         category,
         author,
         published,
+        descriptionGeneral,
+        lessons,
         teachers: [author]
       }
       try {
@@ -127,6 +133,62 @@ const migrateCourses = async data => {
   )
 
   return { categories, courses }
+}
+
+const getDescriptionGeneral = content => {
+  const $ = cheerio.load(content)
+  let description = ''
+  $('.course-body-about')
+    .first()
+    .children()
+    .filter('p')
+    .each((i, element) => {
+      const text = $(element).text()
+      description += (description && '\n') + text
+    })
+
+  return description
+}
+
+const getModules = content => {
+  const lessons = []
+  const $ = cheerio.load(content)
+  const about = $('.course-body-about')
+  const temary = about['3']
+  const resume = $(temary)
+    .children()
+    .filter('div')
+
+  $(resume['0'])
+    .children()
+    .each((i, e1) => {
+      const eTitle = $(e1).children()['0']
+      const title = $(eTitle).text()
+      const lesson = {
+        name: title,
+        slug: toSlug(title, { lower: true }),
+        chapters: []
+      }
+      $(e1)
+        .children()
+        .each((i2, e2) => {
+          if (i2 > 0) {
+            const chap = $(e2)
+              .children()
+              .first()
+              .text()
+            const chapter = {
+              name: chap,
+              slug: toSlug(chap, { lower: true })
+            }
+            lesson.chapters.push(chapter)
+          }
+        })
+
+      lessons.push(lesson)
+    })
+
+  return lessons
 }
 
 module.exports = {

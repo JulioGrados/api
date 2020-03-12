@@ -1,7 +1,7 @@
 const service = require('../services/migration')
 
 const migrateTeachers = async (req, res) => {
-  const data = JSON.parse(req.body.data)
+  const data = JSON.parse(req.files.data.data.toString())
   try {
     const teachers = await service.migrateTeachers(data)
     return res.status(200).json(teachers)
@@ -12,7 +12,7 @@ const migrateTeachers = async (req, res) => {
 }
 
 const migrateCourses = async (req, res) => {
-  const data = JSON.parse(req.body.data)
+  const data = JSON.parse(req.files.data.data.toString())
   try {
     const response = await service.migrateCourses(data)
     return res.status(200).json(response)

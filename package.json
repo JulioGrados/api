@@ -24,6 +24,7 @@
   "dependencies": {
     "@sentry/node": "^5.13.2",
     "body-parser": "^1.19.0",
+    "cheerio": "^1.0.0-rc.3",
     "config": "file:../config",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
