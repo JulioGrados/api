@@ -43,7 +43,7 @@ const updateUser = async (userId, body, file, loggedUser) => {
   }
   dataUser = await changeStatusUser(dataUser, user)
   const updateUser = await userDB.update(userId, dataUser, false)
-  timelineProgress(updateUser, user, loggedUser, body)
+  timelineProgress(updateUser.toJSON(), user.toJSON(), loggedUser, body)
   return updateUser
 }
 
