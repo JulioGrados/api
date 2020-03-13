@@ -8,6 +8,7 @@ const routesSendgrid = require('./sendgrid')
 const routesCategory = require('./category')
 const routesAgrement = require('./agreement')
 const routesPayment = require('./payment')
+const routesMoodle = require('./moodle')
 
 module.exports = server => {
   server.use('/api/open', routesAuth)
@@ -18,4 +19,5 @@ module.exports = server => {
   server.use('/api/open', routesCategory)
   server.use('/api/open', routesAgrement)
   server.use('/api/open', routesPayment)
+  server.use('/api/open', routesMoodle)
 }
