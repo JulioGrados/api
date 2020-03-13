@@ -4,7 +4,7 @@ const toSlug = require('slug')
 const cheerio = require('cheerio')
 const moment = require('moment-timezone')
 const { downloadFile } = require('utils/files/save')
-const { userDB, categoryDB, courseDB } = require('../db')
+const { userDB, categoryDB, courseDB, agreementDB } = require('../db')
 
 const migrateTeachers = async data => {
   const promises = data.map(async item => {
@@ -29,17 +29,20 @@ const migrateTeachers = async data => {
 const migrateCategories = async data => {
   const categories = await Promise.all(
     data.map(async item => {
-      const image = await downloadFile(item.image, '/categories')
+      const slug = toSlug(item.name || '', { lower: true })
       try {
-        const category = await categoryDB.create({
-          ...item,
-          image,
-          slug: toSlug(item.name || '', { lower: true })
-        })
+        const category = await categoryDB.detail({ query: { slug } })
         return category
       } catch (error) {
-        error.category = item.name
-        return error
+        if (error.status === 404) {
+          const category = await categoryDB.create({
+            ...item,
+            slug
+          })
+          return category
+        } else {
+          throw error
+        }
       }
     })
   )
@@ -47,23 +50,82 @@ const migrateCategories = async data => {
   return categories
 }
 
-const migrateCourses = async data => {
+const migrateAgrements = async data => {
+  const agreements = await Promise.all(
+    data.map(async item => {
+      const slug = toSlug(item.name || '', { lower: true })
+      try {
+        const agreement = await agreementDB.detail({ query: { slug } })
+        return agreement
+      } catch (error) {
+        if (error.status === 404) {
+          const agreement = await agreementDB.create({
+            institution: item.name,
+            slug
+          })
+          return agreement
+        } else {
+          throw error
+        }
+      }
+    })
+  )
+
+  return agreements
+}
+
+const migrateCourses = async (dataCourse, dataExtra) => {
   const categoriesName = []
-  data.forEach(element => {
-    if (!categoriesName.find(item => item.name === element.category)) {
-      categoriesName.push({ name: element.category })
+  const agreementName = []
+  const data = dataCourse.map(element => {
+    const extra = dataExtra.find(item => {
+      return (
+        item.slug === element.slug || item.name.trim() === element.name.trim()
+      )
+    })
+    element = {
+      ...element,
+      ...extra
     }
+    if (!extra) {
+      console.log('no extra', element.name)
+    }
+    if (!categoriesName.find(item => item.name === element.category)) {
+      if (element.category) {
+        categoriesName.push({ name: element.category })
+      }
+    }
+    if (!agreementName.find(item => item.name === element.agreement)) {
+      if (element.agreement) {
+        agreementName.push({ name: element.agreement })
+      }
+    }
+    return element
   })
 
+  const agreements = await migrateAgrements(agreementName)
   const categories = await migrateCategories(categoriesName)
   const teachers = await userDB.list({ query: { role: 'teacher' } })
 
   const courses = await Promise.all(
     data.map(async item => {
-      let image, shortimage
+      let image, shortimage, brochure
       try {
-        image = await downloadFile(item.image, '/courses')
-        shortimage = await downloadFile(item.shortImage, '/courses')
+        image = await downloadFile(
+          item.image,
+          '/courses',
+          'image-' + item.slug + '.png'
+        )
+        shortimage = await downloadFile(
+          item.shortImage,
+          '/courses',
+          'shortimage-' + item.slug + '.png'
+        )
+        brochure = await downloadFile(
+          item.brochureDrive,
+          '/brochure',
+          'brochure-' + item.slug + '.pdf'
+        )
       } catch (error) {
         error.course = item.name
         error.slug = item.slug
@@ -85,6 +147,19 @@ const migrateCourses = async data => {
       const category = {
         ...categoryItem.toJSON(),
         ref: categoryItem._id
+      }
+      const agreementItem = agreements.find(agree => {
+        return (
+          agree.institution &&
+          toSlug(agree.institution || '') === toSlug(item.agreement || '')
+        )
+      })
+      let agreement
+      if (agreementItem) {
+        agreement = {
+          ...agreementItem.toJSON(),
+          ref: agreementItem._id
+        }
       }
       const authorItem = teachers.find(
         teacher => teacher.username === item.author
@@ -115,10 +190,12 @@ const migrateCourses = async data => {
         image,
         shortimage,
         category,
+        agreement,
         author,
         published,
         descriptionGeneral,
         lessons,
+        brochure,
         teachers: [author]
       }
       try {
@@ -178,7 +255,7 @@ const getModules = content => {
               .first()
               .text()
             const chapter = {
-              name: chap,
+              name: chap.trim(),
               slug: toSlug(chap, { lower: true })
             }
             lesson.chapters.push(chapter)
