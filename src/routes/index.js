@@ -18,6 +18,7 @@ const routesContact = require('./contact')
 const routesNotification = require('./notifications')
 const routesTimeline = require('./timeline')
 const routesPayment = require('./payment')
+const routesMeta = require('./meta')
 
 module.exports = server => {
   server.use('/api', routesLog)
@@ -38,4 +39,5 @@ module.exports = server => {
   server.use('/api', routesNotification)
   server.use('/api', routesTimeline)
   server.use('/api', routesPayment)
+  server.use('/api', routesMeta)
 }
