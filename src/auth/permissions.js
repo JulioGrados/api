@@ -6,12 +6,10 @@ const isAdmin = (req, res, next) => {
       return next()
     }
   }
-  res
-    .status(401)
-    .json({
-      success: false,
-      message: 'No tienes autorización de admin.'
-    })
+  return res.status(401).json({
+    success: false,
+    message: 'No tienes autorización de admin.'
+  })
 }
 
 const isTeacher = (req, res, next) => {
@@ -20,12 +18,10 @@ const isTeacher = (req, res, next) => {
       return next()
     }
   }
-  res
-    .status(401)
-    .json({
-      success: false,
-      message: 'No tienes autorización de profesor.'
-    })
+  return res.status(401).json({
+    success: false,
+    message: 'No tienes autorización de profesor.'
+  })
 }
 
 const isCompany = (req, res, next) => {
@@ -34,12 +30,10 @@ const isCompany = (req, res, next) => {
       return next()
     }
   }
-  res
-    .status(401)
-    .json({
-      success: false,
-      message: 'No tienes autorización de empresa.'
-    })
+  return res.status(401).json({
+    success: false,
+    message: 'No tienes autorización de empresa.'
+  })
 }
 
 const isClient = (req, res, next) => {
@@ -48,12 +42,10 @@ const isClient = (req, res, next) => {
       return next()
     }
   }
-  res
-    .status(401)
-    .json({
-      success: false,
-      message: 'No tienes autorización de cliente.'
-    })
+  return res.status(401).json({
+    success: false,
+    message: 'No tienes autorización de cliente.'
+  })
 }
 
 const isAssessor = (req, res, next) => {
@@ -62,12 +54,10 @@ const isAssessor = (req, res, next) => {
       return next()
     }
   }
-  res
-    .status(401)
-    .json({
-      success: false,
-      message: 'No tienes autorización de Asesor.'
-    })
+  return res.status(401).json({
+    success: false,
+    message: 'No tienes autorización de Asesor.'
+  })
 }
 
 const isColaborator = (req, res, next) => {
@@ -76,12 +66,10 @@ const isColaborator = (req, res, next) => {
       return next()
     }
   }
-  res
-    .status(401)
-    .json({
-      success: false,
-      message: 'No tienes autorización de Colaborador.'
-    })
+  return res.status(401).json({
+    success: false,
+    message: 'No tienes autorización de Colaborador.'
+  })
 }
 
 module.exports = {

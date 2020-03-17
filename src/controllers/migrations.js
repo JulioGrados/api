@@ -1,4 +1,5 @@
 const service = require('../services/migration')
+const csv = require('@fast-csv/parse')
 
 const migrateTeachers = async (req, res) => {
   const data = JSON.parse(req.files.data.data.toString())
@@ -12,15 +13,35 @@ const migrateTeachers = async (req, res) => {
 }
 
 const migrateCourses = async (req, res) => {
-  const data = JSON.parse(req.files.data.data.toString())
+  const dataCourses = JSON.parse(req.files.json.data.toString())
+  const dataBrochure = await csv2json(req.files.csv.data)
+  //console.log('brochure', dataBrochure)
   try {
-    const response = await service.migrateCourses(data)
+    const response = await service.migrateCourses(dataCourses, dataBrochure)
     return res.status(200).json(response)
   } catch (error) {
     console.log('error', error)
     return res.status(error.status || 500).json(error)
   }
 }
+
+const csv2json = async buffer =>
+  new Promise(resolve => {
+    console.log(buffer)
+    const results = []
+
+    csv
+      .parseString(buffer, { headers: true })
+      .on('data', data => {
+        results.push(data)
+      })
+      .on('end', () => {
+        return resolve(results)
+      })
+      .on('error', error => {
+        console.log('error', error)
+      })
+  })
 
 module.exports = {
   migrateTeachers,
