@@ -1,62 +1,91 @@
 'use strict'
+const wwwroot = require('config').moodle.wwwroot
+const tokenMoodle = require('config').moodle.token
+const service = require('config').moodle.service
+
+const getCourses = require('config').moodle.functions.getCourses
+const enrolCourse = require('config').moodle.functions.enrolCourse
+const createUser = require('config').moodle.functions.createUser
+
 const moodle_client = require('moodle-client')
 
-const { connectionMoodle } = require('utils/lib/moodle')
-//core_user_create_users
-//SELECT * FROM mdl_course where fullname = course.name
-// const userMoodle = {
-//   username: 'abc1',
-//   password: '123',
-//   firstname: 'abc',
-//   lastname: 'abc',
-//   email: 'abc1@gmail.com',
-//   idnumber: '4928'
-// }
+const urlMigo = require('config').migo.url
+const tokenMigo = require('config').migo.token
+const axios = require('axios')
 
-// const enroll = {
-//   roleid: '5',
-//   userid: '4927',
-//   courseid: '3'
-// }
-// const init = moodle_client.init({
-//   wwwroot: 'https://cursos.eai.edu.pe',
-//   token: 'ca27f68d60ff203731882a141e2da38b',
-//   service: 'from_wordpress'
-// })
+const init = moodle_client.init({
+  wwwroot: wwwroot,
+  token: tokenMoodle,
+  service: service
+})
 
-// init.then(function (client) {
-//   return client
-//     .call({
-//       wsfunction: 'enrol_manual_enrol_users',
-//       method: 'POST',
-//       args: {
-//         enrolments: [enroll]
-//       }
-//     })
-//     .then(function (info) {
-//       console.log(info)
-//       return
-//     })
-//     .catch(function (err) {
-//       console.log(err)
-//     })
-// })
-const createUser = async (req, res) => {
-  try {
-    const pool = await connectionMoodle()
-    console.log('pool', pool)
-    let result1 = await pool
-      .request()
-      .input('input_parameter', sql.Int, value)
-      .query('select * from mdl_course')
+const actionMoodle = (method, wsfunction, args = {}) => {
+  return init.then(function (client) {
+    return client
+      .call({
+        wsfunction: wsfunction,
+        method: method,
+        args: {
+          args
+        }
+      })
+      .then(function (info) {
+        // console.log(info)
+        return info
+      })
+      .catch(function (err) {
+        // console.log(err)
+        return err
+      })
+  })
+}
 
-    console.dir(result1)
-  } catch (err) {
-    console.log(err)
+const getNamesUser = dni => {
+  axios
+    .post(urlMigo, {
+      token: tokenMigo,
+      dni: dni
+    })
+    .then(function (response) {
+      console.log(response.data)
+      console.log(response.data.dni)
+      console.log(response.data.nombre)
+    })
+    .catch(function (error) {
+      console.log(error.response.status)
+    })
+}
+
+const createEnrolUser = async (req, res) => {
+  const courses = await actionMoodle('GET', getCourses)
+  const courseEnrolName = 'Curso de Ecología y Medio Ambiente'
+  const courseEnrol = courses.filter(
+    course => course.fullname === courseEnrolName
+  )
+
+  const userMoodle = {
+    username: 'abc1',
+    password: '123',
+    firstname: 'abc',
+    lastname: 'abc',
+    email: 'abc1@gmail.com'
   }
-  res.send('hola')
+
+  const createUserMoodle = await actionMoodle('POST', createUser, {
+    users: [userMoodle]
+  })
+
+  const enroll = {
+    roleid: '5',
+    userid: createUserMoodle.id,
+    courseid: courseEnrol.id
+  }
+
+  const enrolUserCourse = await actionMoodle('POST', enrolCourse, {
+    enrolments: [enroll]
+  })
 }
 
 module.exports = {
-  createUser
+  createEnrolUser
 }
