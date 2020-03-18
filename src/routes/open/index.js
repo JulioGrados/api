@@ -9,6 +9,7 @@ const routesCategory = require('./category')
 const routesAgrement = require('./agreement')
 const routesPayment = require('./payment')
 const routesMeta = require('./meta')
+const routesLabel = require('./labels')
 
 module.exports = server => {
   server.use('/api/open', routesAuth)
@@ -20,4 +21,5 @@ module.exports = server => {
   server.use('/api/open', routesAgrement)
   server.use('/api/open', routesPayment)
   server.use('/api/open', routesMeta)
+  server.use('/api/open', routesLabel)
 }
