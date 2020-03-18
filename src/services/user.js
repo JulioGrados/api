@@ -16,6 +16,8 @@ const courseFunc = require('utils/functions/course')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
 const { MEDIA_PATH } = require('utils/files/path')
 
+const { createNewUser, createEnrolUser } = require('./moodle')
+
 const listUsers = async params => {
   const users = await userDB.list(params)
   return users
@@ -40,6 +42,9 @@ const updateUser = async (userId, body, file, loggedUser) => {
   let dataUser = await saveImage(body, file)
   if (dataUser.password) {
     dataUser.password = generateHash(dataUser.password)
+  }
+  if (dataUser.addMoodle) {
+    dataUser.courses = await addCoursesMoodle(dataUser)
   }
   dataUser = await changeStatusUser(dataUser, user)
   const updateUser = await userDB.update(userId, dataUser, false)
@@ -374,6 +379,29 @@ const changeStatusProgress = async (key, dataUser) => {
     }
     return dataUser.statusProgress
   }
+}
+
+const addCoursesMoodle = async user => {
+  console.log('entroooooooooooooooooo')
+  if (!user.moodleId) {
+    const moodleUser = await createNewUser(user)
+    user.moodleId = moodleUser.id
+  }
+  console.log(user.courses)
+  const courses = await Promise.all(
+    user.courses.map(async course => {
+      if (course.status === 'Enroll') {
+        console.log('entro curso')
+        const enroll = await createEnrolUser({ course, user })
+        console.log('enroll', enroll)
+        course.enroll = enroll.id
+        course.isEnrollActive = true
+      }
+    })
+  )
+
+  console.log('cursoooooos', courses)
+  return courses
 }
 
 module.exports = {
