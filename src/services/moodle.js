@@ -40,7 +40,7 @@ const createNewUser = async user => {
     firstname: user.firstName,
     lastname: user.lastName,
     username: user.username,
-    password: 'escuelaamericanadeinnovacion'
+    password: user.password
   }
   console.log('dataUser', dataUser)
   const userMoodle = await actionMoodle('POST', createUser, {
@@ -62,8 +62,7 @@ const createNewUser = async user => {
 
 const findMoodleCourse = async course => {
   const courses = await actionMoodle('GET', getCourses)
-  const courseEnroll = courses.filter(item => item.fullname === course.name)
-  console.log('courseEnroll search', courseEnroll)
+  const courseEnroll = courses.find(item => item.fullname === course.name)
   if (!courseEnroll) {
     const error = {
       status: 404,
@@ -71,20 +70,19 @@ const findMoodleCourse = async course => {
     }
     throw error
   } else {
-    console.log('holaaa else')
-    await courseDB.update(course.ref, {
+    const courseId = course.ref._id || course.ref || course._id
+    await courseDB.update(courseId, {
       moodleId: courseEnroll.id
     })
   }
-  console.log('courseEnroll', courseEnroll)
 
   return courseEnroll
 }
 
 const createEnrolUser = async ({ user, course }) => {
   let courseId
-  if (course.moodleId) {
-    courseId = course.moodleId
+  if (course.ref && course.ref.moodleId) {
+    courseId = course.ref.moodleId
   } else {
     const courseEnroll = await findMoodleCourse(course)
     courseId = courseEnroll.id
@@ -100,18 +98,15 @@ const createEnrolUser = async ({ user, course }) => {
 
   const enroll = {
     roleid: '5',
-    userid: userId,
-    courseid: courseId
+    userid: parseInt(userId),
+    courseid: parseInt(courseId)
   }
 
-  const enrolUserCourse = await actionMoodle('POST', enrolCourse, {
+  await actionMoodle('POST', enrolCourse, {
     enrolments: [enroll]
   })
 
-  console.log('enrolUserCourse', enrolUserCourse)
-  console.log('enrolUserCourse', enrolUserCourse[0])
-
-  return enrolUserCourse[0]
+  return true
 }
 
 module.exports = {

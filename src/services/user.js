@@ -40,11 +40,11 @@ const createUser = async (body, file, loggedUser) => {
 const updateUser = async (userId, body, file, loggedUser) => {
   const user = await userDB.detail({ query: { _id: userId } })
   let dataUser = await saveImage(body, file)
+  if (dataUser.addMoodle) {
+    dataUser.courses = await addCoursesMoodle(dataUser, loggedUser)
+  }
   if (dataUser.password) {
     dataUser.password = generateHash(dataUser.password)
-  }
-  if (dataUser.addMoodle) {
-    dataUser.courses = await addCoursesMoodle(dataUser)
   }
   dataUser = await changeStatusUser(dataUser, user)
   const updateUser = await userDB.update(userId, dataUser, false)
@@ -381,27 +381,70 @@ const changeStatusProgress = async (key, dataUser) => {
   }
 }
 
-const addCoursesMoodle = async user => {
-  console.log('entroooooooooooooooooo')
+const addCoursesMoodle = async (user, logged) => {
+  const timeline = {
+    linked: {
+      names: user.names,
+      ref: user._id
+    },
+    assigned: {
+      username: logged.username,
+      ref: logged._id
+    },
+    type: 'Curso'
+  }
   if (!user.moodleId) {
     const moodleUser = await createNewUser(user)
     user.moodleId = moodleUser.id
-  }
-  console.log(user.courses)
-  const courses = await Promise.all(
-    user.courses.map(async course => {
-      if (course.status === 'Enroll') {
-        console.log('entro curso')
-        const enroll = await createEnrolUser({ course, user })
-        console.log('enroll', enroll)
-        course.enroll = enroll.id
-        course.isEnrollActive = true
-      }
+    createTimeline({
+      ...timeline,
+      type: 'Cuenta',
+      name: `[Cuenta] se creó la cuenta en Moodle`
     })
-  )
-
-  console.log('cursoooooos', courses)
-  return courses
+  }
+  try {
+    const courses = await Promise.all(
+      user.courses.map(async course => {
+        console.log(course)
+        if (course.toEnroll === true) {
+          await createEnrolUser({ course, user })
+          course.isEnrollActive = true
+          course.status = 'Matriculado'
+          createTimeline({
+            ...timeline,
+            name: `[Matricula] ${course.name}`
+          })
+        }
+        if (course.changeActive) {
+          console.log('cange')
+          if (course.isEnrollActive) {
+            createTimeline({
+              ...timeline,
+              name: `[Reactivación] ${course.name}`
+            })
+          } else {
+            createTimeline({
+              ...timeline,
+              name: `[Suspensión] ${course.name}`
+            })
+          }
+        }
+        return course
+      })
+    )
+    return courses
+  } catch (error) {
+    if (error.status) {
+      throw error
+    } else {
+      const err = {
+        status: 500,
+        message: 'Ocurrio un error al matricular en Moodle',
+        error
+      }
+      throw err
+    }
+  }
 }
 
 module.exports = {
