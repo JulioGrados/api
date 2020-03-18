@@ -1,18 +1,31 @@
 'use strict'
 
 const { receiptDB } = require('../db')
+const { saveFile } = require('utils/files/save')
 
 const listReceipts = async params => {
   const receipts = await receiptDB.list(params)
   return receipts
 }
 
-const createReceipt = async (body, loggedUser) => {
+const createReceipt = async (body, files, loggedUser) => {
+  if (files) {
+    for (const label in files) {
+      const route = await saveFile(files[label], '/courses')
+      body[label] = route
+    }
+  }
   const receipt = await receiptDB.create(body)
   return receipt
 }
 
-const updateReceipt = async (receiptId, body, loggedUser) => {
+const updateReceipt = async (receiptId, body, files, loggedUser) => {
+  if (files) {
+    for (const label in files) {
+      const route = await saveFile(files[label], '/courses')
+      body[label] = route
+    }
+  }
   const receipt = await receiptDB.update(receiptId, body)
   return receipt
 }

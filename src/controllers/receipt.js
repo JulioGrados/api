@@ -8,23 +8,29 @@ const listReceipts = async (req, res) => {
 }
 
 const createReceipt = async (req, res) => {
+  const body = JSON.parse(req.body.data)
+  const files = req.files
   try {
-    const whatsapp = await service.createReceipt(req.body, req.whatsapp)
-    return res.status(201).json(whatsapp)
+    const receipt = await service.createReceipt(body, files, req.user)
+    return res.status(201).json(receipt)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
 }
 
 const updateReceipt = async (req, res) => {
+  console.log(req.body)
   const receiptId = req.params.id
+  const body = JSON.parse(req.body.data)
+  const files = req.files
   try {
-    const whatsapp = await service.updateReceipt(
+    const receipt = await service.updateReceipt(
       receiptId,
-      req.body,
-      req.whatsapp
+      body,
+      files,
+      req.receipt
     )
-    return res.status(200).json(whatsapp)
+    return res.status(200).json(receipt)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
@@ -42,8 +48,8 @@ const detailReceipt = async (req, res) => {
   }
 
   try {
-    const whatsapp = await service.detailReceipt(params)
-    return res.status(200).json(whatsapp)
+    const receipt = await service.detailReceipt(params)
+    return res.status(200).json(receipt)
   } catch (error) {
     return res.status(error.status || 500).json(error)
   }
@@ -52,7 +58,7 @@ const detailReceipt = async (req, res) => {
 const deleteReceipt = async (req, res) => {
   const receiptId = req.params.id
   try {
-    const receipt = await service.deleteReceipt(receiptId, req.whatsapp)
+    const receipt = await service.deleteReceipt(receiptId, req.receipt)
     return res.status(201).json(receipt)
   } catch (error) {
     return res.status(error.status || 500).json(error)
