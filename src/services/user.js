@@ -299,7 +299,7 @@ const getSubstitutions = ({ course, linked, assigned }) => {
     precio: course.price,
     precio_oferta: course.priceOffert,
     horas: course.academicHours,
-    brochure: MEDIA_PATH + course.brochure,
+    brochure: course.brochureDrive,
     celular: assigned.mobile
   }
 

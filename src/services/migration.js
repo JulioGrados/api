@@ -4,13 +4,26 @@ const toSlug = require('slug')
 const cheerio = require('cheerio')
 const moment = require('moment-timezone')
 const { downloadFile } = require('utils/files/save')
-const { userDB, categoryDB, courseDB, agreementDB } = require('../db')
+const {
+  userDB,
+  categoryDB,
+  courseDB,
+  agreementDB,
+  progressDB,
+  metaDB
+} = require('../db')
+const { createUser } = require('./user')
 
 const migrateTeachers = async data => {
   const promises = data.map(async item => {
-    const photo = await downloadFile(item.photo, '/users')
+    const photo = await downloadFile(
+      item.photo,
+      '/users',
+      item.username + '.png'
+    )
     const teacher = {
       ...item,
+      country: 'Perú',
       photo
     }
     try {
@@ -51,36 +64,181 @@ const migrateCategories = async data => {
 }
 
 const migrateAgrements = async data => {
-  const agreements = await Promise.all(
-    data.map(async item => {
-      const slug = toSlug(item.name || '', { lower: true })
-      try {
-        const agreement = await agreementDB.detail({ query: { slug } })
-        return agreement
-      } catch (error) {
-        if (error.status === 404) {
-          const agreement = await agreementDB.create({
-            institution: item.name,
-            slug
-          })
-          return agreement
-        } else {
-          throw error
-        }
-      }
-    })
-  )
+  const promises = data.map(async item => {
+    const slug = toSlug(item.name, { lower: true })
+    const image = await downloadFile(
+      item.image,
+      '/agreements',
+      'image-' + slug + '.png'
+    )
+    const agreementData = {
+      ...item,
+      institution: item.name,
+      image,
+      slug
+    }
+    try {
+      const agreement = await agreementDB.create(agreementData)
+      return agreement
+    } catch (error) {
+      error.agreement = data.name
+      return error
+    }
+  })
 
+  const agreements = await Promise.all(promises)
   return agreements
 }
 
-const migrateCourses = async (dataCourse, dataExtra) => {
+const createAdmins = async () => {
+  createUser({
+    personalInfo: {
+      names: 'Carlos Plasencia',
+      email: 'carlos@eai.edu.pe',
+      mobile: '942254876'
+    },
+    username: 'carlos',
+    password: '123456',
+    role: 'admin'
+  })
+  createUser({
+    personalInfo: {
+      names: 'Julio Grados',
+      email: 'julio@eai.edu.pe',
+      mobile: '999999991'
+    },
+    username: 'julio',
+    password: '123456',
+    role: 'admin'
+  })
+  createUser({
+    personalInfo: {
+      names: 'Juan Pino',
+      email: 'juan@eai.edu.pe',
+      mobile: '999999992'
+    },
+    username: 'juan',
+    password: '123456',
+    role: 'admin'
+  })
+  createUser({
+    personalInfo: {
+      names: 'Asesor',
+      email: 'asesor@eai.edu.pe',
+      mobile: '999999993'
+    },
+    username: 'asesor',
+    password: '123456',
+    role: 'assessor'
+  })
+}
+
+const createProgress = async () => {
+  const data = [
+    {
+      key: 'initial',
+      pipes: ['sales'],
+      name: 'Prospecto',
+      order: 1
+    },
+    {
+      key: 'progress',
+      pipes: ['sales'],
+      name: 'No Contesto',
+      order: 2
+    },
+    {
+      key: 'progress',
+      pipes: ['sales'],
+      name: 'Si contesto',
+      order: 3
+    },
+    {
+      key: 'progress',
+      pipes: ['sales'],
+      name: 'Confirmar',
+      order: 4
+    },
+    {
+      key: 'won',
+      pipes: ['accounting', 'sales'],
+      name: 'Canados',
+      order: 5
+    },
+    {
+      key: 'lost',
+      pipes: ['sales'],
+      name: 'Perdidos',
+      order: 6
+    },
+    {
+      key: 'progress',
+      pipes: ['accounting'],
+      name: 'Cuenta',
+      order: 7
+    },
+    {
+      key: 'progress',
+      pipes: ['accounting'],
+      name: 'Recibo',
+      order: 8
+    }
+  ]
+  data.forEach(progress => {
+    progressDB.create(progress)
+  })
+}
+
+const createMeta = async () => {
+  metaDB.create({
+    domain: 'https://www.eai.edu.pe',
+    title: 'Escuela Americana de Innovación',
+    description:
+      'Institución líder en educación de formación continua en el Perú, que brinda cursos de especialización para cada profesional.',
+    pages: [
+      {
+        name: 'Cursos',
+        root: '/cursos/[slug]',
+        title: '{{name}} - Escuela Americana de Innovación',
+        description:
+          '✅ Certificado en {{shortName}}  ✅ impreso por {{academicHours}} horas académicas. Metodología 100% virtual. Plana docente de las mejores universidades del Perú.'
+      }
+    ],
+    address: {
+      type: 'PostalAddress',
+      street: 'Av. José de la Riva Agüero 2092, San Miguel',
+      locality: 'Lima',
+      postalCode: 15088,
+      country: 'PE'
+    },
+    og: {
+      title: 'Escuela Americana de Innovación',
+      description:
+        'Institución líder en educación de formación continua en el Perú, que brinda cursos de especialización para cada profesional.',
+      url: 'https://www.eai.edu.pe/',
+      siteName: 'https://www.eai.edu.pe/'
+    },
+    phone: 997314658,
+    themeColor: '#0e61ee'
+  })
+}
+
+const migrateCourses = async (
+  dataCourse,
+  dataTeachers,
+  dataExtra,
+  dataAgreements
+) => {
+  createAdmins()
+  createProgress()
+  createMeta()
+
   const categoriesName = []
-  const agreementName = []
   const data = dataCourse.map(element => {
     const extra = dataExtra.find(item => {
       return (
-        item.slug === element.slug || item.name.trim() === element.name.trim()
+        item.slug.trim() === element.slug.trim() ||
+        item.name.trim() === element.name.trim()
       )
     })
     element = {
@@ -95,18 +253,21 @@ const migrateCourses = async (dataCourse, dataExtra) => {
         categoriesName.push({ name: element.category })
       }
     }
-    if (!agreementName.find(item => item.name === element.agreement)) {
-      if (element.agreement) {
-        agreementName.push({ name: element.agreement })
-      }
-    }
+
     return element
   })
 
-  const agreements = await migrateAgrements(agreementName)
+  console.time('teachers')
+  const teachers = await migrateTeachers(dataTeachers)
+  console.timeEnd('teachers')
+  console.time('agreements')
+  const agreements = await migrateAgrements(dataAgreements)
+  console.timeEnd('agreements')
+  console.time('categories')
   const categories = await migrateCategories(categoriesName)
-  const teachers = await userDB.list({ query: { role: 'teacher' } })
+  console.timeEnd('categories')
 
+  console.time('courses')
   const courses = await Promise.all(
     data.map(async item => {
       let image, shortimage, brochure
@@ -121,14 +282,20 @@ const migrateCourses = async (dataCourse, dataExtra) => {
           '/courses',
           'shortimage-' + item.slug + '.png'
         )
-        brochure = await downloadFile(
-          item.brochureDrive,
-          '/brochure',
-          'brochure-' + item.slug + '.pdf'
-        )
+        const id = item.brochureDrive && item.brochureDrive.split('id=')[1]
+        const url = `https://drive.google.com/u/0/uc?id=${id}&export=download`
+        brochure = `/brochure/brochure-${item.slug}.pdf`
+        /* if (id) {
+          brochure = await downloadFile(
+            url,
+            '/brochure',
+            'brochure-' + item.slug + '.pdf'
+          )
+        } */
       } catch (error) {
         error.course = item.name
         error.slug = item.slug
+        //console.log('error imagen', error)
         return error
       }
       const published = moment(item.published, 'YYYY-MM-DD')
@@ -200,15 +367,17 @@ const migrateCourses = async (dataCourse, dataExtra) => {
       }
       try {
         const course = await courseDB.create(courseData)
+        console.log('acabe -> ', course.name)
         return course
       } catch (error) {
         error.course = item.name
         error.slug = item.slug
+        console.log('error curso', error)
         return error
       }
     })
   )
-
+  console.timeEnd('courses')
   return { categories, courses }
 }
 

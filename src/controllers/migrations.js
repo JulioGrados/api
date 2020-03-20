@@ -13,11 +13,18 @@ const migrateTeachers = async (req, res) => {
 }
 
 const migrateCourses = async (req, res) => {
-  const dataCourses = JSON.parse(req.files.json.data.toString())
+  req.setTimeout(0)
+  const dataCourses = JSON.parse(req.files.courses.data.toString())
+  const dataTeachers = JSON.parse(req.files.teachers.data.toString())
+  const dataAgreements = JSON.parse(req.files.agreements.data.toString())
   const dataBrochure = await csv2json(req.files.csv.data)
-  //console.log('brochure', dataBrochure)
   try {
-    const response = await service.migrateCourses(dataCourses, dataBrochure)
+    const response = await service.migrateCourses(
+      dataCourses,
+      dataTeachers,
+      dataBrochure,
+      dataAgreements
+    )
     return res.status(200).json(response)
   } catch (error) {
     console.log('error', error)

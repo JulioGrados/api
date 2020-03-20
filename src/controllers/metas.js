@@ -38,11 +38,13 @@ const updateMeta = async (req, res) => {
 const detailMeta = async (req, res) => {
   const metaId = req.params.id
   const params = req.query
-  if (params.query) {
-    params.query._id = metaId
-  } else {
-    params.query = {
-      _id: metaId
+  if (metaId) {
+    if (params.query) {
+      params.query._id = metaId
+    } else {
+      params.query = {
+        _id: metaId
+      }
     }
   }
 
