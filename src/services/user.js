@@ -239,7 +239,8 @@ const prepareCourses = (lead, oldCourses, newCourses) => {
 const emitLead = lead => {
   try {
     const io = getSocket()
-    io.to(lead.assessor.ref).emit('lead', lead)
+    const assessor = lead.assessor.ref._id || lead.assessor.ref
+    io.to(assessor).emit('lead', lead)
   } catch (error) {
     console.log('error sockets', lead, error)
   }
