@@ -13,7 +13,8 @@ const init = moodle_client.init({
 const {
   getCourses,
   enrolCourse,
-  createUser
+  createUser,
+  userField
 } = require('config').moodle.functions
 
 const actionMoodle = (method, wsfunction, args = {}) => {
@@ -32,6 +33,21 @@ const actionMoodle = (method, wsfunction, args = {}) => {
         throw err
       })
   })
+}
+
+const getUsersForField = async (req, res) => {
+  const field = 'username' // 'email'
+  const values = ['vilmahalanoca'] // ['Halanoca29@hotmail.com']
+
+  // Las variables enviadas a la función deben ser field con el atributo y values con un array que contenga el valor del atributo
+
+  const userMoodleUsername = await actionMoodle('GET', userField, {
+    field,
+    values
+  })
+
+  console.log(userMoodleUsername)
+  res.send('courses')
 }
 
 const createNewUser = async user => {
@@ -111,5 +127,6 @@ const createEnrolUser = async ({ user, course }) => {
 
 module.exports = {
   createNewUser,
-  createEnrolUser
+  createEnrolUser,
+  getUsersForField
 }
