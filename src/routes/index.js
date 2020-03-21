@@ -21,6 +21,7 @@ const routesPayment = require('./payment')
 const routesMeta = require('./meta')
 const routesMoodle = require('./moodle')
 const routesLabel = require('./label')
+const routesCertificate = require('./certificate')
 
 module.exports = server => {
   server.use('/api', routesLog)
@@ -44,4 +45,5 @@ module.exports = server => {
   server.use('/api', routesMeta)
   server.use('/api', routesMoodle)
   server.use('/api', routesLabel)
+  server.use('/api', routesCertificate)
 }

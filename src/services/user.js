@@ -239,7 +239,8 @@ const prepareCourses = (lead, oldCourses, newCourses) => {
 const emitLead = lead => {
   try {
     const io = getSocket()
-    io.to(lead.assessor.ref).emit('lead', lead)
+    const assessor = lead.assessor.ref._id || lead.assessor.ref
+    io.to(assessor).emit('lead', lead)
   } catch (error) {
     console.log('error sockets', lead, error)
   }
@@ -294,6 +295,7 @@ const sendEmailCourse = async (lead, dataCourse) => {
 const getSubstitutions = ({ course, linked, assigned }) => {
   const substitutions = {
     nombre: linked.shortName,
+    username: linked.username,
     curso: course.name,
     inicio: course.startCourse,
     precio: course.price,
@@ -401,6 +403,7 @@ const addCoursesMoodle = async (user, logged) => {
       type: 'Cuenta',
       name: `[Cuenta] se creó la cuenta en Moodle`
     })
+    sendEmailAccess(user, user.courses[0], logged)
   }
   try {
     const courses = await Promise.all(
@@ -444,6 +447,43 @@ const addCoursesMoodle = async (user, logged) => {
       }
       throw err
     }
+  }
+}
+
+const sendEmailAccess = async (user, Firstcourse, logged) => {
+  const linked = payloadToData(user)
+  const assigned = payloadToData(logged)
+  const course = courseFunc.payloadToData(Firstcourse.ref)
+  const to = linked.email
+  const from = 'cursos@eai.edu.pe'
+  const templateId = 'd-1283b20fdf3b411a861b30dac8082bd8'
+  const preheader = `Accesos a Moodle`
+  const content =
+    'Se envio la información de accesos a la cuneta de moodle con la plantilla pre definida en sengrid.'
+  const substitutions = getSubstitutions({
+    course,
+    linked,
+    assigned
+  })
+  try {
+    const email = await createEmail({
+      linked,
+      assigned,
+      from,
+      preheader,
+      content
+    })
+    sendMailTemplate({
+      to,
+      from,
+      substitutions,
+      templateId: templateId,
+      args: {
+        emailId: email._id
+      }
+    })
+  } catch (error) {
+    console.log('error create email', error)
   }
 }
 
