@@ -14,7 +14,8 @@ const {
   getCourses,
   enrolCourse,
   createUser,
-  userField
+  userField,
+  coursesUser
 } = require('config').moodle.functions
 
 const actionMoodle = (method, wsfunction, args = {}) => {
@@ -35,18 +36,26 @@ const actionMoodle = (method, wsfunction, args = {}) => {
   })
 }
 
+const getCourseForUser = async () => {
+  const coursesForUser = await actionMoodle('GET', coursesUser, {
+    userid: 789
+  })
+
+  console.log(coursesForUser)
+}
+
 const getUsersForField = async (req, res) => {
   const field = 'username' // 'email'
   const values = ['vilmahalanoca'] // ['Halanoca29@hotmail.com']
 
   // Las variables enviadas a la función deben ser field con el atributo y values con un array que contenga el valor del atributo
 
-  const userMoodleUsername = await actionMoodle('GET', userField, {
+  const userMoodleCourse = await actionMoodle('GET', userField, {
     field,
     values
   })
 
-  console.log(userMoodleUsername)
+  console.log(userMoodleCourse)
   res.send('courses')
 }
 
@@ -128,5 +137,6 @@ const createEnrolUser = async ({ user, course }) => {
 module.exports = {
   createNewUser,
   createEnrolUser,
-  getUsersForField
+  getUsersForField,
+  getCourseForUser
 }
