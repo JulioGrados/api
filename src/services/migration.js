@@ -4,6 +4,7 @@ const toSlug = require('slug')
 const cheerio = require('cheerio')
 const moment = require('moment-timezone')
 const { downloadFile } = require('utils/files/save')
+const { compareSimilarity } = require('utils/functions/text')
 const {
   userDB,
   categoryDB,
@@ -242,8 +243,8 @@ const migrateCourses = async (
       )
     })
     element = {
-      ...element,
-      ...extra
+      ...extra,
+      ...element
     }
     if (!extra) {
       console.log('no extra', element.name)
@@ -437,8 +438,60 @@ const getModules = content => {
   return lessons
 }
 
+const migrateMoodleCourses = async (dataCourse, dataUsers) => {
+  const courses = await courseDB.list({})
+  console.log('moodle', dataUsers.slice(0, 10))
+
+  const newCourses = await Promise.all(
+    dataCourse.map(async moodleCourse => {
+      const course = courses.find(
+        item => compareSimilarity(item.name, moodleCourse.fullname) > 0.9
+      )
+      if (course) {
+        const updatecourse = await courseDB.update(course._id, {
+          moodleId: moodleCourse.id
+        })
+        return updatecourse
+      } else {
+        console.log('no se encontro', moodleCourse.fullname)
+        return course
+      }
+    })
+  )
+
+  const newUsers = await Promise.all(
+    dataUsers.map(async moodleUser => {
+      try {
+        const data = {
+          moodleId: moodleUser.id,
+          username: moodleUser.username,
+          firstName: moodleUser.firstname,
+          lastName: moodleUser.lastname,
+          personalInfo: {
+            names:
+              moodleUser.fullname ||
+              moodleUser.firstname + ' ' + moodleUser.lastname,
+            email: moodleUser.email,
+            mobile: moodleUser.phone1 || moodleUser.phone2
+          },
+          country: moodleUser.country === 'PE' ? 'Perú' : '',
+          city: moodleUser.city
+        }
+        const user = await userDB.create(data)
+        return user
+      } catch (error) {
+        console.log(error, moodleUser)
+        return error
+      }
+    })
+  )
+
+  return { newCourses, newUsers }
+}
+
 module.exports = {
   migrateTeachers,
   migrateCourses,
-  migrateCategories
+  migrateCategories,
+  migrateMoodleCourses
 }

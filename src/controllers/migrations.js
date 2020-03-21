@@ -32,6 +32,20 @@ const migrateCourses = async (req, res) => {
   }
 }
 
+const migrateMoodleCourses = async (req, res) => {
+  req.setTimeout(0)
+  const dataCourses = JSON.parse(req.files.courses.data.toString())
+  const dataUsers = await csv2json(req.files.users.data)
+
+  try {
+    const response = await service.migrateMoodleCourses(dataCourses, dataUsers)
+    return res.status(200).json(response)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 const csv2json = async buffer =>
   new Promise(resolve => {
     console.log(buffer)
@@ -52,5 +66,6 @@ const csv2json = async buffer =>
 
 module.exports = {
   migrateTeachers,
-  migrateCourses
+  migrateCourses,
+  migrateMoodleCourses
 }
