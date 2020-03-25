@@ -23,9 +23,7 @@
     "cheerio": "^1.0.0-rc.3"
   },
   "dependencies": {
-    "@fast-csv/parse": "^4.1.2",
     "@sentry/node": "^5.13.2",
-    "axios": "^0.19.2",
     "body-parser": "^1.19.0",
     "config": "file:../config",
     "cors": "^2.8.5",
@@ -36,7 +34,6 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "moment-timezone": "^0.5.27",
-    "moodle-client": "^0.5.2",
     "morgan": "^1.9.1",
     "slug": "^2.1.1",
     "socket.io": "^2.3.0",
@@ -45,13 +42,9 @@
   "jest": {
     "preset": "@shelf/jest-mongodb",
     "testEnvironment": "node",
-    "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ]
+    "coveragePathIgnorePatterns": ["/node_modules/"]
   },
   "standard": {
-    "ignore": [
-      "/src/test"
-    ]
+    "ignore": ["/src/test"]
   }
 }

@@ -2,18 +2,23 @@
 
 const toSlug = require('slug')
 const cheerio = require('cheerio')
+const _ = require('lodash')
 const moment = require('moment-timezone')
 const { downloadFile } = require('utils/files/save')
 const { compareSimilarity } = require('utils/functions/text')
+const { sqlConsult } = require('utils/functions/sql')
+const { createUser } = require('./user')
 const {
   userDB,
   categoryDB,
   courseDB,
   agreementDB,
   progressDB,
-  metaDB
+  metaDB,
+  enrolDB,
+  examDB,
+  taskDB
 } = require('../db')
-const { createUser } = require('./user')
 
 const migrateTeachers = async data => {
   const promises = data.map(async item => {
@@ -98,7 +103,7 @@ const createAdmins = async () => {
       email: 'carlos@eai.edu.pe',
       mobile: '942254876'
     },
-    username: 'carlos',
+    username: 'CarlosPlasencia',
     password: '123456',
     role: 'admin'
   })
@@ -108,7 +113,7 @@ const createAdmins = async () => {
       email: 'julio@eai.edu.pe',
       mobile: '999999991'
     },
-    username: 'julio',
+    username: 'JulioGrados',
     password: '123456',
     role: 'admin'
   })
@@ -118,7 +123,7 @@ const createAdmins = async () => {
       email: 'juan@eai.edu.pe',
       mobile: '999999992'
     },
-    username: 'juan',
+    username: 'JuanPino',
     password: '123456',
     role: 'admin'
   })
@@ -273,16 +278,18 @@ const migrateCourses = async (
     data.map(async item => {
       let image, shortimage, brochure
       try {
-        image = await downloadFile(
+        /* image = await downloadFile(
           item.image,
           '/courses',
           'image-' + item.slug + '.png'
-        )
-        shortimage = await downloadFile(
+        ) */
+        image = `/courses/image-${item.slug}.png`
+        /* shortimage = await downloadFile(
           item.shortImage,
           '/courses',
           'shortimage-' + item.slug + '.png'
-        )
+        ) */
+        shortimage = `/courses/shortimage-${item.slug}.png`
         const id = item.brochureDrive && item.brochureDrive.split('id=')[1]
         const url = `https://drive.google.com/u/0/uc?id=${id}&export=download`
         brochure = `/brochure/brochure-${item.slug}.pdf`
@@ -438,12 +445,14 @@ const getModules = content => {
   return lessons
 }
 
-const migrateMoodleCourses = async (dataCourse, dataUsers) => {
-  const courses = await courseDB.list({})
-  console.log('moodle', dataUsers.slice(0, 10))
+const migrateMoodleCourses = async () => {
+  const SQL_QUERY = 'SELECT id, fullname FROM mdl_course'
 
-  const newCourses = await Promise.all(
-    dataCourse.map(async moodleCourse => {
+  const courses = await courseDB.list({})
+  const dataCourses = await sqlConsult(SQL_QUERY)
+  console.log(dataCourses)
+  let newCourses = await Promise.all(
+    dataCourses.map(async moodleCourse => {
       const course = courses.find(
         item => compareSimilarity(item.name, moodleCourse.fullname) > 0.9
       )
@@ -454,13 +463,23 @@ const migrateMoodleCourses = async (dataCourse, dataUsers) => {
         return updatecourse
       } else {
         console.log('no se encontro', moodleCourse.fullname)
-        return course
+        return moodleCourse
       }
     })
   )
 
+  return newCourses
+}
+
+const migrateUsersMoodle = async () => {
+  const SQL_QUERY =
+    'SELECT id, username, firstname, lastname, email, country, city FROM mdl_user WHERE deleted = 0'
+
+  const dataUsers = await sqlConsult(SQL_QUERY)
+
   const newUsers = await Promise.all(
-    dataUsers.map(async moodleUser => {
+    dataUsers.map(async (moodleUser, idx) => {
+      //return new Promise((resolve, reject) => {
       try {
         const data = {
           moodleId: moodleUser.id,
@@ -468,30 +487,367 @@ const migrateMoodleCourses = async (dataCourse, dataUsers) => {
           firstName: moodleUser.firstname,
           lastName: moodleUser.lastname,
           personalInfo: {
-            names:
-              moodleUser.fullname ||
-              moodleUser.firstname + ' ' + moodleUser.lastname,
-            email: moodleUser.email,
-            mobile: moodleUser.phone1 || moodleUser.phone2
+            names: moodleUser.firstname + ' ' + moodleUser.lastname,
+            email: moodleUser.email
           },
           country: moodleUser.country === 'PE' ? 'Perú' : '',
           city: moodleUser.city
         }
-        const user = await userDB.create(data)
-        return user
+
+        try {
+          const user = await userDB.create(data)
+          return user
+        } catch (error) {
+          console.log('data User', moodleUser)
+          return error
+        }
       } catch (error) {
         console.log(error, moodleUser)
-        return error
+        return resolve(error)
       }
     })
   )
 
-  return { newCourses, newUsers }
+  return newUsers
+}
+
+const migrateEnrollMoodle = async () => {
+  const SQL_QUERY =
+    'SELECT ue.id, ue.status, ue.enrolid, ue.userid, ue.timestart, e.courseid, e.status AS state FROM mdl_user_enrolments AS ue INNER JOIN mdl_enrol AS e ON ue.enrolid = e.id'
+
+  const courses = await courseDB.list({
+    select: 'moodleId name shortName academicHours price'
+  })
+  const users = await userDB.list({
+    select: 'moodleId firstName lastName courses'
+  })
+
+  const dataEnrolls = await sqlConsult(SQL_QUERY)
+  let not = 0
+  const newEnrolls = await Promise.all(
+    dataEnrolls.map(async (enrol, idx) => {
+      const course = courses.find(item => item.moodleId === enrol.courseid)
+      const user = users.find(item => item.moodleId === enrol.userid)
+
+      if (course && user) {
+        const data = {
+          ...enrol,
+          moodleId: enrol.id,
+          linked: {
+            ...user.toJSON(),
+            ref: user._id
+          },
+          course: {
+            ...course.toJSON(),
+            ref: course._id
+          },
+          date: moment.unix(enrol.timestart).format('YYYY-MM-DD HH:mm')
+        }
+        try {
+          const enrol = await enrolDB.create(data)
+          user.courses.push({
+            ...course.toJSON(),
+            status: 'Matriculado',
+            isEnrollActive: enrol.status === 1,
+            enrol: enrol._id,
+            ref: course._id
+          })
+          return enrol
+        } catch (error) {
+          console.log('error', error)
+          return error
+        }
+      } else {
+        not++
+        console.log('enrol', enrol)
+        console.log('course', course)
+        console.log('user', user)
+        console.log('---------------------------------------------')
+        return enrol
+      }
+    })
+  )
+
+  try {
+    await Promise.all(
+      users.map(
+        async user => await userDB.update(user._id, { courses: user.courses })
+      )
+    )
+  } catch (error) {
+    console.log('error update use', error)
+  }
+
+  console.log('not', not)
+  return newEnrolls
+}
+
+const migrateQuizMoodle = async () => {
+  const SQL_QUERY = 'SELECT * FROM mdl_quiz'
+
+  const courses = await courseDB.list({
+    select: 'moodleId name shortName academicHours price'
+  })
+
+  const dataQuiz = await sqlConsult(SQL_QUERY)
+  let not = 0
+  const newExams = await Promise.all(
+    dataQuiz.map(async (exam, idx) => {
+      const course = courses.find(item => item.moodleId === exam.course)
+      if (course) {
+        const data = {
+          moodleId: exam.id,
+          name: exam.name,
+          number: exam.name.replace(/\D/g, ''),
+          course: {
+            ...course.toJSON(),
+            ref: course._id
+          }
+        }
+        try {
+          const exam = await examDB.create(data)
+          return exam
+        } catch (error) {
+          console.log('error', error)
+          return error
+        }
+      } else {
+        not++
+        console.log('------------------NO---------------------------')
+        console.log('exam', exam)
+        console.log('course', course)
+        return exam
+      }
+    })
+  )
+
+  console.log('not', not)
+  return newExams
+}
+
+const migrateTaskMoodle = async () => {
+  const SQL_QUERY = 'SELECT * FROM mdl_assign'
+
+  const courses = await courseDB.list({
+    select: 'moodleId name shortName academicHours price'
+  })
+
+  const dataQuiz = await sqlConsult(SQL_QUERY)
+  let not = 0
+  const newTasks = await Promise.all(
+    dataQuiz.map(async (task, idx) => {
+      const course = courses.find(item => item.moodleId === task.course)
+      if (course) {
+        const data = {
+          moodleId: task.id,
+          name: task.name,
+          description: task.intro,
+          number: task.name.replace(/\D/g, ''),
+          course: {
+            ...course.toJSON(),
+            ref: course._id
+          }
+        }
+        try {
+          const task = await taskDB.create(data)
+          return task
+        } catch (error) {
+          console.log('error', error)
+          return error
+        }
+      } else {
+        not++
+        console.log('------------------NO---------------------------')
+        console.log('task', task)
+        console.log('course', course)
+        return task
+      }
+    })
+  )
+
+  console.log('not', not)
+  return newTasks
+}
+
+const migrateEvaluationsMoodle2 = async () => {
+  const SQL_QUERY =
+    'SELECT qg.quiz, qg.userid, qg.grade AS score, q.course AS courseid FROM mdl_quiz_grades AS qg INNER JOIN mdl_quiz AS q ON qg.quiz = q.id'
+
+  const allExams = await examDB.list({})
+  const enrols = await enrolDB.list({})
+  const dataQuizUser = await sqlConsult(SQL_QUERY)
+
+  console.log('allExams', allExams.length)
+  console.log('enrols', enrols.length)
+  console.log('dataQuizUser', dataQuizUser.length)
+
+  let not = 0
+
+  const newEnrols = await Promise.all(
+    enrols.map(async enrol => {
+      const examsCourse = allExams.filter(exam => {
+        return exam.course.moodleId === enrol.course.moodleId
+      })
+
+      const dataQuizPerCourseUser = dataQuizUser.filter(item => {
+        return (
+          item.userid === enrol.linked.moodleId &&
+          item.courseid === enrol.course.moodleId
+        )
+      })
+
+      if (dataQuizPerCourseUser.length === 0) {
+        not++
+        console.log('course', enrol.course.moodleId)
+        console.log('user', enrol.linked.moodleId)
+        console.log('-----------------------')
+      }
+
+      const exams = examsCourse.map(exam => {
+        const result_filter = _.filter(
+          dataQuizPerCourseUser,
+          item => item.quiz === exam.id
+        )
+        const result = _.maxBy(result_filter, 'score')
+        const data = {
+          number: exam.number,
+          name: exam.name,
+          score: result && result.score,
+          isTaken: !!result,
+          exam: exam._id
+        }
+        return data
+      })
+
+      const updateEnroll = await enrolDB.update(enrol._id, { exams })
+      return updateEnroll
+    })
+  )
+
+  console.log('not', not)
+
+  return newEnrols
+}
+
+const migrateEvaluationsMoodle = async () => {
+  const courses = await courseDB.list({ select: 'moodleId name' })
+  const resps = await Promise.all(
+    courses.map(async ({ moodleId, name }, idx) => {
+      return new Promise((resolve, reject) => {
+        if (moodleId) {
+          setTimeout(async () => {
+            try {
+              const resp = await migrateEvaluationCourse(moodleId, name)
+              return resolve(resp)
+            } catch (error) {
+              return reject(error)
+            }
+          }, idx * 5 * 1000)
+        } else {
+          return resolve({ not: 0 })
+        }
+      })
+    })
+  )
+  let not = 0
+  resps.forEach(item => (not += item.not))
+
+  console.log('notAllll', not)
+
+  return resps
+}
+
+const migrateEvaluationCourse = async (courseId, name) => {
+  const SQL_QUERY = `SELECT u.id AS userid, c.id AS courseid, u.username AS 'Username', u.firstname AS 'Name' , u.lastname AS 'Surname', c.fullname AS 'Course', cc.name AS 'Category', CASE WHEN gi.itemtype = 'Course' THEN c.fullname + ' Course Total' ELSE gi.itemname END AS 'Item_Name', ROUND(gg.finalgrade,2) AS Score,ROUND(gg.rawgrademax,2) AS MAX, ROUND(gg.finalgrade / gg.rawgrademax * 100 ,2) AS Percentage, IF (ROUND(gg.finalgrade / gg.rawgrademax * 100 ,2) > 79,'Yes' , 'No') AS Pass FROM mdl_course AS c JOIN mdl_context AS ctx ON c.id = ctx.instanceid JOIN mdl_role_assignments AS ra ON ra.contextid = ctx.id JOIN mdl_user AS u ON u.id = ra.userid JOIN mdl_grade_grades AS gg ON gg.userid = u.id JOIN mdl_grade_items AS gi ON gi.id = gg.itemid JOIN mdl_course_categories AS cc ON cc.id = c.category WHERE gi.courseid = c.id AND gi.itemname != 'Attendance' AND gi.courseid= ${courseId} AND c.id= ${courseId} ORDER BY 'Username' ASC`
+
+  const query = {
+    'course.moodleId': courseId
+  }
+  const allExams = await examDB.list({ query })
+  const allTasks = await taskDB.list({ query })
+  const enrols = await enrolDB.list({ query })
+  const dataQuizUser = await sqlConsult(SQL_QUERY)
+
+  console.log(`"********************* ${name} *****************************"`)
+  console.log('allExams', allExams.length)
+  console.log('enrols', enrols.length)
+  console.log('dataQuizUser', dataQuizUser.length)
+
+  let not = 0
+
+  const newEnrols = await Promise.all(
+    enrols.map(async enrol => {
+      const examsCourse = allExams.filter(exam => {
+        return exam.course.moodleId === enrol.course.moodleId
+      })
+      const tasksCourse = allTasks.filter(task => {
+        return task.course.moodleId === enrol.course.moodleId
+      })
+
+      const dataQuizPerCourseUser = dataQuizUser.filter(item => {
+        return (
+          item.userid === enrol.linked.moodleId &&
+          item.courseid === enrol.course.moodleId
+        )
+      })
+
+      if (dataQuizPerCourseUser.length === 0) {
+        not++
+        //console.log('course', enrol.course.moodleId)
+        //console.log('user', enrol.linked.moodleId)
+        //console.log('-----------------------')
+      }
+
+      const exams = examsCourse.map(exam => {
+        const result_filter = _.filter(
+          dataQuizPerCourseUser,
+          item => item.Item_Name === exam.name
+        )
+        const result = _.maxBy(result_filter, 'score')
+        const data = {
+          number: exam.number,
+          name: exam.name,
+          score: result && result.score,
+          isTaken: !!result,
+          exam: exam._id
+        }
+        return data
+      })
+
+      const tasks = tasksCourse.map(task => {
+        const result_filter = _.filter(
+          dataQuizPerCourseUser,
+          item => item.Item_Name === task.name
+        )
+        const result = _.maxBy(result_filter, 'score')
+        const data = {
+          number: task.number,
+          name: task.name,
+          score: result && result.score,
+          isTaken: !!result,
+          task: task._id
+        }
+        return data
+      })
+
+      const updateEnroll = await enrolDB.update(enrol._id, { exams, tasks })
+      return updateEnroll
+    })
+  )
+
+  console.log('not', not)
+
+  return { newEnrols, not }
 }
 
 module.exports = {
   migrateTeachers,
   migrateCourses,
   migrateCategories,
-  migrateMoodleCourses
+  migrateMoodleCourses,
+  migrateUsersMoodle,
+  migrateEnrollMoodle,
+  migrateEvaluationsMoodle,
+  migrateQuizMoodle,
+  migrateTaskMoodle
 }

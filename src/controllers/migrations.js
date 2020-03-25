@@ -1,5 +1,5 @@
 const service = require('../services/migration')
-const csv = require('@fast-csv/parse')
+const { csv2json } = require('utils/functions/csv')
 
 const migrateTeachers = async (req, res) => {
   const data = JSON.parse(req.files.data.data.toString())
@@ -33,12 +33,8 @@ const migrateCourses = async (req, res) => {
 }
 
 const migrateMoodleCourses = async (req, res) => {
-  req.setTimeout(0)
-  const dataCourses = JSON.parse(req.files.courses.data.toString())
-  const dataUsers = await csv2json(req.files.users.data)
-
   try {
-    const response = await service.migrateMoodleCourses(dataCourses, dataUsers)
+    const response = await service.migrateMoodleCourses()
     return res.status(200).json(response)
   } catch (error) {
     console.log('error', error)
@@ -46,26 +42,66 @@ const migrateMoodleCourses = async (req, res) => {
   }
 }
 
-const csv2json = async buffer =>
-  new Promise(resolve => {
-    console.log(buffer)
-    const results = []
+const migrateMoodleUsers = async (req, res) => {
+  try {
+    const response = await service.migrateUsersMoodle()
+    return res.status(200).json(response)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
 
-    csv
-      .parseString(buffer, { headers: true })
-      .on('data', data => {
-        results.push(data)
-      })
-      .on('end', () => {
-        return resolve(results)
-      })
-      .on('error', error => {
-        console.log('error', error)
-      })
-  })
+const migrateMoodleEnroll = async (req, res) => {
+  req.setTimeout(0)
+  try {
+    const response = await service.migrateEnrollMoodle()
+    return res.status(200).json(response)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
+const migrateMoodleEvaluations = async (req, res) => {
+  req.setTimeout(0)
+  try {
+    const response = await service.migrateEvaluationsMoodle()
+    return res.status(200).json(response)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
+const migrateQuizMoodle = async (req, res) => {
+  req.setTimeout(0)
+  try {
+    const response = await service.migrateQuizMoodle()
+    return res.status(200).json(response)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+const migrateTaskMoodle = async (req, res) => {
+  req.setTimeout(0)
+  try {
+    const response = await service.migrateTaskMoodle()
+    return res.status(200).json(response)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
 
 module.exports = {
   migrateTeachers,
   migrateCourses,
-  migrateMoodleCourses
+  migrateMoodleCourses,
+  migrateMoodleUsers,
+  migrateMoodleEnroll,
+  migrateMoodleEvaluations,
+  migrateQuizMoodle,
+  migrateTaskMoodle
 }

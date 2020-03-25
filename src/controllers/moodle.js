@@ -1,6 +1,7 @@
 'use strict'
 
 const services = require('../services/moodle')
+const servicesSql = require('../services/sql')
 
 const createUser = async (req, res) => {
   try {
@@ -20,7 +21,20 @@ const enrrollUser = async (req, res) => {
   }
 }
 
+const getEnroolments = async (req, res) => {
+  try {
+    console.log('lamooooooooooooooo')
+    const enrolls = await servicesSql.getAllEnrollments()
+    console.log('devolviooooooooooooo')
+    return res.json(enrolls)
+  } catch (error) {
+    console.log('eroooooooooor', error)
+    return res.json(error.status || 500).json(error)
+  }
+}
+
 module.exports = {
   createUser,
-  enrrollUser
+  enrrollUser,
+  getEnroolments
 }
