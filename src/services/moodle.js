@@ -20,7 +20,6 @@ const {
 
 const actionMoodle = (method, wsfunction, args = {}) => {
   return init.then(function (client) {
-    console.log({ method, wsfunction, args })
     return client
       .call({
         wsfunction,
@@ -36,12 +35,17 @@ const actionMoodle = (method, wsfunction, args = {}) => {
   })
 }
 
-const getCourseForUser = async () => {
-  const coursesForUser = await actionMoodle('GET', coursesUser, {
-    userid: 789
-  })
+const getCourseForUser = async userId => {
+  try {
+    const coursesForUser = await actionMoodle('GET', coursesUser, {
+      userid: userId
+    })
 
-  console.log(coursesForUser)
+    return coursesForUser
+  } catch (error) {
+    console.log('error coursesUser', error)
+    return []
+  }
 }
 
 const getUsersForField = async (req, res) => {
