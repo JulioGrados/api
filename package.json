@@ -42,9 +42,13 @@
   "jest": {
     "preset": "@shelf/jest-mongodb",
     "testEnvironment": "node",
-    "coveragePathIgnorePatterns": ["/node_modules/"]
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
   },
   "standard": {
-    "ignore": ["/src/test"]
+    "ignore": [
+      "/src/test"
+    ]
   }
 }
