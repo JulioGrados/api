@@ -777,12 +777,8 @@ const migrateEvaluationCourse = async (courseId, name) => {
 
   const newEnrols = await Promise.all(
     enrols.map(async enrol => {
-      const examsCourse = allExams.filter(exam => {
-        return exam.course.moodleId === enrol.course.moodleId
-      })
-      const tasksCourse = allTasks.filter(task => {
-        return task.course.moodleId === enrol.course.moodleId
-      })
+      const examsCourse = allExams
+      const tasksCourse = allTasks
 
       const dataQuizPerCourseUser = dataQuizUser.filter(item => {
         return (
@@ -803,11 +799,11 @@ const migrateEvaluationCourse = async (courseId, name) => {
           dataQuizPerCourseUser,
           item => item.Item_Name === exam.name
         )
-        const result = _.maxBy(result_filter, 'score')
+        const result = _.maxBy(result_filter, 'Score')
         const data = {
           number: exam.number,
           name: exam.name,
-          score: result && result.score,
+          score: result && result.Score,
           isTaken: !!result,
           exam: exam._id
         }
@@ -819,11 +815,11 @@ const migrateEvaluationCourse = async (courseId, name) => {
           dataQuizPerCourseUser,
           item => item.Item_Name === task.name
         )
-        const result = _.maxBy(result_filter, 'score')
+        const result = _.maxBy(result_filter, 'Score')
         const data = {
           number: task.number,
           name: task.name,
-          score: result && result.score,
+          score: result && result.Score,
           isTaken: !!result,
           task: task._id
         }
