@@ -591,14 +591,21 @@ const migrateQuizMoodle = async () => {
 
   const dataQuiz = await sqlConsult(SQL_QUERY)
   let not = 0
+
+  const dataFilter = dataQuiz.filter(
+    (item, index, self) =>
+      index ===
+      self.findIndex(t => t.course === item.course && t.name === item.name)
+  )
+
   const newExams = await Promise.all(
-    dataQuiz.map(async (exam, idx) => {
+    dataFilter.map(async (exam, idx) => {
       const course = courses.find(item => item.moodleId === exam.course)
       if (course) {
         const data = {
           moodleId: exam.id,
           name: exam.name,
-          number: exam.name.replace(/\D/g, ''),
+          number: idx + 1,
           course: {
             ...course.toJSON(),
             ref: course._id
@@ -634,20 +641,28 @@ const migrateTaskMoodle = async () => {
 
   const dataQuiz = await sqlConsult(SQL_QUERY)
   let not = 0
+
+  const dataFilter = dataQuiz.filter(
+    (item, index, self) =>
+      index ===
+      self.findIndex(t => t.course === item.course && t.name === item.name)
+  )
+
   const newTasks = await Promise.all(
-    dataQuiz.map(async (task, idx) => {
+    dataFilter.map(async (task, idx) => {
       const course = courses.find(item => item.moodleId === task.course)
       if (course) {
         const data = {
           moodleId: task.id,
           name: task.name,
           description: task.intro,
-          number: task.name.replace(/\D/g, ''),
+          number: idx + 1,
           course: {
             ...course.toJSON(),
             ref: course._id
           }
         }
+
         try {
           const task = await taskDB.create(data)
           return task
