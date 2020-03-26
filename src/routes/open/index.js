@@ -10,7 +10,6 @@ const routesAgrement = require('./agreement')
 const routesPayment = require('./payment')
 const routesMeta = require('./meta')
 const routesLabel = require('./labels')
-const moodleData = require('./moodle')
 const routesCertificate = require('./certificate')
 
 module.exports = server => {
@@ -25,5 +24,4 @@ module.exports = server => {
   server.use('/api/open', routesMeta)
   server.use('/api/open', routesCertificate)
   server.use('/api/open', routesLabel)
-  server.use('/api/open', moodleData)
 }
