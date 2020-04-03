@@ -5,8 +5,9 @@ const cheerio = require('cheerio')
 const _ = require('lodash')
 const moment = require('moment-timezone')
 const { downloadFile } = require('utils/files/save')
-const { compareSimilarity } = require('utils/functions/text')
+const { compareOnlySimilarity } = require('utils/functions/text')
 const { sqlConsult } = require('utils/functions/sql')
+const { calculatePromScore, calculateProm } = require('utils/functions/enrol')
 const { createUser } = require('./user')
 const {
   userDB,
@@ -17,7 +18,8 @@ const {
   metaDB,
   enrolDB,
   examDB,
-  taskDB
+  taskDB,
+  certificateDB
 } = require('../db')
 
 const migrateTeachers = async data => {
@@ -168,7 +170,7 @@ const createProgress = async () => {
     {
       key: 'won',
       pipes: ['accounting', 'sales'],
-      name: 'Canados',
+      name: 'Ganados',
       order: 5
     },
     {
@@ -454,7 +456,7 @@ const migrateMoodleCourses = async () => {
   let newCourses = await Promise.all(
     dataCourses.map(async moodleCourse => {
       const course = courses.find(
-        item => compareSimilarity(item.name, moodleCourse.fullname) > 0.9
+        item => compareOnlySimilarity(item.name, moodleCourse.fullname) > 0.9
       )
       if (course) {
         const updatecourse = await courseDB.update(course._id, {
@@ -480,30 +482,34 @@ const migrateUsersMoodle = async () => {
   const newUsers = await Promise.all(
     dataUsers.map(async (moodleUser, idx) => {
       //return new Promise((resolve, reject) => {
-      try {
-        const data = {
-          moodleId: moodleUser.id,
-          username: moodleUser.username,
-          firstName: moodleUser.firstname,
-          lastName: moodleUser.lastname,
-          personalInfo: {
-            names: moodleUser.firstname + ' ' + moodleUser.lastname,
-            email: moodleUser.email
-          },
-          country: moodleUser.country === 'PE' ? 'Perú' : '',
-          city: moodleUser.city
-        }
+      const data = {
+        moodleId: moodleUser.id,
+        username: moodleUser.username,
+        firstName: moodleUser.firstname,
+        lastName: moodleUser.lastname,
+        personalInfo: {
+          names: moodleUser.firstname + ' ' + moodleUser.lastname,
+          email: moodleUser.email
+        },
+        country: moodleUser.country === 'PE' ? 'Perú' : '',
+        city: moodleUser.city,
+        role: 'client'
+      }
 
-        try {
-          const user = await userDB.create(data)
+      try {
+        const user = await userDB.create(data)
+        return user
+      } catch (error) {
+        if (error.status === 402) {
+          const user = userDB.detail({
+            query: { username: moodleUser.username }
+          })
+          await userDB.update(user._id, { moodleId: moodleUser.id })
           return user
-        } catch (error) {
+        } else {
           console.log('data User', moodleUser)
           return error
         }
-      } catch (error) {
-        console.log(error, moodleUser)
-        return resolve(error)
       }
     })
   )
@@ -526,8 +532,12 @@ const migrateEnrollMoodle = async () => {
   let not = 0
   const newEnrolls = await Promise.all(
     dataEnrolls.map(async (enrol, idx) => {
-      const course = courses.find(item => item.moodleId === enrol.courseid)
-      const user = users.find(item => item.moodleId === enrol.userid)
+      const course = courses.find(
+        item => parseInt(item.moodleId) === parseInt(enrol.courseid)
+      )
+      const user = users.find(
+        item => parseInt(item.moodleId) === parseInt(enrol.userid)
+      )
 
       if (course && user) {
         const data = {
@@ -559,10 +569,11 @@ const migrateEnrollMoodle = async () => {
         }
       } else {
         not++
-        console.log('enrol', enrol)
-        console.log('course', course)
-        console.log('user', user)
-        console.log('---------------------------------------------')
+        if (!course) {
+          console.log('not Courseeeeeee', enrol.courseid)
+        } else {
+          console.log('not user', enrol.userid)
+        }
         return enrol
       }
     })
@@ -639,13 +650,18 @@ const migrateTaskMoodle = async () => {
     select: 'moodleId name shortName academicHours price'
   })
 
-  const dataQuiz = await sqlConsult(SQL_QUERY)
+  const dataTask = await sqlConsult(SQL_QUERY)
   let not = 0
 
-  const dataFilter = dataQuiz.filter(
+  const dataFilter = dataTask.filter(
     (item, index, self) =>
       index ===
-      self.findIndex(t => t.course === item.course && t.name === item.name)
+      self.findIndex(
+        t =>
+          t.course === item.course &&
+          toSlug(t.name, { lower: true }) ===
+            toSlug(item.name.trim(), { lower: true })
+      )
   )
 
   const newTasks = await Promise.all(
@@ -804,9 +820,6 @@ const migrateEvaluationCourse = async (courseId, name) => {
 
       if (dataQuizPerCourseUser.length === 0) {
         not++
-        //console.log('course', enrol.course.moodleId)
-        //console.log('user', enrol.linked.moodleId)
-        //console.log('-----------------------')
       }
 
       const exams = examsCourse.map(exam => {
@@ -841,14 +854,139 @@ const migrateEvaluationCourse = async (courseId, name) => {
         return data
       })
 
-      const updateEnroll = await enrolDB.update(enrol._id, { exams, tasks })
+      const exam = calculateProm(exams)
+      const task = calculateProm(tasks)
+      let dataEnrol = { exams, tasks }
+      if (exam.isFinished || task.isFinished) {
+        let note = 0
+        if (exam.isFinished && task.isFinished) {
+          note = (exam.note + task.note) / 2
+        } else if (exam.isFinished) {
+          note = exam.note
+        } else {
+          note = task.note
+        }
+        dataEnrol = {
+          exams,
+          tasks,
+          isFinished: true,
+          score: note
+        }
+      }
+
+      const updateEnroll = await enrolDB.update(enrol._id, dataEnrol)
       return updateEnroll
+    })
+  )
+
+  return { newEnrols, not }
+}
+
+const migrateCertificates = async () => {
+  const getConvert = field =>
+    `(CASE WHEN LENGTH(code) > 7 THEN CONVERT(CAST(CONVERT(${field} USING latin1) AS BINARY) USING utf8) ELSE ${field} END) as ${field}s`
+
+  const SQL_QUERY = `SELECT *, ${getConvert('course')}, ${getConvert(
+    'firstname'
+  )}, ${getConvert('lastname')} FROM wp_certificate`
+
+  const enrols = await enrolDB.list({})
+  const users = await userDB.list({})
+  const courses = await courseDB.list({})
+
+  const dataCertificate = await sqlConsult(SQL_QUERY, 'manvicio_xyzwp')
+
+  let not = 0
+
+  const resp = await Promise.all(
+    dataCertificate.map(async certificate => {
+      const user = users.find(user => {
+        const isFirstName =
+          compareOnlySimilarity(user.firstName, certificate.firstnames) > 0.9
+        const isLastName =
+          compareOnlySimilarity(user.lastName, certificate.lastnames) > 0.9
+
+        return isFirstName && isLastName
+      })
+
+      if (!user) {
+        not++
+        console.log('Not User', certificate)
+        return
+      }
+
+      const course = courses.find(course => {
+        let isCourse =
+          compareOnlySimilarity(course.shortName, certificate.courses) > 0.8
+
+        if (!isCourse) {
+          isCourse =
+            certificate.courses.includes(course.shortName) ||
+            course.name.includes(certificate.courses)
+        }
+
+        return isCourse
+      })
+
+      if (!course) {
+        not++
+
+        console.log('Not Course', certificate)
+        return
+      }
+
+      let enrol = enrols.find(enrol => {
+        const isCourse = course._id.toString() === enrol.course.ref.toString()
+        const isUser = enrol.linked.ref.toString() === user._id.toString()
+
+        return isCourse && isUser
+      })
+
+      if (!enrol) {
+        return
+      }
+
+      const data = {
+        code: certificate.code,
+        shortCode: certificate.codeshort,
+        linked: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          ref: user._id
+        },
+        course: {
+          shortName: course.shortName,
+          academicHours: certificate.hours,
+          ref: course._id
+        },
+        moodleId: certificate.id,
+        enrol: enrol && enrol._id,
+        score: certificate.score,
+        date: Date(certificate.date)
+      }
+
+      try {
+        const certi = await certificateDB.create(data)
+
+        if (enrol && enrol.isFinished) {
+          await enrolDB.update(enrol._id, {
+            certificate: {
+              ...certi.toJSON(),
+              ref: certi._id
+            }
+          })
+        }
+
+        return certi
+      } catch (error) {
+        return error
+      }
     })
   )
 
   console.log('not', not)
 
-  return { newEnrols, not }
+  return resp
 }
 
 module.exports = {
@@ -860,5 +998,6 @@ module.exports = {
   migrateEnrollMoodle,
   migrateEvaluationsMoodle,
   migrateQuizMoodle,
-  migrateTaskMoodle
+  migrateTaskMoodle,
+  migrateCertificates
 }

@@ -36,6 +36,7 @@
     "moment-timezone": "^0.5.27",
     "moodle-client": "^0.5.2",
     "morgan": "^1.9.1",
+    "request": "^2.88.2",
     "slug": "^2.1.1",
     "socket.io": "^2.3.0",
     "utils": "file:../utils"

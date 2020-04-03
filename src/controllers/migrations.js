@@ -94,6 +94,16 @@ const migrateTaskMoodle = async (req, res) => {
     return res.status(error.status || 500).json(error)
   }
 }
+const migrateCertificates = async (req, res) => {
+  req.setTimeout(0)
+  try {
+    const response = await service.migrateCertificates()
+    return res.status(200).json(response)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
 
 module.exports = {
   migrateTeachers,
@@ -103,5 +113,6 @@ module.exports = {
   migrateMoodleEnroll,
   migrateMoodleEvaluations,
   migrateQuizMoodle,
-  migrateTaskMoodle
+  migrateTaskMoodle,
+  migrateCertificates
 }

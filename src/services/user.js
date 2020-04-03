@@ -16,7 +16,7 @@ const courseFunc = require('utils/functions/course')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
 const { MEDIA_PATH } = require('utils/files/path')
 
-const { createNewUser, createEnrolUser } = require('./moodle')
+const { createNewUser, createEnrolUser, searchUser } = require('./moodle')
 
 const listUsers = async params => {
   const users = await userDB.list(params)
@@ -38,18 +38,23 @@ const createUser = async (body, file, loggedUser) => {
 }
 
 const updateUser = async (userId, body, file, loggedUser) => {
-  const user = await userDB.detail({ query: { _id: userId } })
-  let dataUser = await saveImage(body, file)
-  if (dataUser.addMoodle) {
-    dataUser.courses = await addCoursesMoodle(dataUser, loggedUser)
+  try {
+    const user = await userDB.detail({ query: { _id: userId } })
+    let dataUser = await saveImage(body, file)
+    if (dataUser.addMoodle) {
+      dataUser.courses = await addCoursesMoodle(dataUser, loggedUser)
+    }
+    if (dataUser.password) {
+      dataUser.password = generateHash(dataUser.password)
+    }
+    dataUser = await changeStatusUser(dataUser, user)
+    const updateUser = await userDB.update(userId, dataUser, false)
+    timelineProgress(updateUser.toJSON(), user.toJSON(), loggedUser, body)
+    return updateUser
+  } catch (error) {
+    console.log('error', error)
+    throw error
   }
-  if (dataUser.password) {
-    dataUser.password = generateHash(dataUser.password)
-  }
-  dataUser = await changeStatusUser(dataUser, user)
-  const updateUser = await userDB.update(userId, dataUser, false)
-  timelineProgress(updateUser.toJSON(), user.toJSON(), loggedUser, body)
-  return updateUser
 }
 
 const detailUser = async params => {
@@ -296,6 +301,7 @@ const getSubstitutions = ({ course, linked, assigned }) => {
   const substitutions = {
     nombre: linked.shortName,
     username: linked.username,
+    password: linked.password,
     curso: course.name,
     inicio: course.startCourse,
     precio: course.price,
@@ -396,7 +402,20 @@ const addCoursesMoodle = async (user, logged) => {
     type: 'Curso'
   }
   if (!user.moodleId) {
+    const exist = await searchUser({
+      username: user.username,
+      email: user.email
+    })
+    console.log('exist', exist)
+    if (exist && exist.user) {
+      const err = {
+        status: 402,
+        message: `Ya existe un usuario con el mismo ${exist.type}`
+      }
+      throw err
+    }
     const moodleUser = await createNewUser(user)
+    console.log('moodleUser', moodleUser)
     user.moodleId = moodleUser.id
     createTimeline({
       ...timeline,
@@ -435,6 +454,7 @@ const addCoursesMoodle = async (user, logged) => {
         return course
       })
     )
+    console.log('courses', courses)
     return courses
   } catch (error) {
     if (error.status) {
@@ -454,7 +474,7 @@ const sendEmailAccess = async (user, Firstcourse, logged) => {
   const linked = payloadToData(user)
   const assigned = payloadToData(logged)
   const course = courseFunc.payloadToData(Firstcourse.ref)
-  const to = linked.email
+  const to = user.email
   const from = 'cursos@eai.edu.pe'
   const templateId = 'd-1283b20fdf3b411a861b30dac8082bd8'
   const preheader = `Accesos a Moodle`
@@ -465,6 +485,8 @@ const sendEmailAccess = async (user, Firstcourse, logged) => {
     linked,
     assigned
   })
+  substitutions.password = user.password
+  console.log({ substitutions })
   try {
     const email = await createEmail({
       linked,
