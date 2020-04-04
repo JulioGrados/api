@@ -1,9 +1,9 @@
 'use strict'
 
-const { saleDB, voucherDB, receiptDB, userDB, progressDB } = require('../db')
+const { saleDB, voucherDB, receiptDB, dealDB } = require('../db')
 const { sumAmountOrders } = require('utils/functions/sale')
 const { saveFile } = require('utils/files/save')
-const { emitLead } = require('./user')
+const { emitDeal } = require('./deal')
 
 /* Basicos */
 const listSales = async params => {
@@ -18,7 +18,7 @@ const createSale = async (body, files, loggedUser) => {
   const sale = await saleDB.create(body)
   try {
     sale.orders = await editVoucher(sale.orders, copyOrders)
-    changeStatusUser(sale)
+    changeStatusUser(sale, body.detail)
   } catch (error) {
     await sale.remove()
     throw error
@@ -34,7 +34,7 @@ const updateSale = async (saleId, body, files, loggedUser) => {
     body.status = getStatusSale(body)
     const sale = await saleDB.update(saleId, body)
     sale.orders = await editVoucher(sale.orders, copyOrders)
-    changeStatusUser(sale)
+    changeStatusUser(sale, body.detail)
     return sale
   } else {
     const error = {
@@ -268,38 +268,23 @@ const getStatusSale = ({ orders, amount }) => {
 
 const changeStatusUser = async sale => {
   if (sale.status === 'Pagando' || sale.status === 'Finalizada') {
-    const user = await userDB.detail({
-      query: {
-        _id: sale.user.ref
-      }
-    })
-    let statusProgress = user.statusProgress
-    try {
-      const progress = await progressDB.detail({ query: { key: 'won' } })
-      statusProgress = {
+    const progress = await pregressDB.detail({ query: { key: 'won' } })
+    let progressPayment
+    if (progress) {
+      progressPayment = {
         name: progress.name,
         ref: progress._id
-      }
-    } catch (error) {
-      if (error.status !== 404) {
-        throw error
       }
     }
     const statusActivity = 'done'
     const status = 'Ganado'
-    const courses = user.courses.map(course => {
-      if (course.status === 'Interesado') {
-        course.status = 'Ganado'
-      }
-      return course
-    })
-    const updateUser = await userDB.update(sale.user.ref, {
+
+    const updateDeal = await dealDB.update(sale.deal, {
+      progressPayment,
       statusActivity,
-      statusProgress,
-      status,
-      courses
+      status
     })
-    emitLead(updateUser)
+    emitDeal(updateDeal)
   }
 }
 

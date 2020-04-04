@@ -39,6 +39,7 @@ const migrateTeachers = async data => {
       return user
     } catch (error) {
       error.teacher = data.username
+      console.log('error', error, teacher)
       return error
     }
   })
@@ -100,41 +101,33 @@ const migrateAgrements = async data => {
 
 const createAdmins = async () => {
   createUser({
-    personalInfo: {
-      names: 'Carlos Plasencia',
-      email: 'carlos@eai.edu.pe',
-      mobile: '942254876'
-    },
+    names: 'Carlos Plasencia',
+    email: 'carlos@eai.edu.pe',
+    mobile: '942254876',
     username: 'CarlosPlasencia',
     password: '123456',
     role: 'admin'
   })
   createUser({
-    personalInfo: {
-      names: 'Julio Grados',
-      email: 'julio@eai.edu.pe',
-      mobile: '999999991'
-    },
+    names: 'Julio Grados',
+    email: 'julio@eai.edu.pe',
+    mobile: '999999991',
     username: 'JulioGrados',
     password: '123456',
     role: 'admin'
   })
   createUser({
-    personalInfo: {
-      names: 'Juan Pino',
-      email: 'juan@eai.edu.pe',
-      mobile: '999999992'
-    },
+    names: 'Juan Pino',
+    email: 'juan@eai.edu.pe',
+    mobile: '999999992',
     username: 'JuanPino',
     password: '123456',
     role: 'admin'
   })
   createUser({
-    personalInfo: {
-      names: 'Asesor',
-      email: 'asesor@eai.edu.pe',
-      mobile: '999999993'
-    },
+    names: 'Asesor',
+    email: 'asesor@eai.edu.pe',
+    mobile: '999999993',
     username: 'asesor',
     password: '123456',
     role: 'assessor'
@@ -169,27 +162,21 @@ const createProgress = async () => {
     },
     {
       key: 'won',
-      pipes: ['accounting', 'sales'],
-      name: 'Ganados',
+      pipes: ['accounting'],
+      name: 'Nuevo',
       order: 5
-    },
-    {
-      key: 'lost',
-      pipes: ['sales'],
-      name: 'Perdidos',
-      order: 6
     },
     {
       key: 'progress',
       pipes: ['accounting'],
       name: 'Cuenta',
-      order: 7
+      order: 6
     },
     {
       key: 'progress',
       pipes: ['accounting'],
       name: 'Recibo',
-      order: 8
+      order: 7
     }
   ]
   data.forEach(progress => {
@@ -305,7 +292,7 @@ const migrateCourses = async (
       } catch (error) {
         error.course = item.name
         error.slug = item.slug
-        //console.log('error imagen', error)
+        // console.log('error imagen', error)
         return error
       }
       const published = moment(item.published, 'YYYY-MM-DD')
@@ -354,8 +341,8 @@ const migrateCourses = async (
       }
       const author = {
         ...authorItem.toJSON(),
-        names: authorItem.personalInfo.names,
-        email: authorItem.personalInfo.email,
+        names: authorItem.names,
+        email: authorItem.email,
         ref: authorItem._id
       }
 
@@ -453,7 +440,7 @@ const migrateMoodleCourses = async () => {
   const courses = await courseDB.list({})
   const dataCourses = await sqlConsult(SQL_QUERY)
   console.log(dataCourses)
-  let newCourses = await Promise.all(
+  const newCourses = await Promise.all(
     dataCourses.map(async moodleCourse => {
       const course = courses.find(
         item => compareOnlySimilarity(item.name, moodleCourse.fullname) > 0.9
@@ -481,7 +468,7 @@ const migrateUsersMoodle = async () => {
 
   const newUsers = await Promise.all(
     dataUsers.map(async (moodleUser, idx) => {
-      //return new Promise((resolve, reject) => {
+      // return new Promise((resolve, reject) => {
       const data = {
         moodleId: moodleUser.id,
         username: moodleUser.username,
@@ -935,7 +922,7 @@ const migrateCertificates = async () => {
         return
       }
 
-      let enrol = enrols.find(enrol => {
+      const enrol = enrols.find(enrol => {
         const isCourse = course._id.toString() === enrol.course.ref.toString()
         const isUser = enrol.linked.ref.toString() === user._id.toString()
 
