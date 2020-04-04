@@ -19,7 +19,8 @@ const {
   enrolDB,
   examDB,
   taskDB,
-  certificateDB
+  certificateDB,
+  testimonyDB
 } = require('../db')
 
 const migrateTeachers = async data => {
@@ -184,6 +185,53 @@ const createProgress = async () => {
   })
 }
 
+const createTestimonies = async () => {
+  const data = [
+    {
+      firstName: 'Darwin Raúl',
+      lastName: 'Huaman Hernandez',
+      dni: 70393661,
+      city: 'PISCO, ICA',
+      rate: 5,
+      comment:
+        'Es una plataforma que deja muy satisfecho, depende también del ordenador donde desarrolles el curso, pero en general muy bueno eh aprendido muchísimo y me siento mas competente en el ámbito profesional donde me desarrollo.',
+      course: {
+        name: 'Curso profesional de excel',
+        slug: 'excel'
+      }
+    },
+    {
+      firstName: 'Jesus Diogenes',
+      lastName: 'Coronel Florindez',
+      dni: 18144172,
+      city: 'LIMA, LIMA',
+      rate: 5,
+      comment:
+        'Muy buena información y casos. Altamente recomendable para quienes desean profundizar en el tema de las finanzas.',
+      course: {
+        name: 'Curso de Finanzas Corporativas',
+        slug: 'finanzas-corporativas'
+      }
+    },
+    {
+      firstName: 'Charlie Jaime',
+      lastName: 'Tocas Bringas',
+      dni: 46846658,
+      city: 'LIMA, LIMA',
+      rate: 5,
+      comment:
+        'Este curso me ayudó a comprender mejor como se mueve y funciona el mundo de los recursos humanos y me aportó muchos conceptos que no había visto antes. También me permitió actualizarme al mostrarme las nuevas tendencias de este campo tan interesante e importante para las empresas, como lo es la gestión del talento humano.',
+      course: {
+        name: 'CURSO DE GESTIÓN DEL TALENTO HUMANO',
+        slug: 'gestion-del-talento-humano'
+      }
+    }
+  ]
+  data.forEach(testimony => {
+    testimonyDB.create(testimony)
+  })
+}
+
 const createMeta = async () => {
   metaDB.create({
     domain: 'https://www.eai.edu.pe',
@@ -227,6 +275,7 @@ const migrateCourses = async (
   createAdmins()
   createProgress()
   createMeta()
+  createTestimonies()
 
   const categoriesName = []
   const data = dataCourse.map(element => {
@@ -561,7 +610,6 @@ const migrateEnrollMoodle = async () => {
     })
   )
 
-  console.log('not', not)
   return newEnrolls
 }
 

@@ -1,6 +1,6 @@
 'use strict'
 
-const { saleDB, voucherDB, receiptDB, dealDB } = require('../db')
+const { saleDB, voucherDB, receiptDB, dealDB, progressDB } = require('../db')
 const { sumAmountOrders } = require('utils/functions/sale')
 const { saveFile } = require('utils/files/save')
 const { emitDeal } = require('./deal')
@@ -268,7 +268,7 @@ const getStatusSale = ({ orders, amount }) => {
 
 const changeStatusUser = async sale => {
   if (sale.status === 'Pagando' || sale.status === 'Finalizada') {
-    const progress = await pregressDB.detail({ query: { key: 'won' } })
+    const progress = await progressDB.detail({ query: { key: 'won' } })
     let progressPayment
     if (progress) {
       progressPayment = {

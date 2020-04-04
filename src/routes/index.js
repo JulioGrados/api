@@ -24,6 +24,7 @@ const routesLabel = require('./label')
 const routesCertificate = require('./certificate')
 const routesEnrol = require('./enrol')
 const routesDeal = require('./deal')
+const routesTestimony = require('./testimony')
 
 module.exports = server => {
   server.use('/api', routesLog)
@@ -50,4 +51,5 @@ module.exports = server => {
   server.use('/api', routesCertificate)
   server.use('/api', routesEnrol)
   server.use('/api', routesDeal)
+  server.use('/api', routesTestimony)
 }

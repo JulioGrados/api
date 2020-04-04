@@ -270,9 +270,6 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
       preheader,
       content
     })
-    console.log('email', email)
-    console.log('substitutions', substitutions)
-    console.log('to', to)
     sendMailTemplate({
       to,
       from,
@@ -306,14 +303,12 @@ const getSubstitutions = ({ course, linked, assigned }) => {
 
 const changeStatus = async (dataDeal, deal) => {
   if (dataDeal.status === 'Perdido') {
-    dataDeal.progress = await changeStatusProgress('lost', dataDeal)
     dataDeal.isClosed = true
     dataDeal.statusActivity = 'done'
     dataDeal.status = 'Perdido'
     decProspects(deal)
   }
   if (deal.status !== 'Abierto' && dataDeal.status === 'Abierto') {
-    dataDeal.statusProgress = await changeStatusProgress('initial', dataDeal)
     dataDeal.isClosed = false
     dataDeal.statusActivity = 'todo'
     dataDeal.status = 'Abierto'
@@ -344,7 +339,6 @@ const timelineProgress = (updateDeal, deal, assigned, body) => {
     const oldName = deal.progress.name
     const newRef = updateDeal.progress.ref.toString()
     const newName = updateDeal.progress.name
-    console.log(oldRef, newRef)
     if (oldRef !== newRef) {
       if (updateDeal.status === 'Perdido') {
         createTimeline({

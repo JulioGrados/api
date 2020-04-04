@@ -11,6 +11,7 @@ const routesPayment = require('./payment')
 const routesMeta = require('./meta')
 const routesLabel = require('./labels')
 const routesCertificate = require('./certificate')
+const routesTestimony = require('./testimony')
 
 module.exports = server => {
   server.use('/api/open', routesAuth)
@@ -24,4 +25,5 @@ module.exports = server => {
   server.use('/api/open', routesMeta)
   server.use('/api/open', routesCertificate)
   server.use('/api/open', routesLabel)
+  server.use('/api/open', routesTestimony)
 }
