@@ -7,7 +7,7 @@ const moment = require('moment-timezone')
 const { downloadFile } = require('utils/files/save')
 const { compareOnlySimilarity } = require('utils/functions/text')
 const { sqlConsult } = require('utils/functions/sql')
-const { calculatePromScore, calculateProm } = require('utils/functions/enrol')
+const { calculateProm } = require('utils/functions/enrol')
 const { createUser } = require('./user')
 const {
   userDB,
@@ -474,10 +474,8 @@ const migrateUsersMoodle = async () => {
         username: moodleUser.username,
         firstName: moodleUser.firstname,
         lastName: moodleUser.lastname,
-        personalInfo: {
-          names: moodleUser.firstname + ' ' + moodleUser.lastname,
-          email: moodleUser.email
-        },
+        names: moodleUser.firstname + ' ' + moodleUser.lastname,
+        email: moodleUser.email,
         country: moodleUser.country === 'PE' ? 'Perú' : '',
         city: moodleUser.city,
         role: 'client'
@@ -488,11 +486,15 @@ const migrateUsersMoodle = async () => {
         return user
       } catch (error) {
         if (error.status === 402) {
-          const user = userDB.detail({
-            query: { username: moodleUser.username }
-          })
-          await userDB.update(user._id, { moodleId: moodleUser.id })
-          return user
+          try {
+            const user = userDB.detail({
+              query: { username: moodleUser.username }
+            })
+            await userDB.update(user._id, { moodleId: moodleUser.id })
+            return user
+          } catch (error) {
+            return error
+          }
         } else {
           console.log('data User', moodleUser)
           return error
@@ -512,7 +514,7 @@ const migrateEnrollMoodle = async () => {
     select: 'moodleId name shortName academicHours price'
   })
   const users = await userDB.list({
-    select: 'moodleId firstName lastName courses'
+    select: 'moodleId firstName lastName'
   })
 
   const dataEnrolls = await sqlConsult(SQL_QUERY)
@@ -542,13 +544,6 @@ const migrateEnrollMoodle = async () => {
         }
         try {
           const enrol = await enrolDB.create(data)
-          user.courses.push({
-            ...course.toJSON(),
-            status: 'Matriculado',
-            isEnrollActive: enrol.status === 1,
-            enrol: enrol._id,
-            ref: course._id
-          })
           return enrol
         } catch (error) {
           console.log('error', error)
@@ -565,16 +560,6 @@ const migrateEnrollMoodle = async () => {
       }
     })
   )
-
-  try {
-    await Promise.all(
-      users.map(
-        async user => await userDB.update(user._id, { courses: user.courses })
-      )
-    )
-  } catch (error) {
-    console.log('error update use', error)
-  }
 
   console.log('not', not)
   return newEnrolls
