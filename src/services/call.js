@@ -68,7 +68,7 @@ const updateUserStateFromCall = async (call, emit) => {
   const statusActivity = getNewActivityState(call)
   if (statusActivity !== deal.statusActivity) {
     if (statusActivity === 'delay') {
-      sendNotification(call)
+      sendNotification(call, deal)
     }
     deal = updateStatusDeal(deal, statusActivity)
   }
@@ -114,11 +114,12 @@ const emitCall = call => {
   }
 }
 
-const sendNotification = async call => {
+const sendNotification = async (call, deal) => {
   const date = getFullDate(call)
   const data = {
     assigned: call.assigned.ref,
     linked: call.linked.ref,
+    deal: deal._id,
     type: 'Llamada',
     typeRef: call._id,
     title: `Llamar a ${call.linked.names}`,
