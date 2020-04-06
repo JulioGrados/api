@@ -58,13 +58,13 @@ const getDelayCalls = async () => {
 
   calls.map(async call => {
     if (call.deal) {
-      await updateUserStateFromCall(call)
+      await updateUserStateFromCall(call, true)
     }
   })
 }
 
-const updateUserStateFromCall = async call => {
-  let deal = await getLeadFromCall(call)
+const updateUserStateFromCall = async (call, emit) => {
+  let deal = await getDealFromCall(call)
   const statusActivity = getNewActivityState(call)
   if (statusActivity !== deal.statusActivity) {
     if (statusActivity === 'delay') {
@@ -72,12 +72,13 @@ const updateUserStateFromCall = async call => {
     }
     deal = updateStatusDeal(deal, statusActivity)
   }
-  console.log('aquiiii')
-  emitCall(call, deal)
+  if (emit) {
+    emitCall(call, deal)
+  }
   return deal
 }
 
-const getLeadFromCall = async call => {
+const getDealFromCall = async call => {
   let deal
   if (call.deal && call.deal.statusActivity) {
     deal = call.deal

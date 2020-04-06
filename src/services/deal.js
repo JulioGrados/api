@@ -47,6 +47,7 @@ const countDocuments = async params => {
 }
 
 const createOrUpdateDeal = async (user, body) => {
+  console.log('user', user)
   try {
     const deal = await dealDB.detail({
       query: {
@@ -57,7 +58,7 @@ const createOrUpdateDeal = async (user, body) => {
         path: 'assessor.ref'
       }
     })
-    const updateDeal = await editExistDeal(deal, user, body)
+    const updateDeal = await editExistDeal(deal.toJSON(), user, body)
     return updateDeal
   } catch (error) {
     if (error.status === 404) {
@@ -94,7 +95,7 @@ const editExistDeal = async (deal, user, body) => {
     incProspects(dataDeal)
   }
   dataDeal.courses = prepareCourses(user, dataDeal, deal.courses, body.courses)
-  const updateDeal = await userDB.update(deal._id, {
+  const updateDeal = await dealDB.update(deal._id, {
     ...dataDeal,
     linked: {
       ...user,
@@ -268,7 +269,8 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
       assigned,
       from,
       preheader,
-      content
+      content,
+      deal: deal._id
     })
     sendMailTemplate({
       to,
