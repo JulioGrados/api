@@ -1,0 +1,79 @@
+'use strict'
+
+const service = require('../services/testimony')
+
+const listTestimonies = async (req, res) => {
+  const testimonies = await service.listTestimonies(req.query)
+  return res.status(200).json(testimonies)
+}
+
+const createTestimony = async (req, res) => {
+  const body = JSON.parse(req.body.data)
+  const file = req.files && req.files.image
+  try {
+    const testimony = await service.createTestimony(body, file, req.user)
+    return res.status(201).json(testimony)
+  } catch (error) {
+    return res.status(error.status || 500).json(error)
+  }
+}
+
+const updateTestimony = async (req, res) => {
+  const testimonyId = req.params.id
+  const body = JSON.parse(req.body.data)
+  const file = req.files && req.files.image
+  try {
+    const testimony = await service.updateTestimony(
+      testimonyId,
+      body,
+      file,
+      req.user
+    )
+    return res.status(200).json(testimony)
+  } catch (error) {
+    return res.status(error.status || 500).json(error)
+  }
+}
+
+const detailTestimony = async (req, res) => {
+  const testimonyId = req.params.id
+  const params = req.query
+  if (params.query) {
+    params.query._id = testimonyId
+  } else {
+    params.query = {
+      _id: testimonyId
+    }
+  }
+
+  try {
+    const testimony = await service.detailTestimony(params)
+    return res.status(200).json(testimony)
+  } catch (error) {
+    return res.status(error.status || 500).json(error)
+  }
+}
+
+const deleteTestimony = async (req, res) => {
+  const testimonyId = req.params.id
+  try {
+    const testimony = await service.deleteTestimony(testimonyId, req.user)
+    return res.status(201).json(testimony)
+  } catch (error) {
+    return res.status(error.status || 500).json(error)
+  }
+}
+
+const countDocuments = async (req, res) => {
+  const count = await service.countDocuments(req.query)
+  return res.json(count)
+}
+
+module.exports = {
+  countDocuments,
+  listTestimonies,
+  createTestimony,
+  updateTestimony,
+  detailTestimony,
+  deleteTestimony
+}

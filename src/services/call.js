@@ -1,6 +1,6 @@
 'use strict'
 
-const { callDB, userDB, notificationDB } = require('../db')
+const { callDB, notificationDB, dealDB } = require('../db')
 const moment = require('moment-timezone')
 const { getSocket } = require('../lib/io')
 
@@ -47,60 +47,70 @@ const getDelayCalls = async () => {
       date: {
         $lte: moment().endOf('day')
       },
-      'linked.ref': { $exists: true }
+      deal: { $exists: true }
     },
     populate: {
-      path: 'linked.ref',
+      path: 'deal',
       match: { statusActivity: { $ne: 'delay' } },
       select: 'statusActivity'
     }
   })
 
   calls.map(async call => {
-    if (call.linked.ref) {
-      await updateUserStateFromCall(call)
+    if (call.deal) {
+      await updateUserStateFromCall(call, true)
     }
   })
 }
 
-const updateUserStateFromCall = async call => {
-  let lead = await getLeadFromCall(call)
+const updateUserStateFromCall = async (call, emit) => {
+  let deal = await getDealFromCall(call)
   const statusActivity = getNewActivityState(call)
-  if (statusActivity !== lead.statusActivity) {
+  if (statusActivity !== deal.statusActivity) {
     if (statusActivity === 'delay') {
       sendNotification(call)
     }
-    lead = updateStatusUser(lead, statusActivity)
+    deal = updateStatusDeal(deal, statusActivity)
   }
-  return lead
+  if (emit) {
+    emitCall(call, deal)
+  }
+  return deal
 }
 
-const getLeadFromCall = async call => {
-  let lead
-  if (call.linked.ref && call.linked.ref.statusActivity) {
-    lead = call.linked.ref
+const getDealFromCall = async call => {
+  let deal
+  if (call.deal && call.deal.statusActivity) {
+    deal = call.deal
   } else {
-    lead = await userDB.detail({
-      query: { _id: call.linked.ref },
+    deal = await dealDB.detail({
+      query: { _id: call.deal },
       select: 'statusActivity'
     })
   }
-  return lead
+  return deal
 }
 
-const updateStatusUser = async (lead, statusActivity) => {
+const updateStatusDeal = async (deal, statusActivity) => {
   try {
-    const updatedLead = await userDB.update(lead._id, { statusActivity }, false)
-    emitLead(updatedLead)
+    const updatedDeal = await dealDB.update(deal._id, { statusActivity }, false)
+    emitDeal(updatedDeal)
   } catch (error) {
-    console.log('error update user', lead, statusActivity, error)
+    console.log('error update user', deal, statusActivity, error)
   }
 }
 
-const emitLead = lead => {
-  if (lead.assessor) {
+const emitDeal = deal => {
+  if (deal.assessor) {
     const io = getSocket()
-    io.to(lead.assessor.ref).emit('lead', lead)
+    io.to(deal.assessor.ref).emit('deal', deal)
+  }
+}
+
+const emitCall = call => {
+  if (call.assigned) {
+    const io = getSocket()
+    io.to(call.assigned.ref).emit('call', call)
   }
 }
 

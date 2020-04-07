@@ -19,5 +19,8 @@ router
 
 router.route('/migrations/quiz/moodle').post(isAdmin, Api.migrateQuizMoodle)
 router.route('/migrations/tasks/moodle').post(isAdmin, Api.migrateTaskMoodle)
+router
+  .route('/migrations/certificates/moodle')
+  .post(isAdmin, Api.migrateCertificates)
 
 module.exports = router

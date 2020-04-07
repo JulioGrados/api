@@ -48,28 +48,36 @@ const getCourseForUser = async userId => {
   }
 }
 
-const getUsersForField = async (req, res) => {
-  // const field = 'username' // 'email'
-  // const values = ['vilmahalanoca'] // ['Halanoca29@hotmail.com']
+const getUsersForField = async (name, value) => {
+  const field = name // 'email'
+  const values = [value] // ['Halanoca29@hotmail.com']
 
-  // // Las variables enviadas a la función deben ser field con el atributo y values con un array que contenga el valor del atributo
+  // Las variables enviadas a la función deben ser field con el atributo y values con un array que contenga el valor del atributo
 
-  // const userMoodleCourse = await actionMoodle('GET', userField, {
-  //   field,
-  //   values
-  // })
+  const userMoodle = await actionMoodle('GET', userField, {
+    field,
+    values
+  })
 
-  const userMoodleCourse = await actionMoodle(
-    'GET',
-    'core_completion_get_course_completion_status',
-    {
-      courseid: 26,
-      userid: 789
+  console.log('userMoodle', userMoodle)
+  return userMoodle[0]
+}
+
+const searchUser = async ({ username, email }) => {
+  let user
+  if (username) {
+    user = await getUsersForField('username', username)
+    if (user) {
+      return { type: 'username', user }
     }
-  )
-
-  console.log(userMoodleCourse)
-  res.send('courses')
+  }
+  if (email) {
+    user = await getUsersForField('email', email)
+    if (user) {
+      return { type: 'email', user }
+    }
+  }
+  return { user: undefined }
 }
 
 const createNewUser = async user => {
@@ -151,5 +159,6 @@ module.exports = {
   createNewUser,
   createEnrolUser,
   getUsersForField,
-  getCourseForUser
+  getCourseForUser,
+  searchUser
 }
