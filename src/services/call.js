@@ -12,6 +12,7 @@ const listCalls = async params => {
 }
 
 const createCall = async (body, loggedCall) => {
+  await validateExistCall(body)
   const call = await callDB.create(body)
   updateUserStateFromCall(call)
   return call
@@ -68,7 +69,7 @@ const updateUserStateFromCall = async (call, emit) => {
   const statusActivity = getNewActivityState(call)
   if (statusActivity !== deal.statusActivity) {
     if (statusActivity === 'delay') {
-      sendNotification(call)
+      sendNotification(call, deal)
     }
     deal = updateStatusDeal(deal, statusActivity)
   }
@@ -114,11 +115,12 @@ const emitCall = call => {
   }
 }
 
-const sendNotification = async call => {
+const sendNotification = async (call, deal) => {
   const date = getFullDate(call)
   const data = {
     assigned: call.assigned.ref,
     linked: call.linked.ref,
+    deal: deal._id,
     type: 'Llamada',
     typeRef: call._id,
     title: `Llamar a ${call.linked.names}`,
@@ -138,6 +140,30 @@ const emitNotification = notification => {
   if (notification.assigned) {
     const io = getSocket()
     io.to(notification.assigned).emit('notification', notification)
+  }
+}
+
+const validateExistCall = async body => {
+  if (body.isCompleted === true) {
+    return true
+  }
+  try {
+    const exist = await callDB.list({
+      query: { isCompleted: { $ne: true }, 'linked.ref': body.linked.ref },
+      select: '_id'
+    })
+    if (exist.length > 0) {
+      const error = {
+        status: 402,
+        message:
+          'No puedes tener mas de una llamada pendiente, completa las demas para poder crear una nueva.'
+      }
+      throw error
+    } else {
+      return true
+    }
+  } catch (error) {
+    throw error
   }
 }
 

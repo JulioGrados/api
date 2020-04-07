@@ -139,25 +139,25 @@ const createProgress = async () => {
   const data = [
     {
       key: 'initial',
-      pipes: ['sales'],
+      pipes: ['deals'],
       name: 'Prospecto',
       order: 1
     },
     {
       key: 'progress',
-      pipes: ['sales'],
+      pipes: ['deals'],
       name: 'No Contesto',
       order: 2
     },
     {
       key: 'progress',
-      pipes: ['sales'],
+      pipes: ['deals'],
       name: 'Si contesto',
       order: 3
     },
     {
       key: 'progress',
-      pipes: ['sales'],
+      pipes: ['deals'],
       name: 'Confirmar',
       order: 4
     },
