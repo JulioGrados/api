@@ -12,6 +12,7 @@ const listCalls = async params => {
 }
 
 const createCall = async (body, loggedCall) => {
+  await validateExistCall(body)
   const call = await callDB.create(body)
   updateUserStateFromCall(call)
   return call
@@ -139,6 +140,30 @@ const emitNotification = notification => {
   if (notification.assigned) {
     const io = getSocket()
     io.to(notification.assigned).emit('notification', notification)
+  }
+}
+
+const validateExistCall = async body => {
+  if (body.isCompleted === true) {
+    return true
+  }
+  try {
+    const exist = await callDB.list({
+      query: { isCompleted: { $ne: true }, 'linked.ref': body.linked.ref },
+      select: '_id'
+    })
+    if (exist.length > 0) {
+      const error = {
+        status: 402,
+        message:
+          'No puedes tener mas de una llamada pendiente, completa las demas para poder crear una nueva.'
+      }
+      throw error
+    } else {
+      return true
+    }
+  } catch (error) {
+    throw error
   }
 }
 
