@@ -2,31 +2,31 @@
 
 const isAdmin = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'admin') {
+    if (req.user.role === 'Administrador') {
       return next()
     }
   }
   return res.status(401).json({
     success: false,
-    message: 'No tienes autorización de admin.'
+    message: 'No tienes autorización de administrador.'
   })
 }
 
 const isTeacher = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'teacher') {
+    if (req.user.role === 'Docente') {
       return next()
     }
   }
   return res.status(401).json({
     success: false,
-    message: 'No tienes autorización de profesor.'
+    message: 'No tienes autorización de docente.'
   })
 }
 
 const isCompany = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'compay') {
+    if (req.user.role === 'Compañia') {
       return next()
     }
   }
@@ -38,7 +38,7 @@ const isCompany = (req, res, next) => {
 
 const isClient = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'client') {
+    if (req.user.role === 'Cliente') {
       return next()
     }
   }
@@ -50,7 +50,7 @@ const isClient = (req, res, next) => {
 
 const isAssessor = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'assessor') {
+    if (req.user.role === 'Asesor') {
       return next()
     }
   }
@@ -62,7 +62,7 @@ const isAssessor = (req, res, next) => {
 
 const isColaborator = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'collaborator') {
+    if (req.user.role === 'Colaborador') {
       return next()
     }
   }

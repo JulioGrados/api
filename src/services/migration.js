@@ -32,6 +32,7 @@ const migrateTeachers = async data => {
     )
     const teacher = {
       ...item,
+      role: 'Docente',
       country: 'Perú',
       photo
     }
@@ -107,7 +108,7 @@ const createAdmins = async () => {
     mobile: '942254876',
     username: 'CarlosPlasencia',
     password: '123456',
-    role: 'admin'
+    role: 'Administrador'
   })
   createUser({
     names: 'Julio Grados',
@@ -115,7 +116,7 @@ const createAdmins = async () => {
     mobile: '999999991',
     username: 'JulioGrados',
     password: '123456',
-    role: 'admin'
+    role: 'Administrador'
   })
   createUser({
     names: 'Juan Pino',
@@ -123,7 +124,7 @@ const createAdmins = async () => {
     mobile: '999999992',
     username: 'JuanPino',
     password: '123456',
-    role: 'admin'
+    role: 'Administrador'
   })
   createUser({
     names: 'Asesor',
@@ -131,7 +132,7 @@ const createAdmins = async () => {
     mobile: '999999993',
     username: 'asesor',
     password: '123456',
-    role: 'assessor'
+    role: 'Asesor'
   })
 }
 
@@ -527,7 +528,7 @@ const migrateUsersMoodle = async () => {
         email: moodleUser.email,
         country: moodleUser.country === 'PE' ? 'Perú' : '',
         city: moodleUser.city,
-        role: 'client'
+        role: 'Cliente'
       }
 
       try {

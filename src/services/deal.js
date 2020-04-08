@@ -136,7 +136,7 @@ const assignedAssessor = async deal => {
   const coursesId = deal.courses.map(course => course._id)
   const assessors = await userDB.list({
     query: {
-      role: 'assessor',
+      role: 'Asesor',
       sellCourses: {
         $elemMatch: {
           ref: { $in: coursesId }
@@ -152,7 +152,7 @@ const assignedAssessor = async deal => {
   }
 
   const allAssessors = await userDB.list({
-    query: { role: 'assessor' },
+    query: { role: 'Asesor' },
     select: { username: 1, prospects: 1 }
   })
 
