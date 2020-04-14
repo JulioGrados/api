@@ -11,14 +11,40 @@ const { createTimeline } = require('./timeline')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
 const { createEmail } = require('./email')
 const { getSocket } = require('../lib/io')
+const { createNewUser, createEnrolUser, searchUser } = require('./moodle')
 
 const listDeals = async params => {
   const deals = await dealDB.list(params)
   return deals
 }
 
-const createDeal = async body => {
+const createDeal = async (body, loggedUser) => {
+  if (body.status === 'Abierto') {
+    const existDeal = await findDealUser(body.linked.ref)
+    if (existDeal) {
+      const error = {
+        status: 402,
+        message: 'Ya existe un trato abierto para el usuario.'
+      }
+      throw error
+    }
+  } else if (body.status === 'Perdido') {
+    body.isClosed = true
+  } else if (body.status === 'Ganado') {
+    if (!body.linked.moodleId) {
+      const error = {
+        status: 402,
+        message: 'El usuario debe ser cliente en moodle'
+      }
+      throw error
+    }
+  }
   const deal = await dealDB.create(body)
+
+  if (deal.status === 'Ganado') {
+    await addCoursesMoodle(deal, body.linked, loggedUser)
+  }
+
   return deal
 }
 
@@ -26,8 +52,13 @@ const updateDeal = async (dealId, body, loggedUser) => {
   const deal = await dealDB.detail({ query: { _id: dealId } })
   const dataDeal = await changeStatus(body, deal)
   const updateDeal = await dealDB.update(dealId, dataDeal)
+  if (deal.status !== 'Ganado' && updateDeal.status === 'Ganado') {
+    await addCoursesMoodle(deal, updateDeal.linked, loggedUser)
+  }
+  if (deal.addMoodle) {
+    addCoursesMoodle(deal, body, loggedUser)
+  }
   timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser, body)
-
   return updateDeal
 }
 
@@ -47,27 +78,31 @@ const countDocuments = async params => {
 }
 
 const createOrUpdateDeal = async (user, body) => {
-  console.log('user', user)
+  const deal = await findDealUser(user._id)
+  if (deal) {
+    const updateDeal = await editExistDeal(deal.toJSON(), user, body)
+    return updateDeal
+  } else {
+    const deal = createNewDeal(user, body)
+    createTimeline({ linked: user, type: 'Deal', name: 'Nuevo trato creado' })
+    return deal
+  }
+}
+
+const findDealUser = async userId => {
   try {
     const deal = await dealDB.detail({
       query: {
-        'linked.ref': user._id,
+        'linked.ref': userId,
         status: 'Abierto'
       },
       populate: {
         path: 'assessor.ref'
       }
     })
-    const updateDeal = await editExistDeal(deal.toJSON(), user, body)
-    return updateDeal
+    return deal
   } catch (error) {
-    if (error.status === 404) {
-      const deal = createNewDeal(user, body)
-      createTimeline({ linked: user, type: 'Deal', name: 'Nuevo trato creado' })
-      return deal
-    } else {
-      throw error
-    }
+    return null
   }
 }
 
@@ -359,6 +394,140 @@ const timelineProgress = (updateDeal, deal, assigned, body) => {
         })
       }
     }
+  }
+  if (updateDeal.progressPayment && deal.progressPayment) {
+    const oldRef = deal.progressPayment.ref.toString()
+    const oldName = deal.progressPayment.name
+    const newRef = updateDeal.progressPayment.ref.toString()
+    const newName = updateDeal.progressPayment.name
+    if (oldRef !== newRef) {
+      createTimeline({
+        linked: updateDeal.linked,
+        assigned,
+        type: 'Etapa',
+        name: `${oldName} → ${newName}`
+      })
+    }
+  }
+}
+
+const addCoursesMoodle = async (deal, data, logged) => {
+  const user = await userDB.detail({ query: { _id: deal.linked.ref } })
+  const timeline = {
+    linked: deal.linked,
+    assigned: {
+      username: logged.username,
+      ref: logged._id
+    },
+    type: 'Curso'
+  }
+  if (!user.moodleId) {
+    const exist = await searchUser({
+      username: user.username,
+      email: user.email
+    })
+    console.log(exist)
+    if (exist && exist.user) {
+      const err = {
+        status: 402,
+        message: `Ya existe un usuario con el mismo ${exist.type}`
+      }
+      throw err
+    }
+    const moodleUser = await createNewUser({
+      ...user.toJSON(),
+      username: data.username,
+      password: data.password
+    })
+    console.log('moodleUser', moodleUser)
+    const dataUser = {
+      username: data.username || undefined,
+      password: data.password ? generateHash(data.password) : undefined,
+      moodleId: moodleUser.id
+    }
+    await userDB.update(user._id, dataUser)
+    createTimeline({
+      ...timeline,
+      type: 'Cuenta',
+      name: '[Cuenta] se creó la cuenta en Moodle'
+    })
+    sendEmailAccess(user, logged)
+  }
+  try {
+    const courses = await Promise.all(
+      deal.courses.map(async course => {
+        await createEnrolUser({ course, user })
+        createTimeline({
+          ...timeline,
+          name: `[Matricula] ${course.name}`
+        })
+
+        /*         if (course.changeActive) {
+          console.log('cange')
+          if (course.isEnrollActive) {
+            createTimeline({
+              ...timeline,
+              name: `[Reactivación] ${course.name}`
+            })
+          } else {
+            createTimeline({
+              ...timeline,
+              name: `[Suspensión] ${course.name}`
+            })
+          }
+        } */
+        return course
+      })
+    )
+    console.log('courses', courses)
+    return courses
+  } catch (error) {
+    if (error.status) {
+      throw error
+    } else {
+      const err = {
+        status: 500,
+        message: 'Ocurrio un error al matricular en Moodle',
+        error
+      }
+      throw err
+    }
+  }
+}
+
+const sendEmailAccess = async (user, logged) => {
+  const linked = payloadToData(user)
+  const assigned = payloadToData(logged)
+  const to = user.email
+  const from = 'cursos@eai.edu.pe'
+  const templateId = 'd-1283b20fdf3b411a861b30dac8082bd8'
+  const preheader = 'Accesos a Moodle'
+  const content =
+    'Se envio la información de accesos a la cuneta de moodle con la plantilla pre definida en sengrid.'
+  const substitutions = {
+    username: linked.username,
+    password: linked.password,
+    name: linked.shorName
+  }
+  try {
+    const email = await createEmail({
+      linked,
+      assigned,
+      from,
+      preheader,
+      content
+    })
+    sendMailTemplate({
+      to,
+      from,
+      substitutions,
+      templateId: templateId,
+      args: {
+        emailId: email._id
+      }
+    })
+  } catch (error) {
+    console.log('error create email', error)
   }
 }
 
