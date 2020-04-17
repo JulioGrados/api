@@ -9,7 +9,6 @@ const listPayments = async (req, res) => {
 
 const createPayment = async (req, res) => {
   try {
-    console.log('body', req.body)
     const payment = await service.createPayment(req.body, req.user)
     return res.status(201).json(payment)
   } catch (error) {

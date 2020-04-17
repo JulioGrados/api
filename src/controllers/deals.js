@@ -40,8 +40,6 @@ const detailDeal = async (req, res) => {
     }
   }
 
-  console.log(params)
-
   try {
     const deal = await service.detailDeal(params)
     return res.status(200).json(deal)

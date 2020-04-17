@@ -13,8 +13,6 @@ const connectIO = server => {
   io.use(socketHandler)
 
   io.on('connection', socket => {
-    console.log('Nuevo cliente conectado', socket.id, socket.assessor.username)
-
     if (socket.assessor) {
       socket.join(socket.assessor._id)
     }

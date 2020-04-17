@@ -19,7 +19,6 @@ const createReceipt = async (req, res) => {
 }
 
 const updateReceipt = async (req, res) => {
-  console.log(req.body)
   const receiptId = req.params.id
   const body = JSON.parse(req.body.data)
   const files = req.files

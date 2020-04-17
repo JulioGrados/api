@@ -24,8 +24,7 @@ const updateMeta = async (req, res) => {
   const metaId = req.params.id
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const files = req.files
-  console.log(body)
-  console.log(files)
+
   try {
     const meta = await service.updateMeta(metaId, body, files, req.whatsapp)
     return res.status(200).json(meta)

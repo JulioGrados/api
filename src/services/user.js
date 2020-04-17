@@ -1,5 +1,6 @@
 'use strict'
 
+const config = require('config')
 const { userDB } = require('../db')
 const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
@@ -7,6 +8,9 @@ const { saveFile } = require('utils/files/save')
 const { createFindQuery } = require('utils/functions/user')
 const { createOrUpdateDeal } = require('./deal')
 const { createTimeline } = require('./timeline')
+const { loginUser } = require('./auth')
+const { sendMailTemplate } = require('utils/lib/sendgrid')
+const uniqid = require('uniqid')
 
 const listUsers = async params => {
   const users = await userDB.list(params)
@@ -75,6 +79,52 @@ const countDocuments = async params => {
   return count
 }
 
+const recoverPassword = async ({ username, password, token }) => {
+  const user = await userDB.detail({ query: { username } })
+  if (username && token) {
+    if (!user.tokenRecover) {
+      const error = {
+        status: 402,
+        message: 'El token no es valido!'
+      }
+      throw error
+    }
+    if (user.tokenRecover === token) {
+      const newPassword = generateHash(password)
+      await userDB.update(user._id, { password: newPassword, token: undefined })
+      const data = await loginUser(username, password)
+      return data
+    }
+  } else {
+    if (!user.email) {
+      const error = {
+        status: 402,
+        message: 'No tienes un email asociado a la cuenta.'
+      }
+      throw error
+    }
+
+    const tokenRecover = uniqid()
+
+    await userDB.update(user._id, { tokenRecover })
+    console.log(config)
+    const urlBase =
+      config.teach.env === 'development'
+        ? config.teach.localUrl
+        : config.teach.productionUrl
+
+    sendMailTemplate({
+      to: user.email,
+      from: 'soporte@eai.edu.pe',
+      substitutions: {
+        name: user.firstName,
+        link: `${urlBase}/recuperar?token=${tokenRecover}&username=${username}`
+      },
+      templateId: 'd-b6cd2a8f16004803ab5d5e2f6c7f901e'
+    })
+  }
+}
+
 /* functions */
 const emitLead = user => {
   try {
@@ -101,5 +151,6 @@ module.exports = {
   detailUser,
   deleteUser,
   createOrUpdateUser,
-  emitLead
+  emitLead,
+  recoverPassword
 }
