@@ -32,7 +32,8 @@ const migrateTeachers = async data => {
     )
     const teacher = {
       ...item,
-      role: 'Docente',
+      role: undefined,
+      roles: ['Docente'],
       country: 'Perú',
       photo
     }
@@ -108,7 +109,7 @@ const createAdmins = async () => {
     mobile: '999999990',
     username: 'CarlosPlasencia',
     password: '123456',
-    role: 'Administrador'
+    roles: ['Asesor', 'Docente', 'Administrador']
   })
   createUser({
     names: 'Julio Grados',
@@ -116,7 +117,7 @@ const createAdmins = async () => {
     mobile: '999999991',
     username: 'JulioGrados',
     password: '123456',
-    role: 'Administrador'
+    roles: ['Asesor', 'Docente', 'Administrador']
   })
   createUser({
     names: 'Juan Pino',
@@ -124,7 +125,7 @@ const createAdmins = async () => {
     mobile: '999999992',
     username: 'JuanPino',
     password: '123456',
-    role: 'Administrador'
+    roles: ['Asesor', 'Docente', 'Administrador']
   })
   createUser({
     names: 'Asesor',
@@ -132,7 +133,7 @@ const createAdmins = async () => {
     mobile: '999999993',
     username: 'asesor',
     password: '123456',
-    role: 'Asesor'
+    roles: ['Asesor']
   })
 }
 
@@ -516,11 +517,10 @@ const migrateUsersMoodle = async () => {
 
   const dataUsers = await sqlConsult(SQL_QUERY)
 
-  const users = await userDB.list({ select: 'email username' })
+  const users = await userDB.list({ select: 'email username roles' })
 
   const newUsers = await Promise.all(
     dataUsers.map(async (moodleUser, idx) => {
-      // return new Promise((resolve, reject) => {
       const data = {
         moodleId: moodleUser.id,
         username: moodleUser.username,
@@ -530,7 +530,8 @@ const migrateUsersMoodle = async () => {
         email: moodleUser.email,
         country: moodleUser.country === 'PE' ? 'Perú' : '',
         city: moodleUser.city,
-        role: 'Cliente'
+        role: undefined,
+        roles: ['Estudiante']
       }
 
       const exist = users.find(
@@ -540,11 +541,13 @@ const migrateUsersMoodle = async () => {
       if (exist) {
         try {
           const updateUser = await userDB.update(exist._id, {
-            moodleId: moodleUser.id
+            moodleId: moodleUser.id,
+            roles: [...exist.roles, 'Estudiante']
           })
+          console.log('update User', updateUser)
           return updateUser
         } catch (error) {
-          console.log('error al buscar usuario', exist)
+          console.log('error al editar usuario', exist, error)
           return error
         }
       } else {

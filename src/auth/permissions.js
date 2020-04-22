@@ -2,7 +2,7 @@
 
 const isAdmin = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'Administrador') {
+    if (req.user.roles.includes('Administrador')) {
       return next()
     }
   }
@@ -14,7 +14,7 @@ const isAdmin = (req, res, next) => {
 
 const isTeacher = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'Docente') {
+    if (req.user.roles.includes('Docente')) {
       return next()
     }
   }
@@ -24,21 +24,21 @@ const isTeacher = (req, res, next) => {
   })
 }
 
-const isCompany = (req, res, next) => {
+const isStudent = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'Compañia') {
+    if (req.user.roles.includes('Estudiante')) {
       return next()
     }
   }
   return res.status(401).json({
     success: false,
-    message: 'No tienes autorización de empresa.'
+    message: 'No eres estudiante.'
   })
 }
 
 const isClient = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'Cliente') {
+    if (req.user.roles.includes('Cliente')) {
       return next()
     }
   }
@@ -50,7 +50,7 @@ const isClient = (req, res, next) => {
 
 const isAssessor = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'Asesor') {
+    if (req.user.roles.includes('Asesor')) {
       return next()
     }
   }
@@ -60,23 +60,10 @@ const isAssessor = (req, res, next) => {
   })
 }
 
-const isColaborator = (req, res, next) => {
-  if (req.user) {
-    if (req.user.role === 'Colaborador') {
-      return next()
-    }
-  }
-  return res.status(401).json({
-    success: false,
-    message: 'No tienes autorización de Colaborador.'
-  })
-}
-
 module.exports = {
   isAdmin,
   isTeacher,
-  isCompany,
+  isStudent,
   isClient,
-  isAssessor,
-  isColaborator
+  isAssessor
 }

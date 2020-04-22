@@ -15,7 +15,7 @@ const loginUser = async (username, password) => {
     throw error
   }
 
-  const select = 'username personalInfo firstName lastName role password photo'
+  const select = 'username personalInfo firstName lastName roles password photo'
 
   let user = null
 

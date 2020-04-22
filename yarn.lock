@@ -1780,7 +1780,7 @@ data-urls@^1.1.0:
     whatwg-mimetype "^2.2.0"
     whatwg-url "^7.0.0"
 
-"db@file:../db":
+db@../db:
   version "1.0.0"
   dependencies:
     defaults "^1.0.3"
@@ -1788,7 +1788,7 @@ data-urls@^1.1.0:
     mongoose "^5.8.9"
     mongoose-beautiful-unique-validation "^7.1.1"
     mongoose-timestamp "^0.6.0"
-    utils "file:../../../.cache/yarn/v6/npm-db-1.0.0-f7e15108-bc63-4a9d-9acf-f7b099f7f946-1587146771258/node_modules/utils"
+    utils "file:../../../.cache/yarn/v6/npm-db-1.0.0-3f2b6598-d24d-4064-9057-0602e4f7a3fc-1587575356440/node_modules/utils"
 
 debug-log@^1.0.0:
   version "1.0.1"
