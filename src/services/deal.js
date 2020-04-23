@@ -20,18 +20,19 @@ const listDeals = async params => {
 
 const createDeal = async (body, loggedUser) => {
   if (body.status === 'Abierto') {
-    const existDeal = await findDealUser(body.linked.ref)
+    const existDeal = await findDealUser(body.client)
     if (existDeal) {
       const error = {
         status: 402,
-        message: 'Ya existe un trato abierto para el usuario.'
+        message: 'Ya existe un trato abierto para el cliente.'
       }
       throw error
     }
   } else if (body.status === 'Perdido') {
     body.isClosed = true
+    body.endDate = Date()
   } else if (body.status === 'Ganado') {
-    if (!body.linked.moodleId) {
+    if (!body.client.moodleId) {
       const error = {
         status: 402,
         message: 'El usuario debe ser cliente en moodle'
@@ -42,23 +43,38 @@ const createDeal = async (body, loggedUser) => {
   const deal = await dealDB.create(body)
 
   if (deal.status === 'Ganado') {
-    await addCoursesMoodle(deal, body.linked, loggedUser)
+    await addCoursesMoodle(deal, body.client, loggedUser)
   }
 
   return deal
 }
 
 const updateDeal = async (dealId, body, loggedUser) => {
-  const deal = await dealDB.detail({ query: { _id: dealId } })
-  const dataDeal = await changeStatus(body, deal)
+  const deal = await dealDB.detail({
+    query: { _id: dealId },
+    populate: { path: 'client' }
+  })
+  const dataDeal = await changeStatus(body, deal, loggedUser, body)
+  if (
+    deal.status !== 'Ganado' &&
+    body.status === 'Ganado' &&
+    !body.client.moodleId &&
+    !body.client.password
+  ) {
+    const error = {
+      status: 402,
+      message: 'El usuario debe tener una contraseña o ser cliente en moodle'
+    }
+    throw error
+  }
   const updateDeal = await dealDB.update(dealId, dataDeal)
-  if (deal.status !== 'Ganado' && updateDeal.status === 'Ganado') {
-    await addCoursesMoodle(deal, updateDeal.linked, loggedUser)
+  if (
+    (deal.status !== 'Ganado' && updateDeal.status === 'Ganado') ||
+    deal.addMoodle
+  ) {
+    await addCoursesMoodle(deal, body.client, loggedUser)
   }
-  if (deal.addMoodle) {
-    addCoursesMoodle(deal, body, loggedUser)
-  }
-  timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser, body)
+  timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser)
   return updateDeal
 }
 
@@ -78,7 +94,7 @@ const countDocuments = async params => {
 }
 
 const createOrUpdateDeal = async (user, body) => {
-  const deal = await findDealUser(user._id)
+  const deal = await findDealUser(user)
   if (deal) {
     const updateDeal = await editExistDeal(deal.toJSON(), user, body)
     return updateDeal
@@ -89,11 +105,11 @@ const createOrUpdateDeal = async (user, body) => {
   }
 }
 
-const findDealUser = async userId => {
+const findDealUser = async user => {
   try {
     const deal = await dealDB.detail({
       query: {
-        'linked.ref': userId,
+        client: user._id || user,
         status: 'Abierto'
       },
       populate: {
@@ -108,16 +124,19 @@ const findDealUser = async userId => {
 
 const createNewDeal = async (user, body) => {
   const dataDeal = await addInitialStatus(body)
-  dataDeal.assessor = await assignedAssessor(dataDeal)
+  dataDeal.assessor = await assignedAssessor(body.courses)
   const deal = await dealDB.create({
     ...dataDeal,
-    linked: {
-      ...user,
-      ref: user._id
-    }
+    client: user,
+    students: [
+      {
+        student: user,
+        courses: body.courses
+      }
+    ]
   })
   emitDeal(deal)
-  addCall(user, deal, deal.courses)
+  addCall(user, deal, body.courses)
   prepareCourses(user, deal.toJSON(), [], body.courses)
   incProspects(dataDeal)
   return deal
@@ -126,24 +145,38 @@ const createNewDeal = async (user, body) => {
 const editExistDeal = async (deal, user, body) => {
   const dataDeal = await addInitialStatus(deal)
   if (!dataDeal.assessor) {
-    dataDeal.assessor = await assignedAssessor(dataDeal)
+    dataDeal.assessor = await assignedAssessor(body.courses)
     incProspects(dataDeal)
   }
-  dataDeal.courses = prepareCourses(user, dataDeal, deal.courses, body.courses)
+  dataDeal.students[0]
+    ? (dataDeal.students[0].courses = prepareCourses(
+        user,
+        dataDeal,
+        dataDeal.students[0].courses,
+        body.courses
+      ))
+    : {
+        ...dataDeal,
+        client: user,
+        students: [
+          {
+            student: user,
+            courses: prepareCourses(user, dataDeal, [], body.courses)
+          }
+        ]
+      }
   const updateDeal = await dealDB.update(deal._id, {
-    ...dataDeal,
-    linked: {
-      ...user,
-      ref: user._id
-    }
+    ...dataDeal
   })
   emitDeal(updateDeal)
-  addCall(user, updateDeal, body.courses)
+  addCall(user, updateDeal)
   return updateDeal
 }
 
 const addInitialStatus = async deal => {
-  deal.progress = await changeStatusProgress('initial', deal)
+  if (!deal.progress) {
+    deal.progress = await changeStatusProgress('initial', deal)
+  }
   deal.isClosed = false
   deal.statusActivity = 'todo'
   deal.status = 'Abierto'
@@ -167,8 +200,8 @@ const changeStatusProgress = async (key, data) => {
   }
 }
 
-const assignedAssessor = async deal => {
-  const coursesId = deal.courses.map(course => course._id)
+const assignedAssessor = async courses => {
+  const coursesId = courses.map(course => course._id)
   const assessors = await userDB.list({
     query: {
       roles: 'Asesor',
@@ -219,24 +252,36 @@ const getMinAssessor = assessors => {
   }
 }
 
-const addCall = async (lead, deal, courses) => {
-  const coursesName = courses.map(course => course.name).join(', ')
+const addCall = async (client, deal) => {
+  //const coursesName = courses.map(course => course.name).join(', ')
+  const call = await callDB.detail({
+    query: { deal: deal._id, isCompleted: false }
+  })
+  if (call) {
+    return
+  }
+  const lastCall = await callDB.detail({
+    query: { deal: deal._id },
+    sort: '-createdAt'
+  })
+  const number = lastCall ? lastCall.number + 1 : 1
   const dataCall = {
-    name: `Llamada de contacto [${coursesName}]`,
+    name: `Llamada ${number}`,
+    number,
     hour: moment()
       .add(1, 'minutes')
       .format('HH:mm'),
     date: moment(),
     assigned: deal.assessor,
     linked: {
-      names: lead.names,
-      ref: lead._id
+      names: client.names,
+      ref: client._id
     },
     deal: deal._id
   }
   try {
-    const call = await callDB.create(dataCall)
-    emitCall(call)
+    const newCall = await callDB.create(dataCall)
+    emitCall(newCall)
   } catch (error) {
     console.log('error save call', dataCall, error)
   }
@@ -338,20 +383,52 @@ const getSubstitutions = ({ course, linked, assigned }) => {
   return substitutions
 }
 
-const changeStatus = async (dataDeal, deal) => {
-  if (dataDeal.status === 'Perdido') {
-    dataDeal.isClosed = true
-    dataDeal.statusActivity = 'done'
-    dataDeal.status = 'Perdido'
-    decProspects(deal)
+const changeStatus = async (dataDeal, deal, assigned, body) => {
+  try {
+    if (dataDeal.status === 'Perdido') {
+      dataDeal.isClosed = true
+      dataDeal.statusActivity = 'done'
+      dataDeal.status = 'Perdido'
+      decProspects(deal)
+      createTimeline({
+        linked: deal.client,
+        deal,
+        assigned,
+        type: 'Deal',
+        name: `[Trato Perdido] ${body.lostReason}`
+      })
+    }
+    if (dataDeal.status === 'Pausado') {
+      dataDeal.isClosed = true
+      dataDeal.statusActivity = 'done'
+      dataDeal.status = 'Pausado'
+      decProspects(deal)
+      createTimeline({
+        linked: deal.client,
+        deal,
+        assigned,
+        type: 'Deal',
+        name: `[Trato Pausado] ${body.pauseReason}`
+      })
+    }
+    if (deal.status !== 'Abierto' && dataDeal.status === 'Abierto') {
+      dataDeal.isClosed = false
+      dataDeal.statusActivity = 'todo'
+      dataDeal.status = 'Abierto'
+      incProspects(deal)
+      createTimeline({
+        linked: deal.client,
+        deal,
+        assigned,
+        type: 'Deal',
+        name: `[Trato Reabierto]`
+      })
+    }
+    return dataDeal
+  } catch (error) {
+    console.log(error)
+    throw error
   }
-  if (deal.status !== 'Abierto' && dataDeal.status === 'Abierto') {
-    dataDeal.isClosed = false
-    dataDeal.statusActivity = 'todo'
-    dataDeal.status = 'Abierto'
-    incProspects(deal)
-  }
-  return dataDeal
 }
 
 const incProspects = async deal => {
@@ -370,29 +447,20 @@ const decProspects = async deal => {
   }
 }
 
-const timelineProgress = (updateDeal, deal, assigned, body) => {
+const timelineProgress = (updateDeal, deal, assigned) => {
   if (updateDeal.progress && deal.progress) {
     const oldRef = deal.progress.ref.toString()
     const oldName = deal.progress.name
     const newRef = updateDeal.progress.ref.toString()
     const newName = updateDeal.progress.name
     if (oldRef !== newRef) {
-      if (updateDeal.status === 'Perdido') {
-        createTimeline({
-          linked: updateDeal.linked,
-          assigned,
-          type: 'Deal',
-          name: `[Trato Perdido] ${body.lostReason}`,
-          note: body.lostNote
-        })
-      } else {
-        createTimeline({
-          linked: updateDeal.linked,
-          assigned,
-          type: 'Etapa',
-          name: `${oldName} → ${newName}`
-        })
-      }
+      createTimeline({
+        linked: updateDeal.client,
+        deal,
+        assigned,
+        type: 'Etapa',
+        name: `${oldName} → ${newName}`
+      })
     }
   }
   if (updateDeal.progressPayment && deal.progressPayment) {
@@ -403,6 +471,7 @@ const timelineProgress = (updateDeal, deal, assigned, body) => {
     if (oldRef !== newRef) {
       createTimeline({
         linked: updateDeal.linked,
+        deal,
         assigned,
         type: 'Etapa',
         name: `${oldName} → ${newName}`
@@ -412,9 +481,14 @@ const timelineProgress = (updateDeal, deal, assigned, body) => {
 }
 
 const addCoursesMoodle = async (deal, data, logged) => {
-  const user = await userDB.detail({ query: { _id: deal.linked.ref } })
+  const user = await userDB.detail({
+    query: { _id: deal.client._id || deal.client }
+  })
   const timeline = {
-    linked: deal.linked,
+    linked: {
+      ...user.toJSON(),
+      ref: user._id
+    },
     assigned: {
       username: logged.username,
       ref: logged._id
@@ -479,7 +553,6 @@ const addCoursesMoodle = async (deal, data, logged) => {
         return course
       })
     )
-    console.log('courses', courses)
     return courses
   } catch (error) {
     if (error.status) {

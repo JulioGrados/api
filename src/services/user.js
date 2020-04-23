@@ -56,10 +56,18 @@ const createOrUpdateUser = async body => {
   try {
     const params = createFindQuery(body)
     const lead = await userDB.detail(params)
+    if (lead.roles && lead.roles.length) {
+      if (lead.roles.findIndex(role => role === 'Interesado') === -1) {
+        body.roles = ['Interesado', ...lead.roles]
+      }
+    } else {
+      body.roles = ['Interesado']
+    }
     user = await userDB.update(lead._id, { ...body })
     await createOrUpdateDeal(user.toJSON(), body)
   } catch (error) {
     if (error.status === 404) {
+      body.roles = ['Interesado']
       user = await userDB.create(body)
       createTimeline({
         linked: user,

@@ -23,6 +23,7 @@ const updateDeal = async (req, res) => {
     const deal = await service.updateDeal(dealId, req.body, req.user)
     return res.status(200).json(deal)
   } catch (error) {
+    console.log('error', error)
     return res.status(error.status || 500).json(error)
   }
 }
