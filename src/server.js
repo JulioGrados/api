@@ -9,16 +9,10 @@ const config = require('config')
 
 const routes = require('./routes')
 const routesOpen = require('./routes/open')
-const Sentry = require('@sentry/node')
 
 const { authHandler } = require('./auth')
 
 const server = express()
-
-if (config.server.env === 'production') {
-  Sentry.init({ dsn: config.sentry.dsn })
-  server.use(Sentry.Handlers.requestHandler())
-}
 
 server.use(
   fileUpload({

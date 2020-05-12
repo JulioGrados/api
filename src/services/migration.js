@@ -32,6 +32,8 @@ const migrateTeachers = async data => {
     )
     const teacher = {
       ...item,
+      role: undefined,
+      roles: ['Docente'],
       country: 'Perú',
       photo
     }
@@ -104,10 +106,10 @@ const createAdmins = async () => {
   createUser({
     names: 'Carlos Plasencia',
     email: 'carlos@eai.edu.pe',
-    mobile: '942254876',
+    mobile: '999999990',
     username: 'CarlosPlasencia',
     password: '123456',
-    role: 'admin'
+    roles: ['Asesor', 'Docente', 'Administrador']
   })
   createUser({
     names: 'Julio Grados',
@@ -115,7 +117,7 @@ const createAdmins = async () => {
     mobile: '999999991',
     username: 'JulioGrados',
     password: '123456',
-    role: 'admin'
+    roles: ['Asesor', 'Docente', 'Administrador']
   })
   createUser({
     names: 'Juan Pino',
@@ -123,7 +125,7 @@ const createAdmins = async () => {
     mobile: '999999992',
     username: 'JuanPino',
     password: '123456',
-    role: 'admin'
+    roles: ['Asesor', 'Docente', 'Administrador']
   })
   createUser({
     names: 'Asesor',
@@ -131,7 +133,7 @@ const createAdmins = async () => {
     mobile: '999999993',
     username: 'asesor',
     password: '123456',
-    role: 'assessor'
+    roles: ['Asesor']
   })
 }
 
@@ -515,9 +517,10 @@ const migrateUsersMoodle = async () => {
 
   const dataUsers = await sqlConsult(SQL_QUERY)
 
+  const users = await userDB.list({ select: 'email username roles' })
+
   const newUsers = await Promise.all(
     dataUsers.map(async (moodleUser, idx) => {
-      // return new Promise((resolve, reject) => {
       const data = {
         moodleId: moodleUser.id,
         username: moodleUser.username,
@@ -527,25 +530,32 @@ const migrateUsersMoodle = async () => {
         email: moodleUser.email,
         country: moodleUser.country === 'PE' ? 'Perú' : '',
         city: moodleUser.city,
-        role: 'client'
+        role: undefined,
+        roles: ['Estudiante']
       }
 
-      try {
-        const user = await userDB.create(data)
-        return user
-      } catch (error) {
-        if (error.status === 402) {
-          try {
-            const user = userDB.detail({
-              query: { username: moodleUser.username }
-            })
-            await userDB.update(user._id, { moodleId: moodleUser.id })
-            return user
-          } catch (error) {
-            return error
-          }
-        } else {
-          console.log('data User', moodleUser)
+      const exist = users.find(
+        user => user.email === data.email || user.username === data.username
+      )
+
+      if (exist) {
+        try {
+          const updateUser = await userDB.update(exist._id, {
+            moodleId: moodleUser.id,
+            roles: [...exist.roles, 'Estudiante']
+          })
+          console.log('update User', updateUser)
+          return updateUser
+        } catch (error) {
+          console.log('error al editar usuario', exist, error)
+          return error
+        }
+      } else {
+        try {
+          const user = await userDB.create(data)
+          return user
+        } catch (error) {
+          console.log('error al crear usuario', moodleUser)
           return error
         }
       }

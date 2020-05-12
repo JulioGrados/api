@@ -85,6 +85,17 @@ const createOrUpdateUser = async (req, res) => {
   }
 }
 
+const recoverPassword = async (req, res) => {
+  const body = req.body
+  try {
+    const user = await service.recoverPassword(body)
+    return res.status(201).json(user)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 module.exports = {
   countDocuments,
   listUsers,
@@ -93,5 +104,6 @@ module.exports = {
   detailUser,
   deleteUser,
   listTeachers,
-  createOrUpdateUser
+  createOrUpdateUser,
+  recoverPassword
 }

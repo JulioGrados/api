@@ -8,7 +8,7 @@ const listTestimonies = async (req, res) => {
 }
 
 const createTestimony = async (req, res) => {
-  const body = JSON.parse(req.body.data)
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.image
   try {
     const testimony = await service.createTestimony(body, file, req.user)
@@ -20,7 +20,7 @@ const createTestimony = async (req, res) => {
 
 const updateTestimony = async (req, res) => {
   const testimonyId = req.params.id
-  const body = JSON.parse(req.body.data)
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.image
   try {
     const testimony = await service.updateTestimony(

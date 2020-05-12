@@ -2,43 +2,43 @@
 
 const isAdmin = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'admin') {
+    if (req.user.roles.includes('Administrador')) {
       return next()
     }
   }
   return res.status(401).json({
     success: false,
-    message: 'No tienes autorización de admin.'
+    message: 'No tienes autorización de administrador.'
   })
 }
 
 const isTeacher = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'teacher') {
+    if (req.user.roles.includes('Docente')) {
       return next()
     }
   }
   return res.status(401).json({
     success: false,
-    message: 'No tienes autorización de profesor.'
+    message: 'No tienes autorización de docente.'
   })
 }
 
-const isCompany = (req, res, next) => {
+const isStudent = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'compay') {
+    if (req.user.roles.includes('Estudiante')) {
       return next()
     }
   }
   return res.status(401).json({
     success: false,
-    message: 'No tienes autorización de empresa.'
+    message: 'No eres estudiante.'
   })
 }
 
 const isClient = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'client') {
+    if (req.user.roles.includes('Cliente')) {
       return next()
     }
   }
@@ -50,7 +50,7 @@ const isClient = (req, res, next) => {
 
 const isAssessor = (req, res, next) => {
   if (req.user) {
-    if (req.user.role === 'assessor') {
+    if (req.user.roles.includes('Asesor')) {
       return next()
     }
   }
@@ -60,23 +60,10 @@ const isAssessor = (req, res, next) => {
   })
 }
 
-const isColaborator = (req, res, next) => {
-  if (req.user) {
-    if (req.user.role === 'collaborator') {
-      return next()
-    }
-  }
-  return res.status(401).json({
-    success: false,
-    message: 'No tienes autorización de Colaborador.'
-  })
-}
-
 module.exports = {
   isAdmin,
   isTeacher,
-  isCompany,
+  isStudent,
   isClient,
-  isAssessor,
-  isColaborator
+  isAssessor
 }
