@@ -17,6 +17,46 @@ const createTestimony = async (body, file, loggedUser) => {
   return testimony
 }
 
+const listTestimoniesCourse = async ({ courseId, categoryId }) => {
+  let testimonies = []
+  const params = {
+    query: {
+      'course.ref': courseId
+    },
+    limit: 4
+  }
+  const testimoniesCourse = await testimonyDB.list(params)
+  if (testimoniesCourse.length < 4) {
+    const params = {
+      query: {
+        'course.category.ref': categoryId,
+        _id: {
+          $nin: testimoniesCourse.map(item => item._id)
+        }
+      },
+      limit: 4 - testimoniesCourse.length
+    }
+    const testimoniesCategory = await testimonyDB.list(params)
+    testimonies = [...testimoniesCourse, ...testimoniesCategory]
+    if (testimonies.length < 4) {
+      const params = {
+        query: {
+          _id: {
+            $nin: testimonies.map(item => item._id)
+          }
+        },
+        limit: 4 - testimonies.length
+      }
+      const testimoniesGeneral = await testimonyDB.list(params)
+      testimonies = [...testimonies, ...testimoniesGeneral]
+    }
+  } else {
+    testimonies = testimoniesCourse
+  }
+
+  return testimonies
+}
+
 const updateTestimony = async (testimonyId, body, file, loggedUser) => {
   if (file) {
     const route = await saveFile(file, '/testimonies')
@@ -44,6 +84,7 @@ const countDocuments = async params => {
 module.exports = {
   countDocuments,
   listTestimonies,
+  listTestimoniesCourse,
   createTestimony,
   updateTestimony,
   detailTestimony,

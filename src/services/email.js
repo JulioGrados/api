@@ -44,6 +44,10 @@ const countDocuments = async params => {
 
 const prepareEmail = ({ template, ...data }) => {
   const { linked, assigned } = template || data
+  console.log('template', template)
+  console.log('data', data)
+  console.log('linked', linked)
+  console.log('linked names', linked.names)
   const dataEmail = {
     ...data,
     linked: {
@@ -59,7 +63,7 @@ const prepareEmail = ({ template, ...data }) => {
       ref: template._id
     }
   }
-
+  console.log('dataEmail', dataEmail)
   return dataEmail
 }
 

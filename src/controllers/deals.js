@@ -74,6 +74,16 @@ const createOrUpdate = async (req, res) => {
   }
 }
 
+const enrolDeal = async (req, res) => {
+  try {
+    const deal = await service.enrolStudents(req.body, req.user)
+    return res.status(201).json(deal)
+  } catch (error) {
+    console.log(error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 module.exports = {
   countDocuments,
   listDeals,
@@ -81,5 +91,6 @@ module.exports = {
   updateDeal,
   detailDeal,
   deleteDeal,
-  createOrUpdate
+  createOrUpdate,
+  enrolDeal
 }

@@ -7,4 +7,6 @@ const router = new Router()
 
 router.route('/testimonies').get(Api.listTestimonies)
 
+router.route('/testimonies/course').get(Api.listTestimoniesCourse)
+
 module.exports = router

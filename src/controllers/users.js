@@ -68,7 +68,7 @@ const countDocuments = async (req, res) => {
 const listTeachers = async (req, res) => {
   const params = {
     ...req.query,
-    select: 'personalInfo firstName lastName description photo country username'
+    select: 'names firstName lastName description photo country username'
   }
   const users = await service.listUsers(params)
   return res.status(200).json(users)

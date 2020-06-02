@@ -45,6 +45,7 @@ const countDocuments = async params => {
 /* functions */
 
 const emitTimeline = timeline => {
+  // console.log('timeline emitTimeline', timeline)
   try {
     if (timeline.assigned) {
       const io = getSocket()

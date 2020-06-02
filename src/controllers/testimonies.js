@@ -7,6 +7,11 @@ const listTestimonies = async (req, res) => {
   return res.status(200).json(testimonies)
 }
 
+const listTestimoniesCourse = async (req, res) => {
+  const testimonies = await service.listTestimoniesCourse(req.query)
+  return res.status(200).json(testimonies)
+}
+
 const createTestimony = async (req, res) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.image
@@ -72,6 +77,7 @@ const countDocuments = async (req, res) => {
 module.exports = {
   countDocuments,
   listTestimonies,
+  listTestimoniesCourse,
   createTestimony,
   updateTestimony,
   detailTestimony,

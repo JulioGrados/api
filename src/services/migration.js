@@ -32,6 +32,8 @@ const migrateTeachers = async data => {
     )
     const teacher = {
       ...item,
+      names: item.personalInfo.names,
+      email: item.personalInfo.email,
       role: undefined,
       roles: ['Docente'],
       country: 'Perú',
@@ -318,28 +320,28 @@ const migrateCourses = async (
     data.map(async item => {
       let image, shortimage, brochure
       try {
-        /* image = await downloadFile(
+        image = await downloadFile(
           item.image,
           '/courses',
           'image-' + item.slug + '.png'
-        ) */
+        )
         image = `/courses/image-${item.slug}.png`
-        /* shortimage = await downloadFile(
+        shortimage = await downloadFile(
           item.shortImage,
           '/courses',
           'shortimage-' + item.slug + '.png'
-        ) */
+        )
         shortimage = `/courses/shortimage-${item.slug}.png`
         const id = item.brochureDrive && item.brochureDrive.split('id=')[1]
         const url = `https://drive.google.com/u/0/uc?id=${id}&export=download`
         brochure = `/brochure/brochure-${item.slug}.pdf`
-        /* if (id) {
+        if (id) {
           brochure = await downloadFile(
             url,
             '/brochure',
             'brochure-' + item.slug + '.pdf'
           )
-        } */
+        }
       } catch (error) {
         error.course = item.name
         error.slug = item.slug

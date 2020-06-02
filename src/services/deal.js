@@ -2,6 +2,7 @@
 
 const _ = require('lodash')
 const moment = require('moment-timezone')
+const { generateHash } = require('utils/functions/auth')
 
 const { dealDB, userDB, progressDB, callDB } = require('../db')
 
@@ -55,25 +56,9 @@ const updateDeal = async (dealId, body, loggedUser) => {
     populate: { path: 'client' }
   })
   const dataDeal = await changeStatus(body, deal, loggedUser, body)
-  if (
-    deal.status !== 'Ganado' &&
-    body.status === 'Ganado' &&
-    !body.client.moodleId &&
-    !body.client.password
-  ) {
-    const error = {
-      status: 402,
-      message: 'El usuario debe tener una contraseña o ser cliente en moodle'
-    }
-    throw error
-  }
+
   const updateDeal = await dealDB.update(dealId, dataDeal)
-  if (
-    (deal.status !== 'Ganado' && updateDeal.status === 'Ganado') ||
-    deal.addMoodle
-  ) {
-    await addCoursesMoodle(deal, body.client, loggedUser)
-  }
+
   timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser)
   return updateDeal
 }
@@ -95,11 +80,14 @@ const countDocuments = async params => {
 
 const createOrUpdateDeal = async (user, body) => {
   const deal = await findDealUser(user)
+  // console.log('deal', deal)
   if (deal) {
+    //console.log('actualizo deal')
     const updateDeal = await editExistDeal(deal.toJSON(), user, body)
     return updateDeal
   } else {
-    const deal = createNewDeal(user, body)
+    const deal = await createNewDeal(user, body)
+    //console.log('creo deal', deal)
     createTimeline({ linked: user, type: 'Deal', name: 'Nuevo trato creado' })
     return deal
   }
@@ -124,6 +112,7 @@ const findDealUser = async user => {
 
 const createNewDeal = async (user, body) => {
   const dataDeal = await addInitialStatus(body)
+  //console.log('body', body)
   dataDeal.assessor = await assignedAssessor(body.courses)
   const deal = await dealDB.create({
     ...dataDeal,
@@ -480,9 +469,14 @@ const timelineProgress = (updateDeal, deal, assigned) => {
   }
 }
 
-const addCoursesMoodle = async (deal, data, logged) => {
-  const user = await userDB.detail({
-    query: { _id: deal.client._id || deal.client }
+const addCoursesMoodle = async (student, courses, dealId, logged) => {
+  const deal = await dealDB.detail({
+    query: { _id: dealId },
+    populate: { path: 'client' }
+  })
+
+  let user = await userDB.detail({
+    query: { _id: student._id }
   })
   const timeline = {
     linked: {
@@ -493,14 +487,16 @@ const addCoursesMoodle = async (deal, data, logged) => {
       username: logged.username,
       ref: logged._id
     },
+    deal: deal,
     type: 'Curso'
   }
   if (!user.moodleId) {
+    // console.log('registrar usuario moodle')
     const exist = await searchUser({
       username: user.username,
       email: user.email
     })
-    console.log(exist)
+    // console.log('exist', exist)
     if (exist && exist.user) {
       const err = {
         status: 402,
@@ -510,26 +506,27 @@ const addCoursesMoodle = async (deal, data, logged) => {
     }
     const moodleUser = await createNewUser({
       ...user.toJSON(),
-      username: data.username,
-      password: data.password
+      username: student.username,
+      password: student.password
     })
-    console.log('moodleUser', moodleUser)
+    // console.log('moodleUser', moodleUser)
     const dataUser = {
-      username: data.username || undefined,
-      password: data.password ? generateHash(data.password) : undefined,
+      username: student.username || undefined,
+      password: student.password ? generateHash(student.password) : undefined,
       moodleId: moodleUser.id
     }
-    await userDB.update(user._id, dataUser)
+    user = await userDB.update(user._id, dataUser)
     createTimeline({
       ...timeline,
       type: 'Cuenta',
       name: '[Cuenta] se creó la cuenta en Moodle'
     })
-    sendEmailAccess(user, logged)
+    sendEmailAccess(user.toJSON(), logged)
   }
+  // console.log('registro de cursos')
   try {
-    const courses = await Promise.all(
-      deal.courses.map(async course => {
+    const coursesEnrol = await Promise.all(
+      courses.map(async course => {
         await createEnrolUser({ course, user })
         createTimeline({
           ...timeline,
@@ -553,8 +550,9 @@ const addCoursesMoodle = async (deal, data, logged) => {
         return course
       })
     )
-    return courses
+    return coursesEnrol
   } catch (error) {
+    // console.log('error', error)
     if (error.status) {
       throw error
     } else {
@@ -604,6 +602,28 @@ const sendEmailAccess = async (user, logged) => {
   }
 }
 
+const enrolStudents = async ({ students, dealId }, logged) => {
+  //const deal = await dealDB.detail({ query: { _id: dealId } })
+  const enrols = await Promise.all(
+    students.map(async item => {
+      const courses = await addCoursesMoodle(
+        item.student,
+        item.courses,
+        dealId,
+        logged
+      )
+      return courses
+    })
+  )
+
+  const updatedDeal = await dealDB.update(dealId, {
+    isClosed: true,
+    endDate: new Date()
+  })
+  emitDeal(updatedDeal)
+  return { enrols, updatedDeal }
+}
+
 module.exports = {
   countDocuments,
   listDeals,
@@ -612,5 +632,6 @@ module.exports = {
   detailDeal,
   deleteDeal,
   createOrUpdateDeal,
-  emitDeal
+  emitDeal,
+  enrolStudents
 }
