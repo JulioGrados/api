@@ -96,8 +96,9 @@ const migrateTaskMoodle = async (req, res) => {
 }
 const migrateCertificates = async (req, res) => {
   req.setTimeout(0)
+  const dataCertificate = JSON.parse(req.files.certificate.data.toString())
   try {
-    const response = await service.migrateCertificates()
+    const response = await service.migrateCertificates(dataCertificate)
     return res.status(200).json(response)
   } catch (error) {
     console.log('error', error)

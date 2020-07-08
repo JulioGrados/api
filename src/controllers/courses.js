@@ -33,6 +33,7 @@ const updateCourse = async (req, res) => {
 const detailCourse = async (req, res) => {
   const courseId = req.params.id
   const params = req.query
+  console.log(params)
   if (params.query && courseId) {
     params.query._id = courseId
   } else if (courseId) {

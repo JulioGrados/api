@@ -914,111 +914,200 @@ const migrateEvaluationCourse = async (courseId, name) => {
   return { newEnrols, not }
 }
 
-const migrateCertificates = async () => {
-  const getConvert = field =>
-    `(CASE WHEN LENGTH(code) > 7 THEN CONVERT(CAST(CONVERT(${field} USING latin1) AS BINARY) USING utf8) ELSE ${field} END) as ${field}s`
-
-  const SQL_QUERY = `SELECT *, ${getConvert('course')}, ${getConvert(
-    'firstname'
-  )}, ${getConvert('lastname')} FROM wp_certificate`
-
+const migrateCertificates = async dataCertificate => {
   const enrols = await enrolDB.list({})
   const users = await userDB.list({})
   const courses = await courseDB.list({})
-
-  const dataCertificate = await sqlConsult(SQL_QUERY, 'manvicio_xyzwp')
-
   let not = 0
+  const resp = dataCertificate.map(async element => {
+    // console.log(element)
+    const user = users.find(user => {
+      const isFirstName =
+        compareOnlySimilarity(user.firstName, element.firstName) > 0.9
+      const isLastName =
+        compareOnlySimilarity(user.lastName, element.lastName) > 0.9
 
-  const resp = await Promise.all(
-    dataCertificate.map(async certificate => {
-      const user = users.find(user => {
-        const isFirstName =
-          compareOnlySimilarity(user.firstName, certificate.firstnames) > 0.9
-        const isLastName =
-          compareOnlySimilarity(user.lastName, certificate.lastnames) > 0.9
-
-        return isFirstName && isLastName
-      })
-
-      if (!user) {
-        not++
-        console.log('Not User', certificate)
-        return
-      }
-
-      const course = courses.find(course => {
-        let isCourse =
-          compareOnlySimilarity(course.shortName, certificate.courses) > 0.8
-
-        if (!isCourse) {
-          isCourse =
-            certificate.courses.includes(course.shortName) ||
-            course.name.includes(certificate.courses)
-        }
-
-        return isCourse
-      })
-
-      if (!course) {
-        not++
-
-        console.log('Not Course', certificate)
-        return
-      }
-
-      const enrol = enrols.find(enrol => {
-        const isCourse = course._id.toString() === enrol.course.ref.toString()
-        const isUser = enrol.linked.ref.toString() === user._id.toString()
-
-        return isCourse && isUser
-      })
-
-      if (!enrol) {
-        return
-      }
-
-      const data = {
-        code: certificate.code,
-        shortCode: certificate.codeshort,
-        linked: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          ref: user._id
-        },
-        course: {
-          shortName: course.shortName,
-          academicHours: certificate.hours,
-          ref: course._id
-        },
-        moodleId: certificate.id,
-        enrol: enrol && enrol._id,
-        score: certificate.score,
-        date: Date(certificate.date)
-      }
-
-      try {
-        const certi = await certificateDB.create(data)
-
-        if (enrol && enrol.isFinished) {
-          await enrolDB.update(enrol._id, {
-            certificate: {
-              ...certi.toJSON(),
-              ref: certi._id
-            }
-          })
-        }
-
-        return certi
-      } catch (error) {
-        return error
-      }
+      return isFirstName && isLastName
     })
-  )
 
-  console.log('not', not)
+    if (!user) {
+      not++
+      console.log('Not User', element)
+      return
+    }
 
+    const course = courses.find(course => {
+      let isCourse =
+        compareOnlySimilarity(course.shortName, element.course) > 0.8
+
+      if (!isCourse) {
+        isCourse =
+          element.course.includes(course.shortName) ||
+          course.name.includes(element.course)
+      }
+
+      return isCourse
+    })
+
+    if (!course) {
+      not++
+
+      console.log('Not Course', element)
+      return
+    }
+
+    const enrol = enrols.find(enrol => {
+      const isCourse = course._id.toString() === enrol.course.ref.toString()
+      const isUser = enrol.linked.ref.toString() === user._id.toString()
+
+      return isCourse && isUser
+    })
+
+    if (!enrol) {
+      // console.log('Not enrol', element)
+      // return
+    }
+
+    const data = {
+      code: element.code,
+      shortCode: element.shortCode,
+      linked: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        ref: user._id
+      },
+      course: {
+        shortName: course.shortName,
+        academicHours: course.academicHours,
+        ref: course._id
+      },
+      moodleId: course.moodleId,
+      enrol: enrol && enrol._id,
+      score: element.score,
+      date: new Date(element.date)
+    }
+    try {
+      const certi = await certificateDB.create(data)
+
+      if (enrol && enrol.isFinished) {
+        await enrolDB.update(enrol._id, {
+          certificate: {
+            ...certi.toJSON(),
+            ref: certi._id
+          }
+        })
+      }
+
+      return certi
+    } catch (error) {
+      return error
+    }
+  })
   return resp
+  // const getConvert = field =>
+  //   `(CASE WHEN LENGTH(code) > 7 THEN CONVERT(CAST(CONVERT(${field} USING latin1) AS BINARY) USING utf8) ELSE ${field} END) as ${field}s`
+
+  // const SQL_QUERY = `SELECT *, ${getConvert('course')}, ${getConvert(
+  //   'firstname'
+  // )}, ${getConvert('lastname')} FROM wp_certificate`
+
+  // const enrols = await enrolDB.list({})
+  // const users = await userDB.list({})
+  // const courses = await courseDB.list({})
+
+  // const dataCertificate = await sqlConsult(SQL_QUERY, 'manvicio_xyzwp')
+
+  // let not = 0
+
+  // const resp = await Promise.all(
+  //   dataCertificate.map(async certificate => {
+  //     const user = users.find(user => {
+  //       const isFirstName =
+  //         compareOnlySimilarity(user.firstName, certificate.firstnames) > 0.9
+  //       const isLastName =
+  //         compareOnlySimilarity(user.lastName, certificate.lastnames) > 0.9
+
+  //       return isFirstName && isLastName
+  //     })
+
+  //     if (!user) {
+  //       not++
+  //       console.log('Not User', certificate)
+  //       return
+  //     }
+
+  //     const course = courses.find(course => {
+  //       let isCourse =
+  //         compareOnlySimilarity(course.shortName, certificate.courses) > 0.8
+
+  //       if (!isCourse) {
+  //         isCourse =
+  //           certificate.courses.includes(course.shortName) ||
+  //           course.name.includes(certificate.courses)
+  //       }
+
+  //       return isCourse
+  //     })
+
+  //     if (!course) {
+  //       not++
+
+  //       console.log('Not Course', certificate)
+  //       return
+  //     }
+
+  //     const enrol = enrols.find(enrol => {
+  //       const isCourse = course._id.toString() === enrol.course.ref.toString()
+  //       const isUser = enrol.linked.ref.toString() === user._id.toString()
+
+  //       return isCourse && isUser
+  //     })
+
+  //     if (!enrol) {
+  //       return
+  //     }
+
+  //     const data = {
+  //       code: certificate.code,
+  //       shortCode: certificate.codeshort,
+  //       linked: {
+  //         firstName: user.firstName,
+  //         lastName: user.lastName,
+  //         ref: user._id
+  //       },
+  //       course: {
+  //         shortName: course.shortName,
+  //         academicHours: certificate.hours,
+  //         ref: course._id
+  //       },
+  //       moodleId: certificate.id,
+  //       enrol: enrol && enrol._id,
+  //       score: certificate.score,
+  //       date: Date(certificate.date)
+  //     }
+
+  //     try {
+  //       const certi = await certificateDB.create(data)
+
+  //       if (enrol && enrol.isFinished) {
+  //         await enrolDB.update(enrol._id, {
+  //           certificate: {
+  //             ...certi.toJSON(),
+  //             ref: certi._id
+  //           }
+  //         })
+  //       }
+
+  //       return certi
+  //     } catch (error) {
+  //       return error
+  //     }
+  //   })
+  // )
+
+  // console.log('not', not)
+
+  // return resp
 }
 
 module.exports = {

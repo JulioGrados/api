@@ -15,7 +15,9 @@ const {
   enrolCourse,
   createUser,
   userField,
-  coursesUser
+  coursesUser,
+  gradeUser,
+  enrolGetCourse
 } = require('config').moodle.functions
 
 const actionMoodle = (method, wsfunction, args = {}) => {
@@ -106,6 +108,35 @@ const createNewUser = async user => {
   return userMoodle[0]
 }
 
+const gradeNewUser = async user => {
+  const grade = {
+    userid: 820,
+    courseid: 3,
+    groupid: 0
+  }
+  console.log('dataUser', grade)
+  const userMoodle = await actionMoodle('POST', gradeUser, {
+    userid: 820,
+    courseid: 3
+  })
+
+  // const userMoodle = await actionMoodle('POST', enrolGetCourse, {
+  //   courseid: 3
+  // })
+
+  console.log('userMoodle', userMoodle.usergrades[0].gradeitems)
+  if (userMoodle && userMoodle.length) {
+    // await userDB.update(user._id, { moodleId: userMoodle[0].id })
+  } else {
+    const error = {
+      status: 500,
+      message: 'No se pudo crear el usuario de Moodle'
+    }
+    throw error
+  }
+  return userMoodle[0]
+}
+
 const findMoodleCourse = async course => {
   const courses = await actionMoodle('GET', getCourses)
   const courseEnroll = courses.find(item => item.fullname === course.name)
@@ -160,5 +191,6 @@ module.exports = {
   createEnrolUser,
   getUsersForField,
   getCourseForUser,
-  searchUser
+  searchUser,
+  gradeNewUser
 }
