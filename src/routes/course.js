@@ -1,0 +1,21 @@
+'use strict'
+
+const { Router } = require('express')
+const Api = require('../controllers/courses')
+
+const router = new Router()
+
+router.route('/courses/count').get(Api.countDocuments)
+
+router
+  .route('/courses')
+  .get(Api.listCourses)
+  .post(Api.createCourse)
+
+router
+  .route('/courses/:id')
+  .get(Api.detailCourse)
+  .put(Api.updateCourse)
+  .delete(Api.deleteCourse)
+
+module.exports = router
