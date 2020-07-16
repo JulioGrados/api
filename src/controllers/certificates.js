@@ -33,11 +33,13 @@ const updateCertificate = async (req, res) => {
 const detailCertificate = async (req, res) => {
   const certificateId = req.params.id
   const params = req.query
-  if (params.query) {
-    params.query._id = certificateId
-  } else {
-    params.query = {
-      _id: certificateId
+  if (certificateId) {
+    if (params.query) {
+      params.query._id = certificateId
+    } else {
+      params.query = {
+        _id: certificateId
+      }
     }
   }
 
@@ -45,6 +47,7 @@ const detailCertificate = async (req, res) => {
     const certificate = await service.detailCertificate(params)
     return res.status(200).json(certificate)
   } catch (error) {
+    console.log(error)
     return res.status(error.status || 500).json(error)
   }
 }

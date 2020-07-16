@@ -11,6 +11,16 @@ const createUser = async (req, res) => {
   }
 }
 
+const gradeUser = async (req, res) => {
+  try {
+    const user = await services.gradeNewUser(req.body)
+    console.log(user)
+    return user
+  } catch (error) {
+    return res.json(error.status || 500).json(error)
+  }
+}
+
 const enrrollUser = async (req, res) => {
   try {
     const enroll = await services.createEnrolUser(req.body)
@@ -22,5 +32,6 @@ const enrrollUser = async (req, res) => {
 
 module.exports = {
   createUser,
-  enrrollUser
+  enrrollUser,
+  gradeUser
 }
