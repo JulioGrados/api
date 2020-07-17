@@ -33,14 +33,24 @@ const updateCourse = async (req, res) => {
 const detailCourse = async (req, res) => {
   const courseId = req.params.id
   const params = req.query
-  console.log(params)
-  if (params.query && courseId) {
-    params.query._id = courseId
-  } else if (courseId) {
-    params.query = {
-      _id: courseId
+
+  if (courseId) {
+    if (params.query) {
+      params.query._id = courseId
+    } else {
+      params.query = {
+        _id: courseId
+      }
     }
   }
+
+  // if (params.query && courseId) {
+  //   params.query._id = courseId
+  // } else if (courseId) {
+  //   params.query = {
+  //     _id: courseId
+  //   }
+  // }
 
   try {
     const course = await service.detailCourse(params)
