@@ -47,7 +47,6 @@ const detailCertificate = async (req, res) => {
     const certificate = await service.detailCertificate(params)
     return res.status(200).json(certificate)
   } catch (error) {
-    console.log(error)
     return res.status(error.status || 500).json(error)
   }
 }
