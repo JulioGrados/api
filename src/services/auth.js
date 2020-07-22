@@ -48,7 +48,7 @@ const loginUser = async (username, password) => {
   delete user.password
 
   const token = jwt.sign(user.toJSON(), config.auth.secret, {
-    expiresIn: '1d'
+    expiresIn: '1y'
   })
 
   const respuesta = {
