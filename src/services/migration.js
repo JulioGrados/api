@@ -919,7 +919,21 @@ const migrateCertificates = async dataCertificate => {
   const users = await userDB.list({})
   const courses = await courseDB.list({})
   let not = 0
-  const resp = dataCertificate.map(async element => {
+
+  const filteredArr = dataCertificate.reduce((acc, current) => {
+    const x = acc.find(item => item.code === current.code)
+    if (!x) {
+      return acc.concat([current])
+    } else {
+      return acc
+    }
+  }, [])
+
+  const filteredFinal = filteredArr.filter(function (obj) {
+    return obj.lastName !== 'CAÑAPATANA CASTILLO'
+  })
+
+  const resp = filteredFinal.map(async element => {
     // console.log(element)
     const user = users.find(user => {
       const isFirstName =
@@ -931,9 +945,9 @@ const migrateCertificates = async dataCertificate => {
     })
 
     if (!user) {
-      not++
+      // not++
       console.log('Not User', element)
-      return
+      // return
     }
 
     const course = courses.find(course => {
@@ -950,53 +964,60 @@ const migrateCertificates = async dataCertificate => {
     })
 
     if (!course) {
-      not++
+      // not++
 
       console.log('Not Course', element)
-      return
+      // return
     }
 
     const enrol = enrols.find(enrol => {
-      const isCourse = course._id.toString() === enrol.course.ref.toString()
-      const isUser = enrol.linked.ref.toString() === user._id.toString()
-
-      return isCourse && isUser
+      if (course && user) {
+        const isCourse = course._id.toString() === enrol.course.ref.toString()
+        const isUser = enrol.linked.ref.toString() === user._id.toString()
+        return isCourse && isUser
+      } else {
+        return {}
+      }
     })
 
-    if (!enrol) {
-      // console.log('Not enrol', element)
-      // return
-    }
+    // if (!enrol) {
+    //   // console.log('Not enrol', element)
+    //   // return
+    // }
 
     const data = {
       code: element.code,
       shortCode: element.shortCode,
       linked: {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        ref: user._id
+        firstName: user ? user.firstName : element.firstName,
+        lastName: user ? user.lastName : element.lastName,
+        ref: user && user._id
       },
       course: {
-        shortName: course.shortName,
-        academicHours: course.academicHours,
-        ref: course._id
+        shortName: course && course.shortName,
+        academicHours: course && course.academicHours,
+        ref: course && course._id
       },
-      moodleId: course.moodleId,
+      moodleId: course && course.moodleId,
       enrol: enrol && enrol._id,
       score: element.score,
       date: new Date(element.date)
     }
+    console.log(data)
+    console.log(
+      '------------------------------------------------------------------------'
+    )
     try {
       const certi = await certificateDB.create(data)
 
-      if (enrol && enrol.isFinished) {
-        await enrolDB.update(enrol._id, {
-          certificate: {
-            ...certi.toJSON(),
-            ref: certi._id
-          }
-        })
-      }
+      // if (enrol && enrol.isFinished) {
+      //   await enrolDB.update(enrol._id, {
+      //     certificate: {
+      //       ...certi.toJSON(),
+      //       ref: certi._id
+      //     }
+      //   })
+      // }
 
       return certi
     } catch (error) {
