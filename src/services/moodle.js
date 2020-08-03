@@ -340,7 +340,7 @@ const createEnrolCourse = async (grades, course) => {
           number: exam.number,
           name: exam.name,
           score: result && result.graderaw,
-          isTaken: result ? true : false,
+          isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
           exam: exam._id
         }
         return data
@@ -447,7 +447,7 @@ const createEnrolCourse = async (grades, course) => {
           number: task.number,
           name: task.name,
           score: result && result.graderaw,
-          isTaken: !!result,
+          isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
           task: task._id
         }
         return data
@@ -554,7 +554,8 @@ const createCertificatesCourse = async course => {
           certificate: {
             ...certificate.toJSON(),
             ref: certificate._id
-          }
+          },
+          isFinished: true
         })
         console.log('Se actualizó enrol con certificado que existe:', certi)
         return certi
