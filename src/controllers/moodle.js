@@ -11,11 +11,10 @@ const createUser = async (req, res) => {
   }
 }
 
-const gradeUser = async (req, res) => {
+const createCertificates = async (req, res) => {
   try {
-    const user = await services.gradeNewUser(req.body)
-    console.log(user)
-    return user
+    const resp = await services.gradeNewCertificate(req.body)
+    return res.json(resp)
   } catch (error) {
     return res.json(error.status || 500).json(error)
   }
@@ -33,5 +32,5 @@ const enrrollUser = async (req, res) => {
 module.exports = {
   createUser,
   enrrollUser,
-  gradeUser
+  createCertificates
 }
