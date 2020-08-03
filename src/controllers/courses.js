@@ -31,8 +31,13 @@ const updateCourse = async (req, res) => {
 }
 
 const detailCourse = async (req, res) => {
-  const courseId = req.params.id
+  let courseId
   const params = req.query
+
+  if (params && params.params) {
+    const paramsID = JSON.parse(params.params)
+    courseId = paramsID.id
+  }
 
   if (courseId) {
     if (params.query) {
