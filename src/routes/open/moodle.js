@@ -5,6 +5,6 @@ const Api = require('../../controllers/moodle')
 
 const router = new Router()
 
-router.route('/moodle').get(Api.gradeUser)
+router.route('/moodle').post(Api.createCertificates)
 
 module.exports = router

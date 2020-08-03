@@ -160,11 +160,15 @@
 
 // const createEnrolUser = async ({ user, course }) =
 'use strict'
+const _ = require('lodash')
+var randomize = require('randomatic')
 
 const moodle_client = require('moodle-client')
 const { wwwroot, token, service } = require('config').moodle
-const { userDB, courseDB } = require('../db')
+const { userDB, courseDB, examDB, taskDB, certificateDB } = require('../db')
 const { enrolDB } = require('db/lib')
+
+const { calculateProm } = require('utils/functions/enrol')
 
 const init = moodle_client.init({
   wwwroot,
@@ -179,7 +183,9 @@ const {
   userField,
   coursesUser,
   gradeUser,
-  enrolGetCourse
+  enrolGetCourse,
+  quizGetCourse,
+  assignGetCourse
 } = require('config').moodle.functions
 
 const actionMoodle = (method, wsfunction, args = {}) => {
@@ -270,84 +276,596 @@ const createNewUser = async user => {
   return userMoodle[0]
 }
 
-const gradeNewUser = async courseId => {
-  const userMoodle = await actionMoodle('POST', enrolGetCourse, {
-    courseid: 4
+const createUserCourse = async usersMoodle => {
+  const users = await userDB.list({})
+  const userNew = usersMoodle.map(async element => {
+    // console.log(element)
+    const user = users.find(
+      item => parseInt(item.moodleId) === parseInt(element.id)
+    )
+
+    const data = {
+      moodleId: element.id,
+      username: element.username,
+      firstName: element.firstname,
+      lastName: element.lastname,
+      names: element.firstname + ' ' + element.lastname,
+      email: element.email,
+      country: element.country === 'PE' ? 'Perú' : '',
+      city: element.city,
+      role: undefined,
+      roles: ['Estudiante']
+    }
+
+    if (user) {
+      try {
+        const updateUser = await userDB.update(user._id, {
+          moodleId: element.id,
+          roles: [...user.roles, 'Estudiante']
+        })
+        console.log('Se actualizó usuario:')
+        return updateUser
+      } catch (error) {
+        console.log('error al editar usuario')
+        throw {
+          type: 'Actualizar usuario',
+          message: `No actualizó el usuario ${user.names}`,
+          metadata: user,
+          error: error
+        }
+      }
+    } else {
+      try {
+        const user = await userDB.create(data)
+        console.log('Se creo usuario:')
+        return user
+      } catch (error) {
+        console.log('error al crear usuario')
+        throw {
+          type: 'Crear usuario',
+          message: `No creó el usuario ${data.names}`,
+          metadata: data,
+          error: error
+        }
+      }
+    }
+  })
+  // const usersCreate = await Promise.all(userNew)
+  const results = await Promise.all(userNew.map(p => p.catch(e => e)))
+  const validUsers = results.filter(result => !result.error)
+  const errorUsers = results.filter(result => result.error)
+
+  return { validUsers, errorUsers }
+}
+
+const createExamCourse = async (exams, course) => {
+  let examsBD
+  try {
+    examsBD = await examDB.list({
+      query: { 'course.moodleId': course.moodleId }
+    })
+  } catch (error) {
+    return error
+  }
+
+  const examsNew = exams.map(async (element, idx) => {
+    const exam = examsBD.find(
+      item => parseInt(item.moodleId) === parseInt(element.id)
+    )
+
+    const data = {
+      moodleId: element.id,
+      name: element.name,
+      description: element.intro,
+      number: idx + 1,
+      course: {
+        ...course.toJSON(),
+        ref: course._id
+      }
+    }
+
+    if (exam) {
+      try {
+        const examNew = await examDB.update(exam._id, {
+          number: idx + 1,
+          moodleId: element.id,
+          description: element.intro
+        })
+        console.log('Se actualizó examen:', examNew)
+        return examNew
+      } catch (error) {
+        console.log('Error al actualizar examen:', error)
+        throw {
+          type: 'Actualizar examen',
+          message: `No actualizó el examen ${examNew.number}`,
+          metadata: exam,
+          error: error
+        }
+      }
+    } else {
+      try {
+        const examNew = await examDB.create(data)
+        console.log('Se creó examen:', examNew)
+        return examNew
+      } catch (error) {
+        console.log('Error al crear examen', error)
+        throw {
+          type: 'Crear examen',
+          message: `No creó el examen ${data.number}`,
+          metadata: data,
+          error: error
+        }
+      }
+    }
+  })
+  // const examsCreate = await Promise.all(examsNew)
+  const results = await Promise.all(examsNew.map(p => p.catch(e => e)))
+  const validEvaluations = results.filter(result => !result.error)
+  const errorEvaluations = results.filter(result => result.error)
+
+  return { validEvaluations, errorEvaluations }
+}
+
+const createTaskCourse = async (tasks, course) => {
+  let tasksBD
+  try {
+    tasksBD = await taskDB.list({
+      query: { 'course.moodleId': course.moodleId }
+    })
+  } catch (error) {
+    return error
+  }
+  const tasksNew = tasks.map(async (element, idx) => {
+    const task = tasksBD.find(item => item.name === element.name)
+
+    const data = {
+      moodleId: element.id,
+      name: element.name,
+      description: element.intro,
+      number: idx + 1,
+      course: {
+        ...course.toJSON(),
+        ref: course._id
+      }
+    }
+
+    if (task) {
+      try {
+        const taskNew = await taskDB.update(task._id, {
+          number: idx + 1,
+          moodleId: element.id,
+          description: element.intro
+        })
+        console.log('Se actualizó una tarea:', taskNew)
+        return taskNew
+      } catch (error) {
+        console.log('error al actualizar tarea', error)
+        throw {
+          type: 'Actualizar tarea',
+          message: `No actualizó la tarea ${task.number}`,
+          metadata: task,
+          error: error
+        }
+      }
+    } else {
+      try {
+        const taskNew = await taskDB.create(data)
+        console.log('Se creó una tarea:', taskNew)
+        return taskNew
+      } catch (error) {
+        console.log('error al crear tarea', error)
+        throw {
+          type: 'Crear tarea',
+          message: `No creó la tarea ${data.number}`,
+          metadata: data,
+          error: error
+        }
+      }
+    }
+  })
+  const results = await Promise.all(tasksNew.map(p => p.catch(e => e)))
+  const validEvaluations = results.filter(result => !result.error)
+  const errorEvaluations = results.filter(result => result.error)
+
+  return { validEvaluations, errorEvaluations }
+}
+
+const createEnrolCourse = async (grades, course) => {
+  const users = await userDB.list({})
+  const enrols = await enrolDB.list({
+    query: { 'course.moodleId': course.moodleId }
   })
 
-  const users = await userDB.list({ select: 'email username roles' })
-  let course = []
+  let enrolsNew
+  if (course.typeOfEvaluation === 'exams') {
+    let examsBD
+    try {
+      examsBD = await examDB.list({
+        query: { 'course.moodleId': course.moodleId },
+        sort: 'number'
+      })
+    } catch (error) {
+      return error
+    }
+    enrolsNew = grades.map(async grade => {
+      const enrol = enrols.find(
+        item => parseInt(item.linked.moodleId) === parseInt(grade.userid)
+      )
+
+      const exams = examsBD.map(exam => {
+        const result = grade.gradeitems.find(
+          item => item.itemname === exam.name
+        )
+
+        const data = {
+          number: exam.number,
+          name: exam.name,
+          score: result && result.graderaw,
+          isTaken: result ? true : false,
+          exam: exam._id
+        }
+        return data
+      })
+
+      const examEnd = calculateProm(exams)
+
+      const user = users.find(
+        item => parseInt(item.moodleId) === parseInt(grade.userid)
+      )
+
+      let dataEnrol
+      if (examEnd.isFinished) {
+        dataEnrol = {
+          linked: { ...user.toJSON(), ref: user._id },
+          exams: exams,
+          isFinished: true,
+          score: parseInt(examEnd.note),
+          finalScore: parseInt(examEnd.note)
+        }
+      } else {
+        dataEnrol = {
+          linked: { ...user.toJSON(), ref: user._id },
+          exams: exams,
+          isFinished: false,
+          score: parseInt(examEnd.note)
+        }
+      }
+
+      if (enrol) {
+        try {
+          const updateEnroll = await enrolDB.update(enrol._id, dataEnrol)
+          console.log('Se actualizó enrol:', updateEnroll)
+          return updateEnroll
+        } catch (error) {
+          console.log('Error al actualizar enrol:', updateEnroll)
+          throw {
+            type: 'Actualizar enrol',
+            message: `No actualizó el enrol con examenes ${enrol._id}`,
+            metadata: enrol,
+            error: error
+          }
+        }
+      } else {
+        if (user) {
+          const data = {
+            ...dataEnrol,
+            linked: {
+              ...user.toJSON(),
+              ref: user._id
+            },
+            course: {
+              ...course.toJSON(),
+              ref: course._id
+            }
+          }
+
+          try {
+            const enrol = await enrolDB.create(data)
+            console.log('Se creó un nuevo enrol', enrol)
+            return enrol
+          } catch (error) {
+            console.log('error al crear un nuevo enrol', error)
+            throw {
+              type: 'Crear enrol',
+              message: `No creó el enrol con examenes`,
+              metadata: data,
+              error: error
+            }
+          }
+        } else {
+          console.log('not user en enrol')
+        }
+      }
+    })
+
+    const results = await Promise.all(enrolsNew.map(p => p.catch(e => e)))
+    const validEnrols = results.filter(result => !result.error)
+    const errorEnrols = results.filter(result => result.error)
+
+    return { validEnrols, errorEnrols }
+  } else if (course.typeOfEvaluation === 'tasks') {
+    let tasksBD
+    try {
+      tasksBD = await taskDB.list({
+        query: { 'course.moodleId': course.moodleId },
+        sort: 'number'
+      })
+    } catch (error) {
+      return error
+    }
+
+    enrolsNew = grades.map(async grade => {
+      const enrol = enrols.find(
+        item => parseInt(item.linked.moodleId) === parseInt(grade.userid)
+      )
+
+      const tasks = tasksBD.map(task => {
+        const result = grade.gradeitems.find(
+          item => item.itemname === task.name
+        )
+
+        const data = {
+          number: task.number,
+          name: task.name,
+          score: result && result.graderaw,
+          isTaken: !!result,
+          task: task._id
+        }
+        return data
+      })
+
+      const taskEnd = calculateProm(tasks)
+
+      const user = users.find(
+        item => parseInt(item.moodleId) === parseInt(grade.userid)
+      )
+
+      let dataEnrol
+      if (taskEnd.isFinished) {
+        dataEnrol = {
+          linked: { ...user.toJSON(), ref: user._id },
+          tasks: tasks,
+          isFinished: true,
+          score: taskEnd.note,
+          finalScore: taskEnd.note
+        }
+      } else {
+        dataEnrol = {
+          linked: { ...user.toJSON(), ref: user._id },
+          tasks: tasks,
+          isFinished: false,
+          score: taskEnd.note
+        }
+      }
+
+      if (enrol) {
+        try {
+          const updateEnroll = await enrolDB.update(enrol._id, dataEnrol)
+          console.log('Se actualizó enrol:', updateEnroll)
+          return updateEnroll
+        } catch (error) {
+          console.log('Error al actualizar enrol:', error)
+          throw {
+            type: 'Actualizar enrol',
+            message: `No actualizó el enrol con tareas ${enrol._id}`,
+            metadata: enrol,
+            error: error
+          }
+        }
+      } else {
+        if (user) {
+          const data = {
+            ...dataEnrol,
+            linked: {
+              ...user.toJSON(),
+              ref: user._id
+            },
+            course: {
+              ...course.toJSON(),
+              ref: course._id
+            }
+          }
+          try {
+            const enrol = await enrolDB.create(data)
+            console.log('Se creó enrol:', enrol)
+            return enrol
+          } catch (error) {
+            console.log('error al crear enrol', error)
+            throw {
+              type: 'Crear enrol',
+              message: `No creó el enrol con tareas`,
+              metadata: data,
+              error: error
+            }
+          }
+        } else {
+          console.log('not user')
+        }
+      }
+    })
+    // const enrolsCreate = await Promise.all(enrolsNew)
+    const results = await Promise.all(enrolsNew.map(p => p.catch(e => e)))
+    const validEnrols = results.filter(result => !result.error)
+    const errorEnrols = results.filter(result => result.error)
+
+    return { validEnrols, errorEnrols }
+  }
+}
+
+const createCertificatesCourse = async course => {
+  const enrols = await enrolDB.list({
+    query: { 'course.moodleId': course.moodleId, isFinished: true }
+  })
+
+  const certificates = await certificateDB.list({
+    query: { 'course.ref': course._id }
+  })
+  const enrolsCertificate = enrols.map(async enrol => {
+    const certificate = certificates.find(
+      item =>
+        item.linked &&
+        item.linked.firstName === enrol.linked.firstName &&
+        item.linked &&
+        item.linked.lastName === enrol.linked.lastName
+    )
+
+    if (certificate) {
+      try {
+        const certi = await enrolDB.update(enrol._id, {
+          certificate: {
+            ...certificate.toJSON(),
+            ref: certificate._id
+          }
+        })
+        console.log('Se actualizó enrol con certificado que existe:', certi)
+        return certi
+      } catch (error) {
+        console.log(
+          'Error al actualizar enrol con certificado que existe:',
+          error
+        )
+        throw {
+          type: 'Actualizar certificado',
+          message: `No actualizó el certificado ${certificate.code}`,
+          metadata: certificate,
+          error: error
+        }
+      }
+    } else {
+      const code = randomize('a0', 8)
+      const data = {
+        code: code,
+        shortCode: code,
+        linked: {
+          firstName: enrol && enrol.linked && enrol.linked.firstName,
+          lastName: enrol && enrol.linked && enrol.linked.lastName,
+          ref: enrol && enrol.linked && enrol.linked.ref
+        },
+        course: {
+          shortName: course && course.shortName,
+          academicHours: course && course.academicHours,
+          ref: course && course._id
+        },
+        moodleId: course && course.moodleId,
+        enrol: enrol && enrol._id,
+        score: enrol.finalScore,
+        date: new Date()
+      }
+
+      try {
+        const certi = await certificateDB.create(data)
+
+        await enrolDB.update(enrol._id, {
+          certificate: {
+            ...certi.toJSON(),
+            ref: certi._id
+          }
+        })
+        console.log('Se creó certificado y actualizó enrol:', certi)
+        return certi
+      } catch (error) {
+        console.log(
+          'Error al crear y actualizar enrol con nuevo certificado:',
+          certi
+        )
+        throw {
+          type: 'Crear certificado',
+          message: `No creó el certificado ${data.code}`,
+          metadata: data,
+          error: error
+        }
+      }
+    }
+  })
+
+  // const certificateCreate = await Promise.all(enrolsCertificate)
+
+  const results = await Promise.all(enrolsCertificate.map(p => p.catch(e => e)))
+  const validCertificates = results.filter(result => !result.error)
+  const errorCertificates = results.filter(result => result.error)
+
+  return { validCertificates, errorCertificates }
+}
+
+const gradeNewCertificate = async ({ courseId }) => {
+  const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
+    courseid: courseId
+  })
+  let course
   try {
-    course = await courseDB.detail({ query: { moodleId: 4 } })
+    course = await courseDB.detail({ query: { moodleId: courseId } })
   } catch (error) {
-    console.log(error)
+    throw error
   }
 
-  let enrols = []
-  try {
-    enrols = await enrolDB.list({ query: { 'course.moodleId': 4 } })
-  } catch (error) {
-    console.log(error)
+  const respUsers = await createUserCourse(usersMoodle)
+
+  if (respUsers.errorUsers.length > 0) {
+    return respUsers.errorUsers
   }
 
-  await userMoodle.reduce(async (promise, user) => {
+  let grades = []
+  await usersMoodle.reduce(async (promise, user) => {
     await promise
     const contents = await actionMoodle('POST', gradeUser, {
       userid: user.id,
-      courseid: 4
+      courseid: courseId
     })
-    console.log(contents)
-    const exist = users.find(
-      user => user.email === data.email || user.username === data.username
-    )
-    if (exist) {
-      try {
-        // const updateUser = await userDB.update(exist._id, {
-        //   moodleId: moodleUser.id,
-        //   roles: [...exist.roles, 'Estudiante']
-        // })
-        // console.log('update User', updateUser)
-        // return updateUser
-      } catch (error) {
-        // console.log('error al editar usuario', exist, error)
-        // return error
-      }
-    } else {
-      const data = {
-        moodleId: user.id,
-        username: user.username,
-        firstName: user.firstname,
-        lastName: user.lastname,
-        names: user.firstname + ' ' + user.lastname,
-        email: user.email,
-        country: user.country === 'PE' ? 'Perú' : '',
-        city: user.city,
-        role: undefined,
-        roles: ['Estudiante']
-      }
-      try {
-        // const user = await userDB.create(data)
-        // return user
-      } catch (error) {
-        // console.log('error al crear usuario', moodleUser)
-        // return error
-      }
-    }
+
+    console.log(contents.usergrades[0])
+    grades.push(contents.usergrades[0])
   }, Promise.resolve())
 
-  // const userMoodle = [1, 2, 3]
+  grades.forEach(grade => {
+    let gradeFilter = grade.gradeitems.filter(
+      item =>
+        (item.itemname && item.itemname.indexOf('Evaluación') > -1) ||
+        (item.itemname && item.itemname.indexOf('Evaluacion') > -1)
+    )
+    grade.gradeitems = gradeFilter
+  })
 
-  // await userMoodle.map(async element => {
-  //   const contents = await actionMoodle('POST', gradeUser, {
-  //     userid: 820,
-  //     courseid: 3
-  //   })
-  //   console.log(contents)
-  //   // console.log(element.id)
-  //   console.log('------------------------------------------------------------')
-  // })
+  let evaluations
+  if (course.typeOfEvaluation === 'exams') {
+    evaluations = await actionMoodle('POST', quizGetCourse, {
+      courseids: [courseId]
+    })
+    evaluations = evaluations.quizzes
+  } else if (course.typeOfEvaluation === 'tasks') {
+    evaluations = await actionMoodle('POST', assignGetCourse, {
+      courseids: [courseId]
+    })
+    evaluations = evaluations.courses[0].assignments
+  }
 
-  return 1
+  const evaluationsFilter = evaluations.filter(
+    evaluation =>
+      (evaluation.name && evaluation.name.indexOf('Evaluación') > -1) ||
+      (evaluation.name && evaluation.name.indexOf('Evaluacion') > -1)
+  )
+
+  let createEvaluations
+  if (course.typeOfEvaluation === 'exams') {
+    createEvaluations = await createExamCourse(evaluationsFilter, course)
+  } else if (course.typeOfEvaluation === 'tasks') {
+    createEvaluations = await createTaskCourse(evaluationsFilter, course)
+  }
+
+  if (createEvaluations.errorEvaluations.length > 0) {
+    return createEvaluations.errorEvaluations
+  }
+
+  const respEnrols = await createEnrolCourse(grades, course)
+  if (respEnrols.errorEnrols.length > 0) {
+    return respEnrols.errorEnrols
+  }
+
+  const certificates = await createCertificatesCourse(course)
+  if (certificates.errorCertificates.length > 0) {
+    return certificates.errorCertificates
+  }
+
+  return certificates.validCertificates
 }
 
 const findMoodleCourse = async course => {
@@ -405,7 +923,7 @@ module.exports = {
   getUsersForField,
   getCourseForUser,
   searchUser,
-  gradeNewUser
+  gradeNewCertificate
 }
 
 // 'use strict'

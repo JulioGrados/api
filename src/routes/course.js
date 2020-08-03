@@ -14,7 +14,7 @@ router
 
 router
   .route('/courses/:id')
-  .get(Api.detailCourse)
+  .get(Api.detailCourseFirst)
   .put(Api.updateCourse)
   .delete(Api.deleteCourse)
 
