@@ -559,6 +559,12 @@ const createCertificatesCourse = async course => {
           },
           isFinished: true
         })
+
+        if (enrol.linked) {
+          await certificateDB.update(certificate._id, {
+            linked: enrol.linked
+          })
+        }
         console.log('Se actualizó enrol con certificado que existe:', certi)
         return certi
       } catch (error) {
