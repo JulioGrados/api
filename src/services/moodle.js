@@ -120,7 +120,9 @@ const createUserCourse = async usersMoodle => {
   const userNew = usersMoodle.map(async element => {
     // console.log(element)
     const user = users.find(
-      item => parseInt(item.moodleId) === parseInt(element.id)
+      item =>
+        parseInt(item.moodleId) === parseInt(element.id) ||
+        parseInt(item.email) === parseInt(element.email)
     )
 
     const data = {
