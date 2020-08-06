@@ -920,16 +920,33 @@ const migrateCertificates = async dataCertificate => {
   const courses = await courseDB.list({})
   let not = 0
 
-  const filteredArr = dataCertificate.reduce((acc, current) => {
-    const x = acc.find(item => item.code === current.code)
-    if (!x) {
-      return acc.concat([current])
-    } else {
-      return acc
-    }
-  }, [])
+  // const filteredArr = dataCertificate.reduce((acc, current) => {
+  //   const x = acc.find(item => item.code == current.code)
+  //   if (!x) {
+  //     return acc.concat([current])
+  //   } else {
+  //     return acc
+  //   }
+  // }, [])
 
-  const filteredFinal = filteredArr.filter(function (obj) {
+  function getUnique (arr, comp) {
+    // store the comparison  values in array
+    const unique = arr
+      .map(e => e[comp])
+
+      // store the indexes of the unique objects
+      .map((e, i, final) => final.indexOf(e) === i && i)
+
+      // eliminate the false indexes & return unique objects
+      .filter(e => arr[e])
+      .map(e => arr[e])
+
+    return unique
+  }
+
+  const filterArray = getUnique(dataCertificate, 'code')
+
+  const filteredFinal = filterArray.filter(function (obj) {
     return obj.lastName !== 'CAÑAPATANA CASTILLO'
   })
 
