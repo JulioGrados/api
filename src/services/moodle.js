@@ -360,15 +360,15 @@ const createEnrolCourse = async (grades, course) => {
           linked: { ...user.toJSON(), ref: user._id },
           exams: exams,
           isFinished: true,
-          score: parseInt(examEnd.note),
-          finalScore: parseInt(examEnd.note)
+          score: examEnd.note,
+          finalScore: examEnd.note
         }
       } else {
         dataEnrol = {
           linked: { ...user.toJSON(), ref: user._id },
           exams: exams,
           isFinished: false,
-          score: parseInt(examEnd.note)
+          score: examEnd.note
         }
       }
 
