@@ -723,7 +723,8 @@ const createCertificatesCourse = async course => {
 
         if (enrol.linked) {
           await certificateDB.update(certificate._id, {
-            linked: enrol.linked
+            linked: enrol.linked,
+            score: enrol.score
           })
         }
         console.log('Se actualizó enrol con certificado que existe:', certi)
