@@ -168,7 +168,7 @@ const { wwwroot, token, service } = require('config').moodle
 const { userDB, courseDB, examDB, taskDB, certificateDB } = require('../db')
 const { enrolDB } = require('db/lib')
 
-const { calculateProm } = require('utils/functions/enrol')
+const { calculateProm, calculatePromBoth } = require('utils/functions/enrol')
 
 const init = moodle_client.init({
   wwwroot,
@@ -691,6 +691,141 @@ const createEnrolCourse = async (grades, course) => {
     const errorEnrols = results.filter(result => result.error)
 
     return { validEnrols, errorEnrols }
+  } else if (course.typeOfEvaluation === 'both') {
+    let examsBD
+    try {
+      examsBD = await examDB.list({
+        query: { 'course.moodleId': course.moodleId },
+        sort: 'number'
+      })
+    } catch (error) {
+      return error
+    }
+    let tasksBD
+    try {
+      tasksBD = await taskDB.list({
+        query: { 'course.moodleId': course.moodleId },
+        sort: 'number'
+      })
+    } catch (error) {
+      return error
+    }
+
+    enrolsNew = grades.map(async grade => {
+      const enrol = enrols.find(
+        item => parseInt(item.linked.moodleId) === parseInt(grade.userid)
+      )
+
+      const exams = examsBD.map(exam => {
+        const result = grade.gradeitems.find(
+          item => item.itemname === exam.name
+        )
+
+        const data = {
+          number: exam.number,
+          name: exam.name,
+          score: result && result.graderaw,
+          isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
+          exam: exam._id
+        }
+        return data
+      })
+
+      const tasks = tasksBD.map(task => {
+        const result = grade.gradeitems.find(
+          item => item.itemname === task.name
+        )
+
+        const data = {
+          number: task.number,
+          name: task.name,
+          score: result && result.graderaw,
+          isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
+          task: task._id
+        }
+        return data
+      })
+
+      const bothEnd = calculatePromBoth(exams, tasks)
+
+      const user = users.find(
+        item => parseInt(item.moodleId) === parseInt(grade.userid)
+      )
+
+      let dataEnrol
+      if (bothEnd.isFinished) {
+        dataEnrol = {
+          linked: { ...user.toJSON(), ref: user._id },
+          exams: exams,
+          tasks: tasks,
+          isFinished: true,
+          score: bothEnd.note,
+          finalScore: bothEnd.note,
+          certificate: {}
+        }
+      } else {
+        dataEnrol = {
+          linked: { ...user.toJSON(), ref: user._id },
+          exams: exams,
+          tasks: tasks,
+          isFinished: false,
+          score: bothEnd.note,
+          certificate: {}
+        }
+      }
+
+      if (enrol) {
+        try {
+          const updateEnroll = await enrolDB.update(enrol._id, dataEnrol)
+          console.log('Se actualizó enrol:', updateEnroll)
+          return updateEnroll
+        } catch (error) {
+          console.log('Error al actualizar enrol:', updateEnroll)
+          throw {
+            type: 'Actualizar enrol',
+            message: `No actualizó el enrol con examenes ${enrol._id}`,
+            metadata: enrol,
+            error: error
+          }
+        }
+      } else {
+        if (user) {
+          const data = {
+            ...dataEnrol,
+            linked: {
+              ...user.toJSON(),
+              ref: user._id
+            },
+            course: {
+              ...course.toJSON(),
+              ref: course._id
+            }
+          }
+
+          try {
+            const enrol = await enrolDB.create(data)
+            console.log('Se creó un nuevo enrol', enrol)
+            return enrol
+          } catch (error) {
+            console.log('error al crear un nuevo enrol', error)
+            throw {
+              type: 'Crear enrol',
+              message: `No creó el enrol con examenes`,
+              metadata: data,
+              error: error
+            }
+          }
+        } else {
+          console.log('not user en enrol')
+        }
+      }
+    })
+
+    const results = await Promise.all(enrolsNew.map(p => p.catch(e => e)))
+    const validEnrols = results.filter(result => !result.error)
+    const errorEnrols = results.filter(result => result.error)
+
+    return { validEnrols, errorEnrols }
   }
 }
 
@@ -846,25 +981,69 @@ const gradeNewCertificate = async ({ courseId }) => {
       courseids: [courseId]
     })
     evaluations = evaluations.courses[0].assignments
+  } else if (course.typeOfEvaluation === 'both') {
+    const examsBoth = await actionMoodle('POST', quizGetCourse, {
+      courseids: [courseId]
+    })
+
+    const tasksBoth = await actionMoodle('POST', assignGetCourse, {
+      courseids: [courseId]
+    })
+
+    const examsEnd = examsBoth.quizzes
+    const tasksEnd = tasksBoth.courses[0].assignments
+
+    const examsFilter = examsEnd.filter(
+      evaluation =>
+        (evaluation.name && evaluation.name.indexOf('Evaluación') > -1) ||
+        (evaluation.name && evaluation.name.indexOf('Evaluacion') > -1)
+    )
+    console.log('examsFilter', examsFilter)
+
+    const tasksFilter = tasksEnd.filter(
+      evaluation =>
+        (evaluation.name && evaluation.name.indexOf('Evaluación') > -1) ||
+        (evaluation.name && evaluation.name.indexOf('Evaluacion') > -1)
+    )
+    console.log('tasksFilter', tasksFilter)
+
+    const createExams = await createExamCourse(examsFilter, course)
+    const createTasks = await createTaskCourse(tasksFilter, course)
+
+    if (createExams.errorEvaluations.length > 0) {
+      return createEvaluations.errorEvaluations
+    }
+
+    if (createTasks.errorEvaluations.length > 0) {
+      return createTasks.errorEvaluations
+    }
+
+    console.log('createExams', createExams)
+    console.log('createTasks', createTasks)
   }
-
-  const evaluationsFilter = evaluations.filter(
-    evaluation =>
-      (evaluation.name && evaluation.name.indexOf('Evaluación') > -1) ||
-      (evaluation.name && evaluation.name.indexOf('Evaluacion') > -1)
-  )
-
+  console.log('1')
+  const evaluationsFilter =
+    evaluations &&
+    evaluations.filter(
+      evaluation =>
+        (evaluation.name && evaluation.name.indexOf('Evaluación') > -1) ||
+        (evaluation.name && evaluation.name.indexOf('Evaluacion') > -1)
+    )
+  console.log('2')
   let createEvaluations
   if (course.typeOfEvaluation === 'exams') {
     createEvaluations = await createExamCourse(evaluationsFilter, course)
   } else if (course.typeOfEvaluation === 'tasks') {
     createEvaluations = await createTaskCourse(evaluationsFilter, course)
   }
-
-  if (createEvaluations.errorEvaluations.length > 0) {
+  console.log('3')
+  if (
+    createEvaluations &&
+    createEvaluations.errorEvaluations &&
+    createEvaluations.errorEvaluations.length > 0
+  ) {
     return createEvaluations.errorEvaluations
   }
-
   const respEnrols = await createEnrolCourse(grades, course)
   if (respEnrols.errorEnrols.length > 0) {
     return respEnrols.errorEnrols
