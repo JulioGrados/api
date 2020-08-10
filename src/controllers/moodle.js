@@ -29,8 +29,18 @@ const enrrollUser = async (req, res) => {
   }
 }
 
+const createModulesCourse = async (req, res) => {
+  try {
+    const modules = await services.modulesCourse(req.body)
+    return modules
+  } catch (error) {
+    return res.json(error.status || 500).json(error)
+  }
+}
+
 module.exports = {
   createUser,
   enrrollUser,
-  createCertificates
+  createCertificates,
+  createModulesCourse
 }

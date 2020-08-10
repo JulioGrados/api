@@ -24,7 +24,8 @@ const {
   gradeUser,
   enrolGetCourse,
   quizGetCourse,
-  assignGetCourse
+  assignGetCourse,
+  moduleGetCourse
 } = require('config').moodle.functions
 
 const actionMoodle = (method, wsfunction, args = {}) => {
@@ -342,7 +343,10 @@ const createEnrolCourse = async (grades, course) => {
           number: exam.number,
           name: exam.name,
           score: result && result.graderaw,
-          isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
+          isTaken:
+            result && result.graderaw && parseInt(result.graderaw) >= 11
+              ? true
+              : false,
           exam: exam._id
         }
         return data
@@ -361,14 +365,16 @@ const createEnrolCourse = async (grades, course) => {
           exams: exams,
           isFinished: true,
           score: examEnd.note,
-          finalScore: examEnd.note
+          finalScore: examEnd.note,
+          certificate: {}
         }
       } else {
         dataEnrol = {
           linked: { ...user.toJSON(), ref: user._id },
           exams: exams,
           isFinished: false,
-          score: examEnd.note
+          score: examEnd.note,
+          certificate: {}
         }
       }
 
@@ -449,7 +455,10 @@ const createEnrolCourse = async (grades, course) => {
           number: task.number,
           name: task.name,
           score: result && result.graderaw,
-          isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
+          isTaken:
+            result && result.graderaw && parseInt(result.graderaw) >= 11
+              ? true
+              : false,
           task: task._id
         }
         return data
@@ -468,14 +477,16 @@ const createEnrolCourse = async (grades, course) => {
           tasks: tasks,
           isFinished: true,
           score: taskEnd.note,
-          finalScore: taskEnd.note
+          finalScore: taskEnd.note,
+          certificate: {}
         }
       } else {
         dataEnrol = {
           linked: { ...user.toJSON(), ref: user._id },
           tasks: tasks,
           isFinished: false,
-          score: taskEnd.note
+          score: taskEnd.note,
+          certificate: {}
         }
       }
 
@@ -896,6 +907,20 @@ const gradeNewCertificate = async ({ courseId }) => {
   return certificates.validCertificates
 }
 
+const modulesCourse = async ({ courseId }) => {
+  const modulesMoodle = await actionMoodle('GET', moduleGetCourse, {
+    courseid: 11
+  })
+  console.log(modulesMoodle)
+  // modulesMoodle.forEach(item => {
+  //   item.modules.forEach(module => {
+  //     console.log(module)
+  //   })
+  // })
+
+  return 1
+}
+
 const findMoodleCourse = async course => {
   const courses = await actionMoodle('GET', getCourses)
   const courseEnroll = courses.find(item => item.fullname === course.name)
@@ -951,7 +976,8 @@ module.exports = {
   getUsersForField,
   getCourseForUser,
   searchUser,
-  gradeNewCertificate
+  gradeNewCertificate,
+  modulesCourse
 }
 
 // 'use strict'
