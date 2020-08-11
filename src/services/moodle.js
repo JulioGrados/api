@@ -25,7 +25,9 @@ const {
   enrolGetCourse,
   quizGetCourse,
   assignGetCourse,
-  moduleGetCourse
+  moduleGetCourse,
+  feedbackGetQuiz,
+  feedbackListCourse
 } = require('config').moodle.functions
 
 const actionMoodle = (method, wsfunction, args = {}) => {
@@ -782,6 +784,90 @@ const createCertificatesCourse = async course => {
   return { validCertificates, errorCertificates }
 }
 
+const createShippingUser = async course => {
+  const users = await userDB.list({})
+
+  const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
+    courseids: [course.moodleId]
+  })
+
+  const feedback = feedBackCourse.feedbacks.find(
+    item => item.name.indexOf('certificado') > -1
+  )
+
+  if (feedback) {
+    const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
+      feedbackid: feedback.id
+    })
+
+    const newsFeedBack = feedBackModule.attempts.map(async element => {
+      const user = users.find(
+        item => parseInt(item.moodleId) === parseInt(element.userid)
+      )
+      let shippings = []
+      const shipping = {
+        moodleId: parseInt(element.id),
+        firstName: element.responses[0].rawval,
+        lastName: element.responses[1].rawval,
+        dni: element.responses[2].rawval,
+        cellphone: element.responses[3].rawval,
+        address: element.responses[4].rawval,
+        priority: 'Principal',
+        course: {
+          name: course.name,
+          moodleId: course.moodleId,
+          ref: course._id
+        }
+      }
+
+      if (user) {
+        const userFeedBacks = user.shippings
+
+        if (userFeedBacks && userFeedBacks.length > 0) {
+          const sending = userFeedBacks.find(
+            feed => parseInt(feed.moodleId) === parseInt(element.id)
+          )
+          shippings = userFeedBacks
+          if (!sending) {
+            shippings.push(shipping)
+          }
+        } else {
+          shippings.push(shipping)
+        }
+        try {
+          const updateUser = await userDB.update(user._id, {
+            shippings: shippings
+          })
+          console.log('Se actualizó usuario shipping:', updateUser)
+          return updateUser
+        } catch (error) {
+          console.log('error al editar usuario')
+          throw {
+            type: 'Actualizar usuario',
+            message: `No actualizó el usuario ${user.names}`,
+            metadata: user,
+            error: error
+          }
+        }
+      } else {
+        throw {
+          type: 'Actualizar usuario',
+          message: `No se encontro usuario ${element.fullname}`,
+          metadata: element,
+          error: error
+        }
+      }
+    })
+    const results = await Promise.all(newsFeedBack.map(p => p.catch(e => e)))
+    const validShipping = results.filter(result => !result.error)
+    const errorShipping = results.filter(result => result.error)
+
+    return { validShipping, errorShipping }
+  } else {
+    return {}
+  }
+}
+
 const gradeNewCertificate = async ({ courseId }) => {
   const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
     courseid: courseId
@@ -899,6 +985,15 @@ const gradeNewCertificate = async ({ courseId }) => {
     return respEnrols.errorEnrols
   }
 
+  const respShipping = await createShippingUser(course)
+  if (
+    respShipping &&
+    respShipping.errorShipping &&
+    respShipping.errorShipping.length > 0
+  ) {
+    return respShipping.errorShipping
+  }
+
   const certificates = await createCertificatesCourse(course)
   if (certificates.errorCertificates.length > 0) {
     return certificates.errorCertificates
@@ -908,15 +1003,19 @@ const gradeNewCertificate = async ({ courseId }) => {
 }
 
 const modulesCourse = async ({ courseId }) => {
-  const modulesMoodle = await actionMoodle('GET', moduleGetCourse, {
-    courseid: 11
+  const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
+    feedbackid: 25
   })
-  console.log(modulesMoodle)
-  // modulesMoodle.forEach(item => {
-  //   item.modules.forEach(module => {
-  //     console.log(module)
-  //   })
-  // })
+
+  feedBackModule.attempts.forEach(item => {
+    console.log(item)
+  })
+
+  const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
+    courseids: [28]
+  })
+
+  console.log(feedBackCourse.feedbacks)
 
   return 1
 }
