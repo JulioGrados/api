@@ -138,16 +138,16 @@ const createUserCourse = async usersMoodle => {
       country: element.country === 'PE' ? 'Perú' : '',
       city: element.city,
       role: undefined,
-      roles: ['Estudiante'],
-      shippings: []
+      roles: ['Estudiante']
+      // shippings: []
     }
 
     if (user) {
       try {
         const updateUser = await userDB.update(user._id, {
           moodleId: element.id,
-          roles: [...user.roles, 'Estudiante'],
-          shippings: []
+          roles: [...user.roles, 'Estudiante']
+          // shippings: []
         })
         console.log('Se actualizó usuario:')
         return updateUser
@@ -992,14 +992,14 @@ const gradeNewCertificate = async ({ courseId }) => {
     return respEnrols.errorEnrols
   }
 
-  // const respShipping = await createShippingUser(course)
-  // if (
-  //   respShipping &&
-  //   respShipping.errorShipping &&
-  //   respShipping.errorShipping.length > 0
-  // ) {
-  //   return respShipping.errorShipping
-  // }
+  const respShipping = await createShippingUser(course)
+  if (
+    respShipping &&
+    respShipping.errorShipping &&
+    respShipping.errorShipping.length > 0
+  ) {
+    return respShipping.errorShipping
+  }
 
   const certificates = await createCertificatesCourse(course)
   if (certificates.errorCertificates.length > 0) {
