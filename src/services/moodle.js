@@ -506,6 +506,7 @@ const createEnrolCourse = async (grades, course) => {
           number: exam.number,
           name: exam.name,
           score: result && result.graderaw,
+          date: result && result.gradedatesubmitted,
           isTaken:
             result && result.graderaw && parseInt(result.graderaw) >= 11
               ? true
@@ -618,6 +619,7 @@ const createEnrolCourse = async (grades, course) => {
           number: task.number,
           name: task.name,
           score: result && result.graderaw,
+          date: result && result.gradedatesubmitted,
           isTaken:
             result && result.graderaw && parseInt(result.graderaw) >= 11
               ? true
@@ -738,6 +740,7 @@ const createEnrolCourse = async (grades, course) => {
           number: exam.number,
           name: exam.name,
           score: result && result.graderaw,
+          date: result && result.gradedatesubmitted,
           isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
           exam: exam._id
         }
@@ -753,6 +756,7 @@ const createEnrolCourse = async (grades, course) => {
           number: task.number,
           name: task.name,
           score: result && result.graderaw,
+          date: result && result.gradedatesubmitted,
           isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
           task: task._id
         }
