@@ -1,10 +1,19 @@
 'use strict'
 const _ = require('lodash')
+const slug = require('slug')
 var randomize = require('randomatic')
 
 const moodle_client = require('moodle-client')
 const { wwwroot, token, service } = require('config').moodle
-const { userDB, courseDB, examDB, taskDB, certificateDB } = require('../db')
+const {
+  userDB,
+  courseDB,
+  examDB,
+  taskDB,
+  certificateDB,
+  lessonDB,
+  chapterDB
+} = require('../db')
 const { enrolDB } = require('db/lib')
 
 const { calculateProm, calculatePromBoth } = require('utils/functions/enrol')
@@ -1009,22 +1018,293 @@ const gradeNewCertificate = async ({ courseId }) => {
   return certificates.validCertificates
 }
 
+const chaptersModuleCourse = async modules => {
+  const chapters = await chapterDB.list({})
+
+  let chaptersModules = []
+  modules.forEach(item => {
+    const chaptersModule = item.modules.filter(
+      item =>
+        item.modname === 'label' &&
+        item.visible === 1 &&
+        item.description.includes('player.vimeo.com')
+    )
+    chaptersModule.forEach(chapter => {
+      let nameChapter = chapter.name
+      while (
+        (nameChapter.charCodeAt(0) >= 48 && nameChapter.charCodeAt(0) <= 57) ||
+        nameChapter.charAt(0) === ' ' ||
+        nameChapter.charAt(0) === '.'
+      ) {
+        nameChapter = nameChapter.substring(1, nameChapter.length)
+      }
+
+      chapter.name = nameChapter.replace(/[\r\n]+/gm, '')
+      chaptersModules.push(chapter)
+    })
+  })
+
+  const chaptersSave = chaptersModules.map(async item => {
+    const chapter = chapters.find(element => element.moodleId === item.instance)
+
+    if (chapter) {
+      try {
+        const chapt = await chapterDB.update(chapter._id, {
+          name: item.name,
+          slug: slug(item.name.toLowerCase()),
+          description: item.description,
+          video: item.description,
+          moodleId: item.instance
+        })
+        console.log('Se actualizó capítulo que existe:', chapt)
+        return chapt
+      } catch (error) {
+        console.log('Error al actualizar capítulo que existe:', error)
+        throw {
+          type: 'Actualizar capítulo',
+          message: `No actualizó el capítulo ${chapter.name}`,
+          metadata: chapter,
+          error: error
+        }
+      }
+    } else {
+      const data = {
+        name: item.name,
+        moodleId: item.instance,
+        slug: slug(item.name),
+        description: item.description,
+        video: item.description
+      }
+
+      try {
+        const chapt = await chapterDB.create(data)
+        console.log('Se creó el capítulo:', chapt)
+        return chapt
+      } catch (error) {
+        console.log('Error al crear un capítulo')
+        throw {
+          type: 'Crear capítulo',
+          message: `No creó el capítulo ${data.name}`,
+          metadata: data,
+          error: error
+        }
+      }
+    }
+  })
+
+  const results = await Promise.all(chaptersSave.map(p => p.catch(e => e)))
+  const validChapters = results.filter(result => !result.error)
+  const errorChapters = results.filter(result => result.error)
+
+  return { validChapters, errorChapters }
+}
+
+const listModulesCourse = async (courseId, modulesFilter) => {
+  const chapters = await chapterDB.list({})
+  const modules = await lessonDB.list({
+    query: { 'course.moodleId': courseId }
+  })
+
+  let course
+  try {
+    course = await courseDB.detail({ query: { moodleId: courseId } })
+  } catch (error) {
+    throw error
+  }
+  let evaluations = []
+  if (course.typeOfEvaluation === 'exams') {
+    let examsBD
+    try {
+      examsBD = await examDB.list({
+        query: { 'course.moodleId': courseId }
+      })
+    } catch (error) {
+      return error
+    }
+    evaluations = examsBD
+  } else if (course.typeOfEvaluation === 'tasks') {
+    let tasksBD
+    try {
+      tasksBD = await taskDB.list({
+        query: { 'course.moodleId': courseId }
+      })
+    } catch (error) {
+      return error
+    }
+    evaluations = tasksBD
+  } else if (course.typeOfEvaluation === 'both') {
+    let examsBD
+    try {
+      examsBD = await examDB.list({
+        query: { 'course.moodleId': courseId }
+      })
+    } catch (error) {
+      return error
+    }
+    let tasksBD
+    try {
+      tasksBD = await taskDB.list({
+        query: { 'course.moodleId': courseId }
+      })
+    } catch (error) {
+      return error
+    }
+    examsBD.forEach(item => evaluations.push(item))
+    tasksBD.forEach(item => evaluations.push(item))
+  }
+
+  const modulesSave = modulesFilter.map(async (item, index) => {
+    let nameModule = item.name
+    while (
+      (nameModule.charCodeAt(0) >= 48 && nameModule.charCodeAt(0) <= 57) ||
+      nameModule.charAt(0) === ' '
+    ) {
+      nameModule = nameModule.substring(1, nameModule.length)
+    }
+
+    const resourcesModule = item.modules.filter(
+      item =>
+        (item.modname === 'url' || item.modname === 'resource') &&
+        item.visible === 1
+    )
+
+    const evaluationModule = item.modules.find(
+      item =>
+        (item.modname === 'assign' || item.modname === 'quiz') &&
+        item.visible === 1
+    )
+
+    const evaluation = evaluations.find(
+      item => item.moodleId === evaluationModule.instance
+    )
+
+    const chaptersModule = item.modules.filter(
+      item =>
+        item.modname === 'label' &&
+        item.visible === 1 &&
+        item.description.includes('player.vimeo.com')
+    )
+
+    let listChapters = []
+    chaptersModule.forEach((item, index) => {
+      const chapter = chapters.find(
+        element => element.moodleId === item.instance
+      )
+      if (chapter) {
+        listChapters.push({
+          name: chapter.name,
+          order: index + 1,
+          moodleId: chapter.moodleId,
+          ref: chapter._id
+        })
+      }
+    })
+
+    const resources = resourcesModule.map((item, index) => {
+      const url = item.contents[0].fileurl
+        .replace('/webservice', '')
+        .replace('?forcedownload=1', '')
+      const resource = {
+        name: item.name,
+        order: index + 1,
+        description: item.modname,
+        moodleId: item.instance,
+        url: url
+      }
+      return resource
+    })
+
+    const data = {
+      order: index + 1,
+      name: nameModule,
+      moodleId: item.id,
+      slug: slug(nameModule.toLowerCase()),
+      resources: resources,
+      chapters: listChapters,
+      evaluation: {
+        name: evaluation.name,
+        number: evaluation.number,
+        moodleId: evaluation.moodleId,
+        ref: evaluation._id
+      },
+      course: {
+        name: course.name,
+        moodleId: course.moodleId,
+        ref: course._id
+      }
+    }
+
+    const lesson = modules.find(element => element.moodleId === item.id)
+    if (lesson) {
+      try {
+        const mod = await lessonDB.update(lesson._id, {
+          name: nameModule,
+          slug: slug(nameModule.toLowerCase()),
+          moodleId: item.id,
+          resources: resources,
+          chapters: listChapters,
+          evaluation: {
+            name: evaluation.name,
+            number: evaluation.number,
+            moodleId: evaluation.moodleId,
+            ref: evaluation._id
+          }
+        })
+        console.log('Se actualizó modulo que existe:', mod)
+        return mod
+      } catch (error) {
+        console.log('Error al actualizar modulo que existe:', error)
+        throw {
+          type: 'Actualizar modulo',
+          message: `No actualizó el modulo ${lesson.name}`,
+          metadata: lesson,
+          error: error
+        }
+      }
+    } else {
+      try {
+        const mod = await lessonDB.create(data)
+        console.log('Se creó el modulo:', mod)
+        return mod
+      } catch (error) {
+        console.log('Error al crear un modulo')
+        throw {
+          type: 'Crear modulo',
+          message: `No creó el modulo ${data.name}`,
+          metadata: data,
+          error: error
+        }
+      }
+    }
+  })
+  const results = await Promise.all(modulesSave.map(p => p.catch(e => e)))
+  const validModules = results.filter(result => !result.error)
+  const errorModules = results.filter(result => result.error)
+
+  return { validModules, errorModules }
+}
+
 const modulesCourse = async ({ courseId }) => {
-  const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
-    feedbackid: 25
+  console.log('llego 2')
+  const feedBackModule = await actionMoodle('GET', moduleGetCourse, {
+    courseid: courseId
   })
 
-  feedBackModule.attempts.forEach(item => {
-    console.log(item)
-  })
+  const modulesFilter = feedBackModule.filter(
+    item => item.name !== 'General' && item.visible === 1
+  )
+  const respChapters = await chaptersModuleCourse(modulesFilter)
 
-  const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
-    courseids: [28]
-  })
+  if (respChapters.errorChapters.length > 0) {
+    console.log(respChapters.errorChapters)
+    return respChapters.errorChapters
+  }
 
-  console.log(feedBackCourse.feedbacks)
-
-  return 1
+  const respModules = await listModulesCourse(courseId, modulesFilter)
+  if (respModules.errorModules.length > 0) {
+    return respModules.errorModules
+  }
+  return respModules.validModules
 }
 
 const findMoodleCourse = async course => {

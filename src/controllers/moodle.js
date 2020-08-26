@@ -31,8 +31,8 @@ const enrrollUser = async (req, res) => {
 
 const createModulesCourse = async (req, res) => {
   try {
-    const modules = await services.modulesCourse(req.body)
-    return modules
+    const resp = await services.modulesCourse(req.body)
+    return res.json(resp)
   } catch (error) {
     return res.json(error.status || 500).json(error)
   }
