@@ -1385,6 +1385,12 @@ const listModulesCourse = async (courseId, modulesFilter) => {
         }
         return resource
       })
+    const evaluationEnd = evaluation && {
+      name: evaluation,
+      number: evaluation.number,
+      moodleId: evaluation.moodleId,
+      ref: evaluation._id
+    }
 
     const data = {
       order: index + 1,
@@ -1393,12 +1399,7 @@ const listModulesCourse = async (courseId, modulesFilter) => {
       slug: slug(nameModule.toLowerCase()),
       resources: resources && resources,
       chapters: listChapters && listChapters,
-      evaluation: {
-        name: evaluation.name,
-        number: evaluation.number,
-        moodleId: evaluation.moodleId,
-        ref: evaluation._id
-      },
+      evaluation: evaluationEnd && evaluationEnd,
       course: {
         name: course.name,
         moodleId: course.moodleId,
