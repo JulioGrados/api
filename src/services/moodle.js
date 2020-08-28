@@ -1193,7 +1193,7 @@ const chaptersModuleCourse = async modules => {
     chaptersModule.forEach(chapter => {
       let nameChapter = chapter.name
       while (
-        (nameChapter.charCodeAt(0) >= 48 && nameChapter.charCodeAt(0) <= 57) ||
+        (nameChapter.charAt(0) >= 0 && nameChapter.charAt(0) <= 9) ||
         nameChapter.charAt(0) === ' ' ||
         nameChapter.charAt(0) === '.'
       ) {
@@ -1217,10 +1217,10 @@ const chaptersModuleCourse = async modules => {
           video: item.description,
           moodleId: item.instance
         })
-        console.log('Se actualizó capítulo que existe:', chapt)
+        // console.log('Se actualizó capítulo que existe:', chapt)
         return chapt
       } catch (error) {
-        console.log('Error al actualizar capítulo que existe:', error)
+        // console.log('Error al actualizar capítulo que existe:', error)
         throw {
           type: 'Actualizar capítulo',
           message: `No actualizó el capítulo ${chapter.name}`,
@@ -1239,10 +1239,10 @@ const chaptersModuleCourse = async modules => {
 
       try {
         const chapt = await chapterDB.create(data)
-        console.log('Se creó el capítulo:', chapt)
+        // console.log('Se creó el capítulo:', chapt)
         return chapt
       } catch (error) {
-        console.log('Error al crear un capítulo')
+        // console.log('Error al crear un capítulo')
         throw {
           type: 'Crear capítulo',
           message: `No creó el capítulo ${data.name}`,
@@ -1314,74 +1314,85 @@ const listModulesCourse = async (courseId, modulesFilter) => {
     tasksBD.forEach(item => evaluations.push(item))
   }
 
+  console.log('item', modulesFilter)
   const modulesSave = modulesFilter.map(async (item, index) => {
     let nameModule = item.name
     while (
-      (nameModule.charCodeAt(0) >= 48 && nameModule.charCodeAt(0) <= 57) ||
-      nameModule.charAt(0) === ' '
+      (nameModule.charAt(0) >= 0 && nameModule.charAt(0) <= 9) ||
+      nameModule.charAt(0) === ' ' ||
+      nameModule.charAt(0) === '.'
     ) {
       nameModule = nameModule.substring(1, nameModule.length)
     }
 
-    const resourcesModule = item.modules.filter(
-      item =>
-        (item.modname === 'url' || item.modname === 'resource') &&
-        item.visible === 1
-    )
+    const resourcesModule =
+      item.modules &&
+      item.modules.filter(
+        item =>
+          (item.modname === 'url' || item.modname === 'resource') &&
+          item.visible === 1
+      )
 
-    const evaluationModule = item.modules.find(
-      item =>
-        (item.modname === 'assign' || item.modname === 'quiz') &&
-        item.visible === 1
-    )
+    const evaluationModule =
+      item.modules &&
+      item.modules.find(
+        item =>
+          (item.modname === 'assign' || item.modname === 'quiz') &&
+          item.visible === 1
+      )
 
-    const evaluation = evaluations.find(
-      item => item.moodleId === evaluationModule.instance
-    )
+    const evaluation =
+      evaluationModule &&
+      evaluations.find(item => item.moodleId === evaluationModule.instance)
 
-    const chaptersModule = item.modules.filter(
-      item =>
-        item.modname === 'label' &&
-        item.visible === 1 &&
-        item.description.includes('player.vimeo.com')
-    )
+    const chaptersModule =
+      item.modules &&
+      item.modules.filter(
+        item =>
+          item.modname === 'label' &&
+          item.visible === 1 &&
+          item.description.includes('player.vimeo.com')
+      )
 
     let listChapters = []
-    chaptersModule.forEach((item, index) => {
-      const chapter = chapters.find(
-        element => element.moodleId === item.instance
-      )
-      if (chapter) {
-        listChapters.push({
-          name: chapter.name,
-          order: index + 1,
-          moodleId: chapter.moodleId,
-          ref: chapter._id
-        })
-      }
-    })
+    chaptersModule &&
+      chaptersModule.forEach((item, index) => {
+        const chapter = chapters.find(
+          element => element.moodleId === item.instance
+        )
+        if (chapter) {
+          listChapters.push({
+            name: chapter.name,
+            order: index + 1,
+            moodleId: chapter.moodleId,
+            ref: chapter._id
+          })
+        }
+      })
 
-    const resources = resourcesModule.map((item, index) => {
-      const url = item.contents[0].fileurl
-        .replace('/webservice', '')
-        .replace('?forcedownload=1', '')
-      const resource = {
-        name: item.name,
-        order: index + 1,
-        description: item.modname,
-        moodleId: item.instance,
-        url: url
-      }
-      return resource
-    })
+    const resources =
+      resourcesModule &&
+      resourcesModule.map((item, index) => {
+        const url = item.contents[0].fileurl
+          .replace('/webservice', '')
+          .replace('?forcedownload=1', '')
+        const resource = {
+          name: item.name,
+          order: index + 1,
+          description: item.modname,
+          moodleId: item.instance,
+          url: url
+        }
+        return resource
+      })
 
     const data = {
       order: index + 1,
       name: nameModule,
       moodleId: item.id,
       slug: slug(nameModule.toLowerCase()),
-      resources: resources,
-      chapters: listChapters,
+      resources: resources && resources,
+      chapters: listChapters && listChapters,
       evaluation: {
         name: evaluation.name,
         number: evaluation.number,
@@ -1411,10 +1422,10 @@ const listModulesCourse = async (courseId, modulesFilter) => {
             ref: evaluation._id
           }
         })
-        console.log('Se actualizó modulo que existe:', mod)
+        // console.log('Se actualizó modulo que existe:', mod)
         return mod
       } catch (error) {
-        console.log('Error al actualizar modulo que existe:', error)
+        // console.log('Error al actualizar modulo que existe:', error)
         throw {
           type: 'Actualizar modulo',
           message: `No actualizó el modulo ${lesson.name}`,
@@ -1425,10 +1436,10 @@ const listModulesCourse = async (courseId, modulesFilter) => {
     } else {
       try {
         const mod = await lessonDB.create(data)
-        console.log('Se creó el modulo:', mod)
+        // console.log('Se creó el modulo:', mod)
         return mod
       } catch (error) {
-        console.log('Error al crear un modulo')
+        // console.log('Error al crear un modulo')
         throw {
           type: 'Crear modulo',
           message: `No creó el modulo ${data.name}`,
@@ -1446,7 +1457,6 @@ const listModulesCourse = async (courseId, modulesFilter) => {
 }
 
 const modulesCourse = async ({ courseId }) => {
-  console.log('llego 2')
   const feedBackModule = await actionMoodle('GET', moduleGetCourse, {
     courseid: courseId
   })
@@ -1465,6 +1475,7 @@ const modulesCourse = async ({ courseId }) => {
   if (respModules.errorModules.length > 0) {
     return respModules.errorModules
   }
+  // console.log(modulesFilter)
   return respModules.validModules
 }
 
@@ -1691,3 +1702,26 @@ module.exports = {
 //   getCourseForUser,
 //   searchUser
 // }
+// {
+// "code" : "42886379",
+// "shortCode" : "42886379",
+// "linked" : {
+// "firstName" : "ELMER AUSBERTO",
+// "lastName" : "BRICEÑO SALAZAR",
+// "ref" : ObjectId("5efd118cb1e160169c7dcf44")
+// },
+// "course" : {
+// "shortName" : "Ofimática Profesional",
+// "academicHours" : 600,
+// "ref" : ObjectId("5efd111d179f0412e5dcdd7f")
+// },
+// "score" : 20,
+// "date" : ISODate("2020-08-27T00:00:00Z"),
+// "updatedAt" : ISODate("2020-08-06T04:45:52.061Z"),
+// "createdAt" : ISODate("2020-08-06T04:45:52.061Z"),
+// "__v" : 0
+// }
+// curso:
+// "shortName" : "Ofimática Profesional",
+// "academicHours" : 600,
+// "_id" : ObjectId("5efd111d179f0412e5dcdd7f")
