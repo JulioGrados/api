@@ -577,8 +577,8 @@ const sendEmailAccess = async (user, logged) => {
     'Se envio la información de accesos a la cuneta de moodle con la plantilla pre definida en sengrid.'
   const substitutions = {
     username: linked.username,
-    password: linked.password,
-    name: linked.shorName
+    password: 'escuelaamericanadeinnovacion',
+    name: linked.names
   }
   try {
     const email = await createEmail({
