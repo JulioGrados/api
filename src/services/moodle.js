@@ -698,19 +698,20 @@ const createEnrolCourse = async (grades, course) => {
 
 const createCertificatesCourse = async course => {
   const enrols = await enrolDB.list({
-    query: { 'course.moodleId': course.moodleId, isFinished: true }
+    query: { 'course.moodleId': course.moodleId, isFinished: true },
+    populate: ['linked.ref']
   })
 
   const certificates = await certificateDB.list({
-    query: { 'course.ref': course._id }
+    query: { 'course.ref': course._id },
+    populate: ['linked.ref']
   })
+
   const enrolsCertificate = enrols.map(async enrol => {
+    // console.log('enrol', enrol.linked.ref.firstName)
+
     const certificate = certificates.find(
-      item =>
-        item.linked &&
-        item.linked.firstName === enrol.linked.firstName &&
-        item.linked &&
-        item.linked.lastName === enrol.linked.lastName
+      item => item.linked.ref.email === enrol.linked.ref.email
     )
 
     if (certificate) {
