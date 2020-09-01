@@ -323,6 +323,7 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
   const course = courseFunc.payloadToData(dataCourse)
   const to = linked.email
   const from = 'cursos@eai.edu.pe'
+  const fromname = 'Cursos'
   const templateId = 'd-fe5148580749466aa59f69e5eab99c9a'
   const preheader = `Información del curso ${course.name}`
   const content =
@@ -337,6 +338,7 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
       linked,
       assigned,
       from,
+      fromname,
       preheader,
       content,
       deal: deal._id
@@ -344,6 +346,7 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
     sendMailTemplate({
       to,
       from,
+      fromname,
       substitutions,
       templateId: templateId,
       args: {
@@ -521,6 +524,7 @@ const addCoursesMoodle = async (student, courses, dealId, logged) => {
       type: 'Cuenta',
       name: '[Cuenta] se creó la cuenta en Moodle'
     })
+    console.log('entroooo')
     sendEmailAccess(user.toJSON(), logged)
   }
   // console.log('registro de cursos')
@@ -570,6 +574,7 @@ const sendEmailAccess = async (user, logged) => {
   const linked = payloadToData(user)
   const assigned = payloadToData(logged)
   const to = user.email
+  const fromname = 'Escuela Americana de Innovación'
   const from = 'cursos@eai.edu.pe'
   const templateId = 'd-1283b20fdf3b411a861b30dac8082bd8'
   const preheader = 'Accesos a Moodle'
@@ -585,12 +590,14 @@ const sendEmailAccess = async (user, logged) => {
       linked,
       assigned,
       from,
+      fromname,
       preheader,
       content
     })
     sendMailTemplate({
       to,
       from,
+      fromname,
       substitutions,
       templateId: templateId,
       args: {
