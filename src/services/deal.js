@@ -323,7 +323,7 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
   const course = courseFunc.payloadToData(dataCourse)
   const to = linked.email
   const from = 'cursos@eai.edu.pe'
-  const fromname = 'Cursos'
+  const fromname = 'Escuela Americana de Innovación'
   const templateId = 'd-fe5148580749466aa59f69e5eab99c9a'
   const preheader = `Información del curso ${course.name}`
   const content =
