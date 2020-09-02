@@ -871,9 +871,18 @@ const createCertificatesCourse = async course => {
   const enrolsCertificate = enrols.map(async enrol => {
     // console.log('enrol', enrol.linked.ref.firstName)
 
-    const certificate = certificates.find(
-      item => item.linked.ref.email === enrol.linked.ref.email
-    )
+    const certificate =
+      enrol.linked &&
+      enrol.linked.ref &&
+      certificates.find(item => {
+        if (
+          item.linked &&
+          item.linked.ref &&
+          item.linked.ref.email === enrol.linked.ref.email
+        ) {
+          return item
+        }
+      })
 
     if (certificate) {
       try {
