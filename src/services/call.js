@@ -149,14 +149,19 @@ const validateExistCall = async body => {
   }
   try {
     const exist = await callDB.list({
-      query: { isCompleted: { $ne: true }, 'linked.ref': body.linked.ref },
+      query: {
+        isCompleted: { $ne: true },
+        'linked.ref': body.linked.ref,
+        deal: body.deal
+      },
       select: '_id'
     })
+    console.log('exist', exist)
     if (exist.length > 0) {
       const error = {
         status: 402,
         message:
-          'No puedes tener mas de una llamada pendiente, completa las demas para poder crear una nueva.'
+          'No puedes tener más de una llamada pendiente, completa las demas para poder crear una nueva.'
       }
       throw error
     } else {
