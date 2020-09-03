@@ -1235,7 +1235,7 @@ const listModulesCourse = async (courseId, modulesFilter) => {
         return resource
       })
     const evaluationEnd = evaluation && {
-      name: evaluation,
+      name: evaluation.name,
       number: evaluation.number,
       moodleId: evaluation.moodleId,
       ref: evaluation._id
@@ -1272,10 +1272,10 @@ const listModulesCourse = async (courseId, modulesFilter) => {
             ref: evaluation._id
           }
         })
-        // console.log('Se actualizó modulo que existe:', mod)
+        console.log('Se actualizó modulo que existe:', mod)
         return mod
       } catch (error) {
-        // console.log('Error al actualizar modulo que existe:', error)
+        console.log('Error al actualizar modulo que existe:', error)
         throw {
           type: 'Actualizar modulo',
           message: `No actualizó el modulo ${lesson.name}`,
@@ -1286,10 +1286,10 @@ const listModulesCourse = async (courseId, modulesFilter) => {
     } else {
       try {
         const mod = await lessonDB.create(data)
-        // console.log('Se creó el modulo:', mod)
+        console.log('Se creó el modulo:', mod)
         return mod
       } catch (error) {
-        // console.log('Error al crear un modulo')
+        console.log('Error al crear un modulo')
         throw {
           type: 'Crear modulo',
           message: `No creó el modulo ${data.name}`,
