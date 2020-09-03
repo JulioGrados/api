@@ -517,7 +517,7 @@ const createEnrolCourse = async (grades, course) => {
           number: exam.number,
           name: exam.name,
           score: result && result.graderaw,
-          date: result && result.gradedatesubmitted,
+          date: result && result.gradedategraded,
           isTaken:
             result && result.graderaw && parseInt(result.graderaw) >= 11
               ? true
@@ -625,12 +625,12 @@ const createEnrolCourse = async (grades, course) => {
         const result = grade.gradeitems.find(
           item => item.itemname === task.name
         )
-
+        console.log('result', result)
         const data = {
           number: task.number,
           name: task.name,
           score: result && result.graderaw,
-          date: result && result.gradedatesubmitted,
+          date: result && result.gradedategraded,
           isTaken:
             result && result.graderaw && parseInt(result.graderaw) >= 11
               ? true
@@ -751,7 +751,7 @@ const createEnrolCourse = async (grades, course) => {
           number: exam.number,
           name: exam.name,
           score: result && result.graderaw,
-          date: result && result.gradedatesubmitted,
+          date: result && result.gradedategraded,
           isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
           exam: exam._id
         }
@@ -767,7 +767,7 @@ const createEnrolCourse = async (grades, course) => {
           number: task.number,
           name: task.name,
           score: result && result.graderaw,
-          date: result && result.gradedatesubmitted,
+          date: result && result.gradedategraded,
           isTaken: result && parseInt(result.graderaw) >= 11 ? true : false,
           task: task._id
         }
@@ -1080,7 +1080,7 @@ const gradeNewCertificate = async ({ courseId }) => {
       courseid: courseId
     })
 
-    console.log(contents.usergrades[0])
+    // console.log(contents.usergrades[0])
     grades.push(contents.usergrades[0])
   }, Promise.resolve())
 
