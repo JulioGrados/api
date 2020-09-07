@@ -38,9 +38,19 @@ const createModulesCourse = async (req, res) => {
   }
 }
 
+const migrateTestimonies = async (req, res) => {
+  try {
+    const resp = await services.testimoniesCourse(req.body)
+    return res.json(resp)
+  } catch (error) {
+    return res.json(error.status || 500).json(error)
+  }
+}
+
 module.exports = {
   createUser,
   enrrollUser,
   createCertificates,
-  createModulesCourse
+  createModulesCourse,
+  migrateTestimonies
 }

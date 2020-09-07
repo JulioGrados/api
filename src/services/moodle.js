@@ -12,7 +12,8 @@ const {
   taskDB,
   certificateDB,
   lessonDB,
-  chapterDB
+  chapterDB,
+  testimonyDB
 } = require('../db')
 const { enrolDB } = require('db/lib')
 
@@ -1378,6 +1379,143 @@ const createEnrolUser = async ({ user, course }) => {
   return true
 }
 
+const createTestimonies = async (feedBackCourse, course) => {
+  const users = await userDB.list({})
+  const testimonies = await testimonyDB.list({})
+
+  const feedback = feedBackCourse.feedbacks.find(
+    item => item.name.indexOf('Encuesta') > -1
+  )
+
+  if (feedback) {
+    const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
+      feedbackid: feedback.id
+    })
+
+    const newsFeedBack = feedBackModule.attempts.map(async element => {
+      const user = users.find(
+        item => parseInt(item.moodleId) === parseInt(element.userid)
+      )
+
+      if (user) {
+        const data = {
+          linked: { ref: user._id },
+          firstName: user.firstName,
+          lastName: user.lastName,
+          dni: user.dni && user.dni,
+          city: user.city && user.city,
+          photo: user.photo && user.photo,
+          rate:
+            element.responses[0].rawval === '1'
+              ? 5
+              : element.responses[0].rawval === '2'
+              ? 4
+              : element.responses[0].rawval === '3'
+              ? 3
+              : element.responses[0].rawval === '4'
+              ? 2
+              : element.responses[0].rawval === '5'
+              ? 1
+              : '',
+          moodleId: element.id,
+          comment: element.responses[5].rawval,
+          status: 'Revisar',
+          course: {
+            name: course.name,
+            slug: course.slug,
+            category: {
+              name: course.category.name,
+              ref: course.category.ref
+            },
+            ref: course._id
+          }
+        }
+
+        const testimony = testimonies.find(
+          item => parseInt(item.moodleId) === parseInt(element.id)
+        )
+
+        if (testimony) {
+          try {
+            const testi = await testimonyDB.update(testimony._id, {
+              rate:
+                element.responses[0].rawval === '1'
+                  ? 5
+                  : element.responses[0].rawval === '2'
+                  ? 4
+                  : element.responses[0].rawval === '3'
+                  ? 3
+                  : element.responses[0].rawval === '4'
+                  ? 2
+                  : element.responses[0].rawval === '5'
+                  ? 1
+                  : '',
+              comment: element.responses[5].rawval
+            })
+            console.log('Se actualizó testimonio que existe:', testi)
+            return testi
+          } catch (error) {
+            console.log('Error al actualizar testimonio que existe:', error)
+            throw {
+              type: 'Actualizar testimonio',
+              message: `No actualizó el testimonio ${data.comment}`,
+              metadata: chapter,
+              error: error
+            }
+          }
+        } else {
+          try {
+            const testi = await testimonyDB.create(data)
+            console.log('Se creó el testimonio:', testi)
+            return testi
+          } catch (error) {
+            console.log('Error al crear un testimonio')
+            throw {
+              type: 'Crear testimonio',
+              message: `No creó el testimonio ${data.moodleId}`,
+              metadata: data,
+              error: error
+            }
+          }
+        }
+      } else {
+        return {}
+      }
+    })
+    const results = await Promise.all(newsFeedBack.map(p => p.catch(e => e)))
+    const validTestimonies = results.filter(result => !result.error)
+    const errorTestimonies = results.filter(result => result.error)
+
+    return { validTestimonies, errorTestimonies }
+  } else {
+    return {}
+  }
+}
+
+const testimoniesCourse = async ({ courseId }) => {
+  let course
+  try {
+    course = await courseDB.detail({ query: { moodleId: courseId } })
+  } catch (error) {
+    throw error
+  }
+
+  console.log('course', course)
+
+  const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
+    courseids: [course.moodleId]
+  })
+
+  const respTestimonies = await createTestimonies(feedBackCourse, course)
+
+  if (respTestimonies.errorTestimonies.length > 0) {
+    console.log(respTestimonies.errorTestimonies)
+    return respTestimonies.errorTestimonies
+  }
+  // console.log(modulesFilter)
+  return respTestimonies.validTestimonies
+}
+
 module.exports = {
   createNewUser,
   createEnrolUser,
@@ -1385,7 +1523,8 @@ module.exports = {
   getCourseForUser,
   searchUser,
   gradeNewCertificate,
-  modulesCourse
+  modulesCourse,
+  testimoniesCourse
 }
 
 // 'use strict'
