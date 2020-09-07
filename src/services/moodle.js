@@ -1051,6 +1051,11 @@ const chaptersModuleCourse = async modules => {
       }
 
       chapter.name = nameChapter.replace(/[\r\n]+/gm, '')
+      chapter.name = nameChapter
+        .replace(/&/g, '&amp;')
+        .replace(/>/g, '&gt;')
+        .replace(/</g, '&lt;')
+        .replace(/"/g, '&quot;')
       chaptersModules.push(chapter)
     })
   })
@@ -1175,6 +1180,12 @@ const listModulesCourse = async (courseId, modulesFilter) => {
       nameModule = nameModule.substring(1, nameModule.length)
     }
 
+    nameModule = nameModule.replace(/[\r\n]+/gm, '')
+    nameModule = nameModule
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+
     const resourcesModule =
       item.modules &&
       item.modules.filter(
@@ -1273,7 +1284,7 @@ const listModulesCourse = async (courseId, modulesFilter) => {
             ref: evaluation._id
           }
         })
-        console.log('Se actualizó modulo que existe:', mod)
+        // console.log('Se actualizó modulo que existe:', mod)
         return mod
       } catch (error) {
         console.log('Error al actualizar modulo que existe:', error)
