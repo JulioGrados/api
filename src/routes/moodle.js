@@ -9,6 +9,7 @@ router.route('/moodle/user').post(Api.createUser)
 router.route('/moodle/certificates').post(Api.createCertificates)
 router.route('/migrations/course').post(Api.enrrollUser)
 router.route('/migrations/lessons').post(Api.createModulesCourse)
+router.route('/migrate/testimonies').post(Api.migrateTestimonies)
 // router.route('/migrations/modules').get(Api.createModulesCourse)
 
 module.exports = router
