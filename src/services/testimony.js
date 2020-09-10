@@ -4,6 +4,7 @@ const { testimonyDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 
 const listTestimonies = async params => {
+  console.log(params)
   const testimonies = await testimonyDB.list(params)
   return testimonies
 }
@@ -21,20 +22,24 @@ const listTestimoniesCourse = async ({ courseId, categoryId }) => {
   let testimonies = []
   const params = {
     query: {
+      status: 'Visible',
       'course.ref': courseId
     },
-    limit: 4
+    limit: 4,
+    populate: ['linked.ref', 'course.ref']
   }
   const testimoniesCourse = await testimonyDB.list(params)
   if (testimoniesCourse.length < 4) {
     const params = {
       query: {
+        status: 'Visible',
         'course.category.ref': categoryId,
         _id: {
           $nin: testimoniesCourse.map(item => item._id)
         }
       },
-      limit: 4 - testimoniesCourse.length
+      limit: 4 - testimoniesCourse.length,
+      populate: ['linked.ref', 'course.ref']
     }
     const testimoniesCategory = await testimonyDB.list(params)
     testimonies = [...testimoniesCourse, ...testimoniesCategory]
@@ -43,9 +48,11 @@ const listTestimoniesCourse = async ({ courseId, categoryId }) => {
         query: {
           _id: {
             $nin: testimonies.map(item => item._id)
-          }
+          },
+          status: 'Visible'
         },
-        limit: 4 - testimonies.length
+        limit: 4 - testimonies.length,
+        populate: ['linked.ref', 'course.ref']
       }
       const testimoniesGeneral = await testimonyDB.list(params)
       testimonies = [...testimonies, ...testimoniesGeneral]
