@@ -1436,13 +1436,13 @@ const listModulesCourse = async (courseId, modulesFilter) => {
           name: nameModule,
           slug: slug(nameModule.toLowerCase()),
           moodleId: item.id,
-          resources: resources,
-          chapters: listChapters,
+          resources: resources && resources,
+          chapters: listChapters && listChapters,
           evaluation: {
-            name: evaluation.name,
-            number: evaluation.number,
-            moodleId: evaluation.moodleId,
-            ref: evaluation._id
+            name: evaluation && evaluation.name,
+            number: evaluation && evaluation.number,
+            moodleId: evaluation && evaluation.moodleId,
+            ref: evaluation && evaluation._id
           }
         })
         // console.log('Se actualizó modulo que existe:', mod)
