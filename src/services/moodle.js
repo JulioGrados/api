@@ -333,6 +333,10 @@ const createEnrolCourse = async (grades, course) => {
     query: { 'course.moodleId': course.moodleId }
   })
 
+  const lessons = await lessonDB.list({
+    query: { 'course.moodleId': course.moodleId }
+  })
+
   let enrolsNew
   if (course.typeOfEvaluation === 'exams') {
     let examsBD
@@ -369,6 +373,10 @@ const createEnrolCourse = async (grades, course) => {
       })
 
       const examEnd = calculateProm(exams)
+
+      if (lessons.length !== exams.length) {
+        examEnd.isFinished = false
+      }
 
       const user = users.find(
         item => parseInt(item.moodleId) === parseInt(grade.userid)
@@ -482,6 +490,10 @@ const createEnrolCourse = async (grades, course) => {
       })
 
       const taskEnd = calculateProm(tasks)
+
+      if (lessons.length !== tasks.length) {
+        examEnd.isFinished = false
+      }
 
       const user = users.find(
         item => parseInt(item.moodleId) === parseInt(grade.userid)
@@ -616,6 +628,10 @@ const createEnrolCourse = async (grades, course) => {
       })
 
       const bothEnd = calculatePromBoth(exams, tasks)
+
+      if (lessons.length !== tasks.length + exams.length) {
+        examEnd.isFinished = false
+      }
 
       const user = users.find(
         item => parseInt(item.moodleId) === parseInt(grade.userid)
