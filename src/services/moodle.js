@@ -135,7 +135,8 @@ const createUserCourse = async usersMoodle => {
     const user = users.find(
       item =>
         parseInt(item.moodleId) === parseInt(element.id) ||
-        item.email === element.email
+        item.email === element.email ||
+        item.username === element.username
     )
 
     const data = {
