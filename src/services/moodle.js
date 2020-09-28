@@ -318,8 +318,8 @@ const createUserCourse = async usersMoodle => {
       try {
         const updateUser = await userDB.update(user._id, {
           moodleId: element.id,
-          email: element.email,
-          username: element.username,
+          email: user.email ? user.email : element.email,
+          username: user.username ? user.username : element.username,
           roles: [...user.roles, 'Estudiante']
           // shippings: []
         })
