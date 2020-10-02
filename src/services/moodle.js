@@ -537,7 +537,7 @@ const createEnrolCourse = async (grades, course) => {
 
       const examEnd = calculateProm(exams)
 
-      if (lessons.length !== exams.length) {
+      if (course.numberEvaluation !== exams.length) {
         examEnd.isFinished = false
       }
 
@@ -654,7 +654,7 @@ const createEnrolCourse = async (grades, course) => {
 
       const taskEnd = calculateProm(tasks)
 
-      if (lessons.length !== tasks.length) {
+      if (course.numberEvaluation !== tasks.length) {
         examEnd.isFinished = false
       }
 
@@ -792,7 +792,7 @@ const createEnrolCourse = async (grades, course) => {
 
       const bothEnd = calculatePromBoth(exams, tasks)
 
-      if (lessons.length !== tasks.length + exams.length) {
+      if (course.numberEvaluation !== tasks.length + exams.length) {
         examEnd.isFinished = false
       }
 
