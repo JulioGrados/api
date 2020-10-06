@@ -87,7 +87,7 @@ const createOrUpdateDeal = async (user, body) => {
     return updateDeal
   } else {
     const deal = await createNewDeal(user, body)
-    //console.log('creo deal', deal)
+    // console.log('creo deal', deal)
     createTimeline({ linked: user, type: 'Deal', name: 'Nuevo trato creado' })
     return deal
   }
@@ -112,8 +112,13 @@ const findDealUser = async user => {
 
 const createNewDeal = async (user, body) => {
   const dataDeal = await addInitialStatus(body)
-  //console.log('body', body)
-  dataDeal.assessor = await assignedAssessor(body.courses)
+  if (body.assessor && body.assessor.username) {
+    dataDeal.assessor.username = body.assessor.username
+    dataDeal.assessor.ref = await assignedAssessorOne(body.assessor.username)
+  } else {
+    dataDeal.assessor = await assignedAssessor(body.courses)
+  }
+
   const deal = await dealDB.create({
     ...dataDeal,
     client: user,
@@ -226,6 +231,25 @@ const assignedAssessor = async courses => {
   }
 }
 
+const assignedAssessorOne = async username => {
+  const assessor = await userDB.detail({
+    query: {
+      roles: 'Asesor',
+      username: username
+    }
+  })
+
+  if (assessor) {
+    return assessor
+  } else {
+    const error = {
+      status: 500,
+      message: 'No se encontro un asesor disponible'
+    }
+    throw error
+  }
+}
+
 const getMinAssessor = assessors => {
   const min = _.minBy(assessors, 'prospects')
 
@@ -311,6 +335,7 @@ const prepareCourses = (lead, deal, oldCourses, newCourses) => {
         type: 'Curso',
         name: `Preguntó por el curso ${course.name}`
       })
+      console.log('prepare deal', deal)
       sendEmailCourse(lead, deal, course)
     }, 2000)
   })
@@ -319,7 +344,7 @@ const prepareCourses = (lead, deal, oldCourses, newCourses) => {
 
 const sendEmailCourse = async (lead, deal, dataCourse) => {
   const linked = payloadToData(lead)
-  const assigned = payloadToData(deal.assessor.ref)
+  const assigned = deal.assessor
   const course = courseFunc.payloadToData(dataCourse)
   const to = linked.email
   const from = 'cursos@eai.edu.pe'
