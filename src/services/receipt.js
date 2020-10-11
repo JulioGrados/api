@@ -11,7 +11,7 @@ const listReceipts = async params => {
 const createReceipt = async (body, files, loggedUser) => {
   if (files) {
     for (const label in files) {
-      const route = await saveFile(files[label], '/courses')
+      const route = await saveFile(files[label], '/receipts')
       body[label] = route
     }
   }
@@ -22,7 +22,7 @@ const createReceipt = async (body, files, loggedUser) => {
 const updateReceipt = async (receiptId, body, files, loggedUser) => {
   if (files) {
     for (const label in files) {
-      const route = await saveFile(files[label], '/courses')
+      const route = await saveFile(files[label], '/receipts')
       body[label] = route
     }
   }
