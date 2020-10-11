@@ -23,7 +23,6 @@ const createSale = async (body, files, loggedUser) => {
     await sale.remove()
     throw error
   }
-
   return sale
 }
 
@@ -155,14 +154,23 @@ const changeOrder = async (order, linked, files) => {
         }
       }
     } else {
-      const voucher = await findOrAddVoucher(order.voucher)
-      const receipt = await findOrAddReceipt(order.receipt)
+      if (order.status !== 'Pagada') {
+        const voucher = await findOrAddVoucher(order.voucher)
+        const receipt = await findOrAddReceipt(order.receipt)
+        order.voucher.code = voucher.code
+        order.voucher.ref = voucher
 
-      order.voucher.code = voucher.code
-      order.voucher.ref = voucher
+        order.receipt.code = receipt.code
+        order.receipt.ref = receipt
+      } else if (order.status === 'Pagada') {
+        const voucher = await findVoucher(order.voucher)
+        const receipt = await findOrAddReceipt(order.receipt)
+        order.voucher.code = voucher.code
+        order.voucher.ref = voucher
 
-      order.receipt.code = receipt.code
-      order.receipt.ref = receipt
+        order.receipt.code = receipt.code
+        order.receipt.ref = receipt
+      }
     }
     return order
   } catch (error) {
@@ -175,6 +183,20 @@ const changeOrder = async (order, linked, files) => {
       }
       throw errorMsg
     }
+  }
+}
+
+const findVoucher = async (voucher) => {
+  try {
+    const dbVoucher = await voucherDB.detail({ query: { code: voucher.code } })
+    
+    return dbVoucher
+  } catch (error) {
+      const errorMsg = {
+        status: 402,
+        message: 'No existe voucher'
+      }
+      throw errorMsg
   }
 }
 
