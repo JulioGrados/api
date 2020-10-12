@@ -14,6 +14,8 @@ const { createEmail } = require('./email')
 const { getSocket } = require('../lib/io')
 const { createNewUser, createEnrolUser, searchUser } = require('./moodle')
 
+let randomize = require('randomatic')
+
 const listDeals = async params => {
   const deals = await dealDB.list(params)
   return deals
@@ -518,6 +520,7 @@ const addCoursesMoodle = async (student, courses, dealId, logged) => {
     deal: deal,
     type: 'Curso'
   }
+  const code = randomize('0', 8)
   if (!user.moodleId) {
     // console.log('registrar usuario moodle')
     const exist = await searchUser({
@@ -532,30 +535,33 @@ const addCoursesMoodle = async (student, courses, dealId, logged) => {
       }
       throw err
     }
+    
     const moodleUser = await createNewUser({
       ...user.toJSON(),
       username: student.username,
-      password: student.password
+      password: code
     })
-    // console.log('moodleUser', moodleUser)
+    
     const dataUser = {
       username: student.username || undefined,
-      password: student.password ? generateHash(student.password) : undefined,
+      password: student.password ? generateHash(code) : undefined,
       moodleId: moodleUser.id
     }
     user = await userDB.update(user._id, dataUser)
+    user.password = code
     createTimeline({
       ...timeline,
       type: 'Cuenta',
       name: '[Cuenta] se creó la cuenta en Moodle'
     })
-    console.log('entroooo')
+    
     sendEmailAccess(user.toJSON(), logged)
   }
   // console.log('registro de cursos')
   try {
     const coursesEnrol = await Promise.all(
       courses.map(async course => {
+        user.password = code
         await createEnrolUser({ course, user })
         createTimeline({
           ...timeline,
@@ -607,9 +613,10 @@ const sendEmailAccess = async (user, logged) => {
     'Se envio la información de accesos a la cuneta de moodle con la plantilla pre definida en sengrid.'
   const substitutions = {
     username: linked.username,
-    password: 'escuelaamericanadeinnovacion',
+    password: user.password,
     name: linked.names
   }
+  console.log('substitutions', substitutions)
   try {
     const email = await createEmail({
       linked,
