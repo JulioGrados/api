@@ -1050,35 +1050,35 @@ const gradeNewCertificate = async ({ courseId }) => {
 
 const chaptersModuleCourse = async modules => {
   const chapters = await chapterDB.list({})
-
+  
   let chaptersModules = []
   modules.forEach(item => {
-    const chaptersModule = item.modules.filter(
+    const chaptersModule = item.modules && item.modules.filter(
       item =>
         item.modname === 'label' &&
         item.visible === 1 &&
         item.description.includes('player.vimeo.com')
     )
     chaptersModule.forEach(chapter => {
-      let nameChapter = chapter.name
-      while (
+      let nameChapter = chapter.name.replace(/[\r\n]+/gm, '')
+      if (nameChapter.length > 0) {
+        while (
         (nameChapter.charAt(0) >= 0 && nameChapter.charAt(0) <= 9) ||
-        nameChapter.charAt(0) === ' ' ||
-        nameChapter.charAt(0) === '.'
-      ) {
-        nameChapter = nameChapter.substring(1, nameChapter.length)
+          nameChapter.charAt(0) === ' ' ||
+          nameChapter.charAt(0) === '.'
+        ) {
+          nameChapter = nameChapter.substring(1, nameChapter.length)
+        }
+        chapter.name = nameChapter
+          .replace(/&/g, '&amp;')
+          .replace(/>/g, '&gt;')
+          .replace(/</g, '&lt;')
+          .replace(/"/g, '&quot;')
       }
-
-      chapter.name = nameChapter.replace(/[\r\n]+/gm, '')
-      chapter.name = nameChapter
-        .replace(/&/g, '&amp;')
-        .replace(/>/g, '&gt;')
-        .replace(/</g, '&lt;')
-        .replace(/"/g, '&quot;')
       chaptersModules.push(chapter)
     })
   })
-
+  
   const chaptersSave = chaptersModules.map(async item => {
     const chapter = chapters.find(element => element.moodleId === item.instance)
 
@@ -1091,10 +1091,10 @@ const chaptersModuleCourse = async modules => {
           video: item.description,
           moodleId: item.instance
         })
-        // console.log('Se actualizó capítulo que existe:', chapt)
+        console.log('Se actualizó capítulo que existe:', chapt)
         return chapt
       } catch (error) {
-        // console.log('Error al actualizar capítulo que existe:', error)
+        console.log('Error al actualizar capítulo que existe:', error)
         throw {
           type: 'Actualizar capítulo',
           message: `No actualizó el capítulo ${chapter.name}`,
@@ -1113,10 +1113,10 @@ const chaptersModuleCourse = async modules => {
 
       try {
         const chapt = await chapterDB.create(data)
-        // console.log('Se creó el capítulo:', chapt)
+        console.log('Se creó el capítulo:', chapt)
         return chapt
       } catch (error) {
-        // console.log('Error al crear un capítulo')
+        console.log('Error al crear un capítulo')
         throw {
           type: 'Crear capítulo',
           message: `No creó el capítulo ${data.name}`,
@@ -1345,8 +1345,9 @@ const modulesCourse = async ({ courseId }) => {
   const modulesFilter = feedBackModule.filter(
     item => item.name !== 'General' && item.visible === 1
   )
+  
   const respChapters = await chaptersModuleCourse(modulesFilter)
-
+  
   if (respChapters.errorChapters.length > 0) {
     console.log(respChapters.errorChapters)
     return respChapters.errorChapters
