@@ -1252,10 +1252,10 @@ const chaptersModuleCourse = async modules => {
           video: item.description,
           moodleId: item.instance
         })
-        console.log('Se actualizó capítulo que existe:', chapt)
+        // console.log('Se actualizó capítulo que existe:', chapt)
         return chapt
       } catch (error) {
-        console.log('Error al actualizar capítulo que existe:', error)
+        // console.log('Error al actualizar capítulo que existe:', error)
         throw {
           type: 'Actualizar capítulo',
           message: `No actualizó el capítulo ${chapter.name}`,
@@ -1274,10 +1274,10 @@ const chaptersModuleCourse = async modules => {
 
       try {
         const chapt = await chapterDB.create(data)
-        console.log('Se creó el capítulo:', chapt)
+        // console.log('Se creó el capítulo:', chapt)
         return chapt
       } catch (error) {
-        console.log('Error al crear un capítulo')
+        // console.log('Error al crear un capítulo')
         throw {
           type: 'Crear capítulo',
           message: `No creó el capítulo ${data.name}`,
@@ -1349,8 +1349,9 @@ const listModulesCourse = async (courseId, modulesFilter) => {
     tasksBD.forEach(item => evaluations.push(item))
   }
 
-  console.log('item', modulesFilter)
+  // console.log('item', modulesFilter)
   const modulesSave = modulesFilter.map(async (item, index) => {
+    
     let nameModule = item.name
     while (
       (nameModule.charAt(0) >= 0 && nameModule.charAt(0) <= 9) ||
@@ -1359,13 +1360,13 @@ const listModulesCourse = async (courseId, modulesFilter) => {
     ) {
       nameModule = nameModule.substring(1, nameModule.length)
     }
-
+    
     nameModule = nameModule.replace(/[\r\n]+/gm, '')
     nameModule = nameModule
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
-
+    
     const resourcesModule =
       item.modules &&
       item.modules.filter(
@@ -1373,7 +1374,7 @@ const listModulesCourse = async (courseId, modulesFilter) => {
           (item.modname === 'url' || item.modname === 'resource') &&
           item.visible === 1
       )
-
+    
     const evaluationModule =
       item.modules &&
       item.modules.find(
@@ -1381,11 +1382,11 @@ const listModulesCourse = async (courseId, modulesFilter) => {
           (item.modname === 'assign' || item.modname === 'quiz') &&
           item.visible === 1
       )
-
+    
     const evaluation =
       evaluationModule &&
       evaluations.find(item => item.moodleId === evaluationModule.instance)
-
+    
     const chaptersModule =
       item.modules &&
       item.modules.filter(
@@ -1394,7 +1395,7 @@ const listModulesCourse = async (courseId, modulesFilter) => {
           item.visible === 1 &&
           item.description.includes('player.vimeo.com')
       )
-
+    console.log('7')
     let listChapters = []
     chaptersModule &&
       chaptersModule.forEach((item, index) => {
@@ -1410,11 +1411,11 @@ const listModulesCourse = async (courseId, modulesFilter) => {
           })
         }
       })
-
+    
     const resources =
       resourcesModule &&
       resourcesModule.map((item, index) => {
-        const url = item.contents[0].fileurl
+        const url = item.contents && item.contents[0] && item.contents[0].fileurl
           .replace('/webservice', '')
           .replace('?forcedownload=1', '')
         const resource = {
@@ -1432,7 +1433,6 @@ const listModulesCourse = async (courseId, modulesFilter) => {
       moodleId: evaluation.moodleId,
       ref: evaluation._id
     }
-
     const data = {
       order: index + 1,
       name: nameModule,
@@ -1447,7 +1447,7 @@ const listModulesCourse = async (courseId, modulesFilter) => {
         ref: course._id
       }
     }
-
+    
     const lesson = modules.find(element => element.moodleId === item.id)
     if (lesson) {
       try {
@@ -1467,7 +1467,7 @@ const listModulesCourse = async (courseId, modulesFilter) => {
         // console.log('Se actualizó modulo que existe:', mod)
         return mod
       } catch (error) {
-        console.log('Error al actualizar modulo que existe:', error)
+        // console.log('Error al actualizar modulo que existe:', error)
         throw {
           type: 'Actualizar modulo',
           message: `No actualizó el modulo ${lesson.name}`,
@@ -1478,10 +1478,10 @@ const listModulesCourse = async (courseId, modulesFilter) => {
     } else {
       try {
         const mod = await lessonDB.create(data)
-        console.log('Se creó el modulo:', mod)
+        // console.log('Se creó el modulo:', mod)
         return mod
       } catch (error) {
-        console.log('Error al crear un modulo')
+        // console.log('Error al crear un modulo')
         throw {
           type: 'Crear modulo',
           message: `No creó el modulo ${data.name}`,
