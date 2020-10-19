@@ -6,6 +6,7 @@ const Api = require('../controllers/enrols')
 const router = new Router()
 
 router.route('/enrols/count').get(Api.countDocuments)
+router.route('/enrols/send').post(Api.sendEnrolEmail)
 
 router
   .route('/enrols')

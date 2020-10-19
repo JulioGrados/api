@@ -7,6 +7,16 @@ const listEnrols = async (req, res) => {
   return res.status(200).json(enrols)
 }
 
+const sendEnrolEmail = async (req, res) => {
+  try {
+    const enrol = await service.createEmailEnrol(req.body)
+    return res.status(201).json(enrol)
+  } catch (error) {
+    console.log(error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 const createEnrol = async (req, res) => {
   try {
     const enrol = await service.createEnrol(req.body, req.user)
@@ -67,5 +77,6 @@ module.exports = {
   createEnrol,
   updateEnrol,
   detailEnrol,
-  deleteEnrol
+  deleteEnrol,
+  sendEnrolEmail
 }
