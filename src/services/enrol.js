@@ -16,6 +16,7 @@ const createEnrol = async (body, loggedUser) => {
 const createEmailEnrol = async (body) => {
   const msg = {
     to: body.to,
+    cc: body.cc,
     from: 'docente@eai.edu.pe',
     subject: body.subject,
     text: body.text,
