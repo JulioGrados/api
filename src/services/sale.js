@@ -1,6 +1,6 @@
 'use strict'
 
-const { saleDB, voucherDB, receiptDB, dealDB, progressDB } = require('../db')
+const { saleDB, voucherDB, receiptDB, dealDB, progressDB, userDB } = require('../db')
 const { sumAmountOrders } = require('utils/functions/sale')
 const { saveFile } = require('utils/files/save')
 const { emitDeal } = require('./deal')
@@ -27,7 +27,7 @@ const createSale = async (body, files, loggedUser) => {
 }
 
 const updateSale = async (saleId, body, files, loggedUser) => {
-  if (body.status === 'Pendiente' || body.status === 'Pagando') {
+  if (body.status === 'Pendiente' || body.status === 'Pagando' || body.status === 'Finalizada') {
     const copyOrders = JSON.parse(JSON.stringify(body.orders))
     body.orders = await prepareOrders(body, files)
     body.status = getStatusSale(body)
@@ -113,6 +113,7 @@ const prepareOrders = async ({ orders, amount, user }, files) => {
   try {
     results = await Promise.all(
       orders.map(async order => {
+        console.log('order', order)
         const orderRes = await changeOrder(order, user, files)
         return orderRes
       })
@@ -131,42 +132,22 @@ const prepareOrders = async ({ orders, amount, user }, files) => {
 
 const changeOrder = async (order, linked, files) => {
   try {
-    if (order.status === 'Por Pagar') {
-      if (order.voucher) {
-        order.status = 'Pagada'
-        order.paymentDate = Date()
-        const voucher = await findOrAddVoucher(
-          order.voucher,
-          order.amount,
-          order.assigned,
-          files
-        )
-        order.voucher.code = voucher.code
-        order.voucher.ref = voucher
-
-        if (order.receipt) {
-          const { isBill, ruc, dni, name, businessName } = order.receipt
-          const data = { isBill, ruc, dni, name, businessName }
-          const receipt = await findOrAddReceipt(data, order.assigned, linked)
-
-          order.receipt.code = receipt.code
-          order.receipt.ref = receipt
-        }
-      }
-    } else {
-      if (order.status !== 'Pagada') {
-        const voucher = await findOrAddVoucher(order.voucher)
-        const receipt = await findOrAddReceipt(order.receipt)
-        order.voucher.code = voucher.code
-        order.voucher.ref = voucher
-
-        order.receipt.code = receipt.code
-        order.receipt.ref = receipt
-      } else if (order.status === 'Pagada') {
-        const voucher = await findVoucher(order.voucher)
-        const receipt = await findOrAddReceipt(order.receipt)
-        order.voucher.code = voucher.code
-        order.voucher.ref = voucher
+    if (order.voucher) {
+      order.status = 'Pagada'
+      order.paymentDate = Date()
+      const voucher = await findOrAddVoucher(
+        order.voucher,
+        order.amount,
+        order.assigned,
+        files
+      )
+      order.voucher.code = voucher.code
+      order.voucher.ref = voucher
+      
+      if (order.receipt) {
+        const { _id, isBill, ruc, dni, name, businessName, code } = order.receipt
+        const data = { isBill, ruc, dni, name, businessName, code, _id }
+        const receipt = await findOrAddReceipt(data, files, order.assigned, linked)
 
         order.receipt.code = receipt.code
         order.receipt.ref = receipt
@@ -202,19 +183,27 @@ const findVoucher = async (voucher) => {
 
 const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
   try {
-    const dbVoucher = await voucherDB.detail({ query: { code: voucher.code } })
-    if (dbVoucher.isUsed) {
-      const error = {
-        status: 402,
-        message: 'Ya existe un voaucher con el mismo codigo y ya esta usado.'
+    if (voucher._id) {
+      getResidueVoucher(voucher.amount, orderAmount)
+      if (files) {
+        const file = files[voucher.code]
+        if (file) {
+          const route = await saveFile(file, '/vouchers')
+          voucher.image = route
+        }
       }
-      throw error
-    }
-    getResidueVoucher(dbVoucher.residue, orderAmount)
-
-    return dbVoucher
-  } catch (error) {
-    if (error.status && error.status === 404) {
+      const updateVoucher = await voucherDB.update( voucher._id, {
+        ...voucher,
+        bank: voucher.bank && {
+          ...voucher.bank,
+          name: voucher.bank.label
+        },
+        assigned,
+        residue: voucher.amount,
+        isUsed: true
+      })
+      return updateVoucher
+    } else {
       getResidueVoucher(voucher.amount, orderAmount)
       if (files) {
         const file = files[voucher.code]
@@ -234,9 +223,9 @@ const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
         isUsed: false
       })
       return newVoucher
-    } else {
-      throw error
     }
+  } catch (error) {
+    throw error
   }
 }
 
@@ -256,23 +245,42 @@ const getResidueVoucher = (voucherAmount, orderAmount) => {
   return { isUsed, residue }
 }
 
-const findOrAddReceipt = async (receipt, assigned, linked) => {
+const findOrAddReceipt = async (receipt, files, assigned, linked) => {
   try {
-    const dbReceipt = await receiptDB.detail({
-      query: { _id: receipt._id || receipt.ref }
-    })
-    return dbReceipt
-  } catch (error) {
-    if (error.status && error.status === 404) {
+    if (receipt._id || receipt.ref) {
+      receipt.status = 'Procesado'
+      const ref = receipt._id ? receipt._id : receipt.ref
+      if (files) {
+        const file = files[receipt.code]
+        if (file) {
+          const route = await saveFile(file, '/receipts')
+          receipt.file = route
+        }
+      }
+      const updateReceipt = await receiptDB.update(ref, {
+        ...receipt,
+        assigned,
+        linked
+      })
+      return updateReceipt
+    } else {
+      receipt.status = 'Procesado'
+      if (files) {
+        const file = files[receipt.code]
+        if (file) {
+          const route = await saveFile(file, '/receipts')
+          receipt.file = route
+        }
+      }
       const newReceipt = await receiptDB.create({
         ...receipt,
         assigned,
         linked
       })
       return newReceipt
-    } else {
-      throw error
     }
+  } catch (error) {
+    throw error
   }
 }
 
@@ -296,6 +304,16 @@ const changeStatusUser = async sale => {
       progressPayment = {
         name: progress.name,
         ref: progress._id
+      }
+    }
+
+    if (sale.user && sale.user.ref) {
+      const user = await userDB.detail({ query: { _id: sale.user.ref } })
+
+      if (user) {
+        await userDB.update(user._id, {
+          roles: [...user.roles, 'Cliente']
+        })
       }
     }
     const statusActivity = 'done'
