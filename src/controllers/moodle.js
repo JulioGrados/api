@@ -38,6 +38,48 @@ const createModulesCourse = async (req, res) => {
   }
 }
 
+const migrateUsers = async (req, res) => {
+  try {
+    const resp = await services.usersMoodle(req.body)
+    return res.json(resp)
+  } catch (error) {
+    return res.json(error.status || 500).json(error)
+  }
+}
+
+const migrateEvaluations = async (req, res) => {
+  try {
+    const resp = await services.evaluationMoodle(req.body)
+    return res.json(resp)
+  } catch (error) {
+    return res.json(error.status || 500).json(error)
+  }
+}
+
+const migrateEnrols = async (req, res) => {
+  try {
+    const resp = await services.enrolMoodle(req.body)
+    return res.json(resp)
+  } catch (error) {
+    return res.json(error.status || 500).json(error)
+  }
+}
+
+
+const migrateCertificates = async (req, res) => {
+  try {
+    const resp = await services.certificateMoodle(req.body)
+    return res.json(resp)
+  } catch (error) {
+    return res.json(error.status || 500).json(error)
+  }
+}
+
+const migrateGrades = async (req, res) => {
+  const resp = await services.usersGrades(req.body)
+  return res.json(resp)
+}
+
 const migrateTestimonies = async (req, res) => {
   try {
     const resp = await services.testimoniesCourse(req.body)
@@ -50,6 +92,11 @@ const migrateTestimonies = async (req, res) => {
 module.exports = {
   createUser,
   enrrollUser,
+  migrateUsers,
+  migrateGrades,
+  migrateEvaluations,
+  migrateCertificates,
+  migrateEnrols,
   createCertificates,
   createModulesCourse,
   migrateTestimonies
