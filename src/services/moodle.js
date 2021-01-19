@@ -1430,10 +1430,11 @@ const listModulesCourse = async (courseId, modulesFilter) => {
       moodleId: evaluation.moodleId,
       ref: evaluation._id
     }
+    const num = randomize('0', 1)
     const data = {
       order: index + 1,
       name: nameModule,
-      moodleId: item.id,
+      moodleId: item.id * num,
       slug: slug(nameModule.toLowerCase()),
       resources: resources && resources,
       chapters: listChapters && listChapters,
@@ -1451,7 +1452,6 @@ const listModulesCourse = async (courseId, modulesFilter) => {
         const mod = await lessonDB.update(lesson._id, {
           name: nameModule,
           slug: slug(nameModule.toLowerCase()),
-          moodleId: item.id,
           resources: resources && resources,
           chapters: listChapters && listChapters,
           evaluation: {
