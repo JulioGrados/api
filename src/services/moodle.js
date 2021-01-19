@@ -1591,10 +1591,11 @@ const listModulesCourse = async (courseId, modulesFilter) => {
       moodleId: evaluation.moodleId,
       ref: evaluation._id
     }
+    const order = index + 2
     const data = {
       order: index + 1,
       name: nameModule,
-      moodleId: item.id,
+      moodleId: item.id * order,
       slug: slug(nameModule.toLowerCase()),
       resources: resources && resources,
       chapters: listChapters && listChapters,
@@ -1606,13 +1607,13 @@ const listModulesCourse = async (courseId, modulesFilter) => {
       }
     }
     
-    const lesson = modules.find(element => element.moodleId === item.id)
+    const lesson = modules.find(element => element.moodleId === (item.id*order))
     if (lesson) {
       try {
         const mod = await lessonDB.update(lesson._id, {
           name: nameModule,
           slug: slug(nameModule.toLowerCase()),
-          moodleId: item.id,
+          moodleId: (item.id*order),
           resources: resources && resources,
           chapters: listChapters && listChapters,
           evaluation: {
@@ -1882,4 +1883,3 @@ module.exports = {
   modulesCourse,
   testimoniesCourse
 }
-
