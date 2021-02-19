@@ -14,7 +14,7 @@ const createClaim = async (body, loggedClaim) => {
     to: body.email,
     cc: 'gerencia@eai.edu.pe',
     from: 'gerencia@eai.edu.pe',
-    subject: `[${body.option}] - ${body.firstName} ${body.lastName}`,
+    subject: `[${body.option}] - ${body.firstName} ${body.lastName}]`,
     html: `Nombres: ${body.firstName}<br>Apellidos: ${body.lastName}<br>Email: ${body.email}<br>DNI: ${body.dni}<br>Dirección: ${body.address}<br>Teléfono: ${body.mobile}<br>Detalle: ${body.detail}<br>Pedido: ${body.order}<br>`,
     fromname: `Escuela Americana de Innovación`
   }
