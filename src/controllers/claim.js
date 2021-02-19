@@ -8,8 +8,6 @@ const listClaims = async (req, res) => {
 }
 
 const createClaim = async (req, res) => {
-  console.log('req.body', req.body)
-  console.log('req.claim', req.claim)
   try {
     const claim = await service.createClaim(req.body, req.claim)
     console.log('claim', claim)
