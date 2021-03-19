@@ -50,6 +50,27 @@ const detailCertificate = async (req, res) => {
   }
 }
 
+const detailCertificateOpen = async (req, res) => {
+  const certificateId = req.params.id
+  const params = req.query
+  if (certificateId) {
+    if (params.query) {
+      params.query._id = certificateId
+    } else {
+      params.query = {
+        _id: certificateId
+      }
+    }
+  }
+
+  try {
+    const certificate = await service.detailCertificate(params)
+    return res.status(200).json(certificate)
+  } catch (error) {
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 const deleteCertificate = async (req, res) => {
   const certificateId = req.params.id
   try {
@@ -71,5 +92,6 @@ module.exports = {
   createCertificate,
   updateCertificate,
   detailCertificate,
+  detailCertificateOpen,
   deleteCertificate
 }
