@@ -33,13 +33,12 @@ const updateCertificate = async (req, res) => {
 const detailCertificate = async (req, res) => {
   const certificateId = req.params.id
   const params = req.query
-  if (certificateId) {
-    if (params.query) {
-      params.query._id = certificateId
-    } else {
-      params.query = {
-        _id: certificateId
-      }
+  
+  if (params.query) {
+    params.query._id = certificateId
+  } else {
+    params.query = {
+      _id: certificateId
     }
   }
 
