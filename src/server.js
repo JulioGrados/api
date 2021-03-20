@@ -36,7 +36,7 @@ server.use(
 )
 
 server.use(morgan('dev'))
-server.use(cors())
+// server.use(cors())
 
 routesOpen(server)
 server.use(authHandler)
