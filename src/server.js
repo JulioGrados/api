@@ -36,13 +36,11 @@ server.use(
 )
 
 const corsOpts = {
-	origin: ['https://www.eai.edu.pe','https://www.dash.eai.edu.pe/', 'https://www.media.eai.edu.pe/', 'https://www.api.eai.edu.pe/', 'https://www.crm.eai.edu.pe/', 'https://www.web.eai.edu.pe/', 'https://www.cursos.eai.edu.pe/'],
+  origin: '*',
 
   methods: ['GET', 'POST'],
 
-  allowedHeaders: ['Content-Type'],
-
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  allowedHeaders: ['Content-Type']
 }
 
 server.use(morgan('dev'))
