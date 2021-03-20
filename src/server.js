@@ -44,7 +44,7 @@ const corsOpts = {
 }
 
 server.use(morgan('dev'))
-server.use(cors(corsOpts))
+server.use(cors())
 
 routesOpen(server)
 server.use(authHandler)
