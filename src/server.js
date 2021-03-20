@@ -36,7 +36,7 @@ server.use(
 )
 
 const corsOpts = {
-  origin: 'http://*.eai.edu.pe/',
+  origin: ['https://dash.eai.edu.pe/', 'https://api.eai.edu.pe/',, 'https://media.eai.edu.pe/', 'https://crm.eai.edu.pe/', 'https://web.eai.edu.pe/', 'https://cursos.eai.edu.pe/'],
 
   methods: ['GET', 'POST'],
 
