@@ -35,8 +35,18 @@ server.use(
   })
 )
 
+const corsOpts = {
+  origin: 'http://*.eai.edu.pe/',
+
+  methods: ['GET', 'POST'],
+
+  allowedHeaders: ['Content-Type'],
+
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+
 server.use(morgan('dev'))
-server.use(cors())
+server.use(cors(corsOpts))
 
 routesOpen(server)
 server.use(authHandler)
