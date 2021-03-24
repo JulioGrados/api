@@ -19,4 +19,8 @@ router
   .put(Api.updateEnrol)
   .delete(Api.deleteEnrol)
 
+router
+  .route('/enrols/migrate/:id')
+  .put(Api.updateMoodleEnrol)
+
 module.exports = router
