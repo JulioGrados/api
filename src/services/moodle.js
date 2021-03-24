@@ -128,8 +128,12 @@ const createNewUser = async user => {
   return userMoodle[0]
 }
 
-const createUserCourse = async usersMoodle => {
+const createUserCourse = async (usersMoodle, course) => {
   const users = await userDB.list({})
+  const enrols = await enrolDB.list({
+    query: { 'course.moodleId': course.moodleId }
+  })
+
   const userNew = usersMoodle.map(async element => {
     // console.log(element)
     const user = users.find(
@@ -153,6 +157,11 @@ const createUserCourse = async usersMoodle => {
       // shippings: []
     }
 
+    const enrol = enrols.find(
+      item => parseInt(item.linked.moodleId) === parseInt(element.id) && parseInt(item.course.moodleId) === parseInt(course.moodleId)
+    )
+    console.log('enrol', enrol)
+
     if (user) {
       try {
         const updateUser = await userDB.update(user._id, {
@@ -162,7 +171,26 @@ const createUserCourse = async usersMoodle => {
           roles: [...user.roles, 'Estudiante']
           // shippings: []
         })
-        console.log('Se actualizó usuario:')
+        console.log('Se actualizó usuario:', updateUser)
+        if (!enrol) {
+          const data = {
+            linked: {
+              ...updateUser.toJSON(),
+              ref: user._id
+            },
+            course: {
+              ...course.toJSON(),
+              ref: course._id
+            }
+          }
+
+          try {
+            const enrol = await enrolDB.create(data)
+            console.log('Se creó un nuevo enrol', enrol)
+          } catch (error) {
+            console.log('error al crear un nuevo enrol', error)
+          }
+        } 
         return updateUser
       } catch (error) {
         console.log('error al editar usuario')
@@ -176,7 +204,24 @@ const createUserCourse = async usersMoodle => {
     } else {
       try {
         const user = await userDB.create(data)
-        console.log('Se creo usuario:')
+        console.log('Se creo usuario:', user)
+        const data = {
+          linked: {
+            ...user.toJSON(),
+            ref: user._id
+          },
+          course: {
+            ...course.toJSON(),
+            ref: course._id
+          }
+        }
+
+        try {
+          const enrol = await enrolDB.create(data)
+          console.log('Se creó un nuevo enrol', enrol)
+        } catch (error) {
+          console.log('error al crear un nuevo enrol', error)
+        }
         return user
       } catch (error) {
         console.log('error al crear usuario')
@@ -195,6 +240,26 @@ const createUserCourse = async usersMoodle => {
   const errorUsers = results.filter(result => result.error)
 
   return { validUsers, errorUsers }
+}
+
+const usersMoodle = async ({ courseId }) => {
+  let course
+  try {
+    course = await courseDB.detail({ query: { moodleId: courseId } })
+  } catch (error) {
+    throw error
+  }
+
+  const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
+    courseid: courseId
+  })
+  const respUsers = await createUserCourse(usersMoodle, course)
+
+  if (respUsers.errorUsers.length > 0) {
+    return respUsers.errorUsers
+  }
+  
+  return respUsers.validUsers
 }
 
 const createExamCourse = async (exams, course) => {
@@ -912,19 +977,6 @@ const createShippingUser = async course => {
   } else {
     return {}
   }
-}
-
-const usersMoodle = async ({ courseId }) => {
-  const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
-    courseid: courseId
-  })
-  const respUsers = await createUserCourse(usersMoodle)
-
-  if (respUsers.errorUsers.length > 0) {
-    return respUsers.errorUsers
-  }
-  
-  return respUsers.validUsers
 }
 
 const usersGrades = async ({ courseId, usersMoodle }) => {
