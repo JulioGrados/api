@@ -289,6 +289,75 @@ const createNewUser = async user => {
   return userMoodle[0]
 }
 
+const createUserCertificate = async usersMoodle => {
+  const users = await userDB.list({})
+  const userNew = usersMoodle.map(async element => {
+    // console.log(element)
+    const user = users.find(
+      item =>
+        parseInt(item.moodleId) === parseInt(element.id) ||
+        item.email === element.email ||
+        item.username === element.username
+    )
+
+    const data = {
+      moodleId: element.id,
+      username: element.username,
+      firstName: element.firstname,
+      lastName: element.lastname,
+      names: element.firstname + ' ' + element.lastname,
+      email: element.email,
+      country: element.country === 'PE' ? 'PerÃº' : '',
+      city: element.city,
+      role: undefined,
+      roles: ['Estudiante']
+      // shippings: []
+    }
+
+    if (user) {
+      try {
+        const updateUser = await userDB.update(user._id, {
+          moodleId: element.id,
+          email: user.email ? user.email : element.email,
+          username: user.username ? user.username : element.username,
+          roles: [...user.roles, 'Estudiante']
+          // shippings: []
+        })
+        console.log('Se actualizÃ³ usuario:')
+        return updateUser
+      } catch (error) {
+        console.log('error al editar usuario')
+        throw {
+          type: 'Actualizar usuario',
+          message: `No actualizÃ³ el usuario ${user.names}`,
+          metadata: user,
+          error: error
+        }
+      }
+    } else {
+      try {
+        const user = await userDB.create(data)
+        console.log('Se creo usuario:')
+        return user
+      } catch (error) {
+        console.log('error al crear usuario')
+        throw {
+          type: 'Crear usuario',
+          message: `No creÃ³ el usuario ${data.names}`,
+          metadata: data,
+          error: error
+        }
+      }
+    }
+  })
+  // const usersCreate = await Promise.all(userNew)
+  const results = await Promise.all(userNew.map(p => p.catch(e => e)))
+  const validUsers = results.filter(result => !result.error)
+  const errorUsers = results.filter(result => result.error)
+
+  return { validUsers, errorUsers }
+}
+
 const createUserCourse = async (usersMoodle, course) => {
   const users = await userDB.list({})
   const enrols = await enrolDB.list({
@@ -1295,7 +1364,7 @@ const gradeNewCertificate = async ({ courseId }) => {
     throw error
   }
 
-  const respUsers = await createUserCourse(usersMoodle)
+  const respUsers = await createUserCertificate(usersMoodle)
 
   if (respUsers.errorUsers.length > 0) {
     return respUsers.errorUsers
