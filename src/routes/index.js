@@ -29,6 +29,7 @@ const routesTestimony = require('./testimony')
 const routesLesson = require('./lesson')
 const routesChapter = require('./chapter')
 const routesClaim = require('./claim')
+const routesSend = require('./send')
 
 module.exports = server => {
   server.use('/api', routesLog)
@@ -60,4 +61,5 @@ module.exports = server => {
   server.use('/api', routesLesson)
   server.use('/api', routesChapter)
   server.use('/api', routesClaim)
+  server.use('/api', routesSend)
 }
