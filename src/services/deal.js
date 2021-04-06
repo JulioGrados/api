@@ -10,6 +10,7 @@ const courseFunc = require('utils/functions/course')
 const { payloadToData } = require('utils/functions/user')
 const { createTimeline } = require('./timeline')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
+const { MEDIA_PATH } = require('utils/files/path')
 const { createEmail } = require('./email')
 const { getSocket } = require('../lib/io')
 const { createNewUser, createEnrolUser, searchUser } = require('./moodle')
@@ -355,11 +356,13 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
   const preheader = `Información del curso ${course.name}`
   const content =
     'Se envio informacion del curso de la plantilla pre definida en sengrid.'
+ 
   const substitutions = getSubstitutions({
     course,
     linked,
     assigned
   })
+  
   try {
     const email = await createEmail({
       linked,
@@ -395,7 +398,7 @@ const getSubstitutions = ({ course, linked, assigned }) => {
     precio: course.price,
     precio_oferta: course.priceOffert,
     horas: course.academicHours,
-    brochure: course.brochureDrive,
+    brochure: MEDIA_PATH + course.brochure,
     celular: assigned.mobile
   }
 
