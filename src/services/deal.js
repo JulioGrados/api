@@ -8,6 +8,7 @@ const { dealDB, userDB, progressDB, callDB } = require('../db')
 
 const courseFunc = require('utils/functions/course')
 const { payloadToData } = require('utils/functions/user')
+const { getBase64 } = require('utils/functions/base64')
 const { createTimeline } = require('./timeline')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
 const { MEDIA_PATH } = require('utils/files/path')
@@ -345,6 +346,7 @@ const prepareCourses = (lead, deal, oldCourses, newCourses) => {
   return [...newCourses, ...courses]
 }
 
+
 const sendEmailCourse = async (lead, deal, dataCourse) => {
   const linked = payloadToData(lead)
   const assigned = deal.assessor
@@ -356,7 +358,8 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
   const preheader = `Información del curso ${course.name}`
   const content =
     'Se envio informacion del curso de la plantilla pre definida en sengrid.'
- 
+  const attachment = await getBase64(MEDIA_PATH + course.brochure)
+
   const substitutions = getSubstitutions({
     course,
     linked,
@@ -371,12 +374,14 @@ const sendEmailCourse = async (lead, deal, dataCourse) => {
       fromname,
       preheader,
       content,
+      attachment,
       deal: deal._id
     })
     sendMailTemplate({
       to,
       from,
       fromname,
+      attachment,
       substitutions,
       templateId: templateId,
       args: {
