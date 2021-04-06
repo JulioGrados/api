@@ -394,6 +394,7 @@ const getSubstitutions = ({ course, linked, assigned }) => {
     username: linked.username,
     password: linked.password,
     curso: course.name,
+    shortName: course.shortName,
     inicio: course.startCourse,
     precio: course.price,
     precio_oferta: course.priceOffert,
