@@ -35,7 +35,6 @@
     "moodle-client": "^0.5.2",
     "morgan": "^1.9.1",
     "randomatic": "^3.1.1",
-    "request": "^2.88.2",
     "slug": "^2.1.1",
     "socket.io": "^2.3.0",
     "uniqid": "^5.2.0",
