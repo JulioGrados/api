@@ -12,6 +12,7 @@ const listSales = async params => {
 }
 
 const createSale = async (body, files, loggedUser) => {
+  console.log('create')
   const copyOrders = JSON.parse(JSON.stringify(body.orders))
   body.orders = await prepareOrders(body, files)
   body.status = getStatusSale(body)
@@ -111,6 +112,7 @@ const prepareOrders = async ({ orders, amount, user }, files) => {
 
   let results
   try {
+    console.log('order length', orders.length)
     results = await Promise.all(
       orders.map(async order => {
         console.log('order', order)
@@ -143,12 +145,11 @@ const changeOrder = async (order, linked, files) => {
       )
       order.voucher.code = voucher.code
       order.voucher.ref = voucher
-      
       if (order.receipt) {
         const { _id, isBill, ruc, dni, name, businessName, code } = order.receipt
         const data = { isBill, ruc, dni, name, businessName, code, _id }
         const receipt = await findOrAddReceipt(data, files, order.assigned, linked)
-
+        console.log('receipt', receipt)
         order.receipt.code = receipt.code
         order.receipt.ref = receipt
       }
@@ -184,6 +185,7 @@ const findVoucher = async (voucher) => {
 const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
   try {
     if (voucher._id) {
+      console.log('con id voucher')
       getResidueVoucher(voucher.amount, orderAmount)
       if (files) {
         const file = files[voucher.code]
@@ -204,6 +206,7 @@ const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
       })
       return updateVoucher
     } else {
+      console.log('no existe voucher')
       getResidueVoucher(voucher.amount, orderAmount)
       if (files) {
         const file = files[voucher.code]
@@ -212,16 +215,19 @@ const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
           voucher.image = route
         }
       }
-      const newVoucher = await voucherDB.create({
+      const data = {
         ...voucher,
         bank: voucher.bank && {
           ...voucher.bank,
           name: voucher.bank.label
         },
+        code: voucher.code,
         assigned,
         residue: voucher.amount,
         isUsed: false
-      })
+      }
+      const newVoucher = await voucherDB.create(data)
+      console.log('new voocher', newVoucher)
       return newVoucher
     }
   } catch (error) {
@@ -264,6 +270,8 @@ const findOrAddReceipt = async (receipt, files, assigned, linked) => {
       })
       return updateReceipt
     } else {
+      delete receipt.code
+      console.log('receipt', receipt)
       receipt.status = 'Procesado'
       if (files) {
         const file = files[receipt.code]
