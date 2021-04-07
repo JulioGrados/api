@@ -10,6 +10,7 @@ const listEmails = async params => {
 }
 
 const createEmail = async (body, loggedUser) => {
+  // console.log('create', body)
   const dataEmail = prepareEmail(body)
   const email = await emailDB.create(dataEmail)
   if (email.template && email.template.ref) {
@@ -44,10 +45,11 @@ const countDocuments = async params => {
 
 const prepareEmail = ({ template, ...data }) => {
   const { linked, assigned } = template || data
-  console.log('template', template)
-  console.log('data', data)
-  console.log('linked', linked)
-  console.log('linked names', linked.names)
+  // console.log('template', template)
+  // console.log('data', data)
+  // console.log('linked', linked)
+  // console.log('linked names', linked.names)
+  // console.log('assigned', assigned)
   const dataEmail = {
     ...data,
     linked: {
@@ -56,14 +58,14 @@ const prepareEmail = ({ template, ...data }) => {
     },
     assigned: {
       username: assigned.username,
-      ref: assigned._id
+      ref: assigned._id ? assigned._id : assigned.ref ? assigned.ref._id : assigned.ref
     },
     template: template && {
       name: template.name,
       ref: template._id
     }
   }
-  console.log('dataEmail', dataEmail)
+  // console.log('dataEmail', dataEmail)
   return dataEmail
 }
 
@@ -110,6 +112,7 @@ const getNewStatus = event => {
 }
 
 const emitEmail = email => {
+  // console.log('email.asigned', email.assigned)
   if (email.assigned) {
     const io = getSocket()
     io.to(email.assigned.ref).emit('email', email)
