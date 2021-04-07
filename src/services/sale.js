@@ -12,7 +12,6 @@ const listSales = async params => {
 }
 
 const createSale = async (body, files, loggedUser) => {
-  console.log('create')
   const copyOrders = JSON.parse(JSON.stringify(body.orders))
   body.orders = await prepareOrders(body, files)
   body.status = getStatusSale(body)
@@ -149,7 +148,6 @@ const changeOrder = async (order, linked, files) => {
         const { _id, isBill, ruc, dni, name, businessName, code } = order.receipt
         const data = { isBill, ruc, dni, name, businessName, code, _id }
         const receipt = await findOrAddReceipt(data, files, order.assigned, linked)
-        console.log('receipt', receipt)
         order.receipt.code = receipt.code
         order.receipt.ref = receipt
       }
@@ -271,7 +269,6 @@ const findOrAddReceipt = async (receipt, files, assigned, linked) => {
       return updateReceipt
     } else {
       delete receipt.code
-      console.log('receipt', receipt)
       receipt.status = 'Procesado'
       if (files) {
         const file = files[receipt.code]
