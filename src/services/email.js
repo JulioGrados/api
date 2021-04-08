@@ -3,6 +3,7 @@
 const { emailDB } = require('../db')
 const { sendEmail } = require('utils/lib/sendgrid')
 const { getSocket } = require('../lib/io')
+const { createTimeline } = require('./timeline')
 
 const listEmails = async params => {
   const emails = await emailDB.list(params)
@@ -82,14 +83,43 @@ const sendEmailSengrid = ({ to, from, preheader, content, _id }) => {
   sendEmail(userEmail)
 }
 
+const updateEmailTimeline = async (emailId, status, time) => {
+  const email = await emailDB.detail({query: { _id: emailId }})
+
+  if (email === null) {
+    const error = {
+      status: 404,
+      message: 'El email que intentas editar no existe.'
+    }
+    throw error
+  }
+  // console.log('email', email)
+  try {
+    const timeline = createTimeline({
+      linked: email.linked,
+      deal: email.deal,
+      assigned: email.assigned,
+      type: 'Email',
+      note: status,
+      name: `[${status}] - ${email.preheader}`,
+    })
+    return timeline
+  } catch (errorDB) {
+    const error = parseErrorDB(errorDB)
+    throw error
+  }
+}
+
 const updateStatusEmail = async ({ emailId, event }) => {
   const email = await emailDB.detail({
     query: { _id: emailId },
     select: 'status'
   })
+  // console.log('email', email)
   const status = getNewStatus(event)
   if (email.status !== status) {
     const updateEmail = await emailDB.update(email._id, { status })
+    const timeline = await updateEmailTimeline(email._id, status, event.timestamp)
     emitEmail(updateEmail)
   }
 }
@@ -101,7 +131,7 @@ const getNewStatus = event => {
     case 'open':
       return 'Abierto'
     case 'click':
-      return 'Interacción'
+      return 'Click'
     case 'spamreport':
       return 'Spam'
     case 'bounce':
