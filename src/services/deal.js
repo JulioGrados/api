@@ -413,7 +413,7 @@ const getSubstitutions = ({ course, linked, assigned }) => {
     password: linked.password,
     curso: course.name,
     shortName: course.shortName,
-    inicio: course.startCourse ? course.startCourse : moment().add(7, 'days').format('LL'),,
+    inicio: course.startCourse ? course.startCourse : moment().add(7, 'days').format('LL'),
     precio: course.price,
     precio_oferta: course.priceOffert,
     horas: course.academicHours,
