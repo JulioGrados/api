@@ -93,7 +93,7 @@ const createOrUpdateUser = async (req, res) => {
   const body = req.body
   try {
     // console.log(body)
-    if (body.source && body.source === 'Facebook Lead') {
+    if (body.source && body.source === 'Facebook') {
       const number = body.phone && body.phone.substring(1)
       const phone = searchCodeNumber(number)
       if (!phone.country) {
@@ -103,6 +103,8 @@ const createOrUpdateUser = async (req, res) => {
         body.mobile = number.replace(phone.code, '')
         body.country = phone.country && phone.country.name
       }
+    } else {
+      body.source = 'Sitio web'
     }
     // console.log('body', body)
     const user = await service.createOrUpdateUser(body)
