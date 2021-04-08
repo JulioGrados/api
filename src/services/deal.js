@@ -135,7 +135,7 @@ const createNewDeal = async (user, body) => {
   })
   emitDeal(deal)
   addCall(user, deal, body.courses)
-  prepareCourses(user, deal.toJSON(), [], body.courses)
+  prepareCourses(user, deal.toJSON(), [], body.courses, body.source)
   incProspects(dataDeal)
   return deal
 }
@@ -154,7 +154,8 @@ const editExistDeal = async (deal, user, body) => {
         user,
         dataDeal,
         dataDeal.students[0].courses,
-        body.courses
+        body.courses,
+        body.source
       ))
     : {
         ...dataDeal,
@@ -162,7 +163,7 @@ const editExistDeal = async (deal, user, body) => {
         students: [
           {
             student: user,
-            courses: prepareCourses(user, dataDeal, [], body.courses)
+            courses: prepareCourses(user, dataDeal, [], body.courses, body.source)
           }
         ]
     }
@@ -330,7 +331,7 @@ const emitDeal = deal => {
   }
 }
 
-const prepareCourses = (lead, deal, oldCourses, newCourses) => {
+const prepareCourses = (lead, deal, oldCourses, newCourses, source = 'Sitio web') => {
   const courses = oldCourses.filter(course => {
     const index = newCourses.findIndex(item => {
       // console.log('item._id.toString()', item._id.toString())
@@ -348,7 +349,7 @@ const prepareCourses = (lead, deal, oldCourses, newCourses) => {
         assigned: deal.assessor,
         deal: deal,
         type: 'Curso',
-        name: `Preguntó por el curso ${course.name}`
+        name: `Solicito información del ${course.name} por ${source}`
       })
       sendEmailCourse(lead, deal, course, true)
     }, 2000)
