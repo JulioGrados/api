@@ -9,6 +9,7 @@ const listTimelines = async params => {
 }
 
 const createTimeline = async ({ linked, assigned, ...body }) => {
+  // console.log('assigned', assigned)
   if (linked) {
     body.linked = {
       names: linked.names,
@@ -19,10 +20,10 @@ const createTimeline = async ({ linked, assigned, ...body }) => {
   if (assigned) {
     body.assigned = {
       username: assigned.username,
-      ref: assigned._id || assigned.ref
+      ref: assigned._id || assigned.ref._id ? assigned.ref._id : assigned.ref
     }
   }
-
+  // console.log('body timeline', body)
   try {
     const timeline = await timelineDB.create(body)
     emitTimeline(timeline)

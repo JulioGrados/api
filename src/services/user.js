@@ -1,7 +1,7 @@
 'use strict'
 
 const config = require('config')
-const { userDB } = require('../db')
+const { userDB, courseDB } = require('../db')
 const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
@@ -51,12 +51,34 @@ const deleteUser = async (userId, loggedUser) => {
   return user
 }
 
+const searchCourse = async (courseId) => {
+  try {
+    const course = await courseDB.detail({
+      query: {
+        _id: courseId
+      }
+    })
+    return course
+  } catch (error) {
+    throw error
+  }
+}
+
 const createOrUpdateUser = async body => {
   let user
   try {
     const params = createFindQuery(body)
+    // console.log('params', params)
     const lead = await userDB.detail(params)
     // console.log('lead', lead)
+    if (body.source && body.source === 'Facebook Lead') {
+      const course = await searchCourse(body.courseId)
+      if (course) {
+        body.courses = [course]
+        body.sellCourses= []
+      }
+    }
+    // console.log('body', body)
     if (lead.roles && lead.roles.length) {
       if (lead.roles.findIndex(role => role === 'Interesado') === -1) {
         body.roles = ['Interesado', ...lead.roles]
@@ -71,6 +93,13 @@ const createOrUpdateUser = async body => {
       // console.log('nuevo lead', body)
       body.roles = ['Interesado']
       user = await userDB.create(body)
+      // courses en body
+      if (body.source && body.source === 'Facebook Lead') {
+        const course = await searchCourse(body.courseId)
+        if (course) {
+          body.courses = [course]
+        }
+      }
       // console.log('user', user)
       createTimeline({
         linked: user,

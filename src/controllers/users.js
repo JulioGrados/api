@@ -1,6 +1,7 @@
 'use strict'
 
 const service = require('../services/user')
+const countriesData = require('utils/functions/countries')
 
 const listUsers = async (req, res) => {
   const users = await service.listUsers(req.query)
@@ -74,9 +75,36 @@ const listTeachers = async (req, res) => {
   return res.status(200).json(users)
 }
 
+const searchCodeNumber = number => {
+  let code = number.substring(0, 2)
+  let country 
+  do {
+    country = countriesData.find(item => item.callingCode === code)
+    if (!country) {
+      code = number.substring(0, code.length + 1)
+    }
+    console.log('entro')
+  } while (code.length < 5 && !country)
+
+  return {code, country}
+}
+
 const createOrUpdateUser = async (req, res) => {
   const body = req.body
   try {
+    // console.log(body)
+    if (body.source && body.source === 'Facebook Lead') {
+      const number = body.phone && body.phone.substring(1)
+      const phone = searchCodeNumber(number)
+      if (!phone.country) {
+        body.mobile = number
+      } else {
+        body.mobileCode = phone.code
+        body.mobile = number.replace(phone.code, '')
+        body.country = phone.country && phone.country.name
+      }
+    }
+    // console.log('body', body)
     const user = await service.createOrUpdateUser(body)
     return res.status(201).json(user)
   } catch (error) {

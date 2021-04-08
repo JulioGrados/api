@@ -86,13 +86,13 @@ const createOrUpdateDeal = async (user, body) => {
   const deal = await findDealUser(user)
   // console.log('deal', deal)
   if (deal) {
-    //console.log('actualizo deal')
+    // console.log('actualizo deal')
     const updateDeal = await editExistDeal(deal.toJSON(), user, body)
     return updateDeal
   } else {
     const deal = await createNewDeal(user, body)
     // console.log('creo deal', deal)
-    createTimeline({ linked: user, type: 'Deal', name: 'Nuevo trato creado' })
+    createTimeline({ linked: user, deal:deal, type: 'Deal', name: 'Nuevo trato creado' })
     return deal
   }
 }
@@ -146,6 +146,9 @@ const editExistDeal = async (deal, user, body) => {
     dataDeal.assessor = await assignedAssessor(body.courses)
     incProspects(dataDeal)
   }
+  // console.log('deal prepare', deal)
+  // console.log('body.courses', body.courses)
+  // console.log('dataDeal.students[0].courses', dataDeal.students[0].courses)
   dataDeal.students[0]
     ? (dataDeal.students[0].courses = prepareCourses(
         user,
@@ -162,10 +165,12 @@ const editExistDeal = async (deal, user, body) => {
             courses: prepareCourses(user, dataDeal, [], body.courses)
           }
         ]
-      }
+    }
+  // console.log('dataDeal', dataDeal)
   const updateDeal = await dealDB.update(deal._id, {
     ...dataDeal
   })
+  // console.log('updateDeal', updateDeal)
   emitDeal(updateDeal)
   addCall(user, updateDeal)
   return updateDeal
@@ -328,29 +333,34 @@ const emitDeal = deal => {
 const prepareCourses = (lead, deal, oldCourses, newCourses) => {
   const courses = oldCourses.filter(course => {
     const index = newCourses.findIndex(item => {
-      return item.ref.toString() === course.ref.toString()
+      // console.log('item._id.toString()', item._id.toString())
+      // console.log('course._id.toString()', course._id.toString())
+      return item.ref && item.ref.toString() === course.ref && course.ref.toString() || item._id && item._id.toString() === course._id && course._id.toString()
     })
     return index === -1
   })
   newCourses.forEach(course => {
+    // console.log('course', course)
     setTimeout(() => {
+      // console.log('prepare lead', deal.assessor)
       createTimeline({
         linked: lead,
+        assigned: deal.assessor,
+        deal: deal,
         type: 'Curso',
         name: `Preguntó por el curso ${course.name}`
       })
-      console.log('prepare deal', deal)
-      sendEmailCourse(lead, deal, course)
+      sendEmailCourse(lead, deal, course, true)
     }, 2000)
   })
   return [...newCourses, ...courses]
 }
 
 
-const sendEmailCourse = async (lead, deal, dataCourse) => {
+const sendEmailCourse = async (lead, deal, dataCourse, social = false) => {
   const linked = payloadToData(lead)
   const assigned = deal.assessor
-  const course = courseFunc.payloadToData(dataCourse)
+  const course = social ? dataCourse : courseFunc.payloadToData(dataCourse)
   const to = linked.email
   const from = 'cursos@eai.edu.pe'
   const fromname = 'Escuela Americana de Innovación'
