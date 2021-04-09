@@ -55,14 +55,17 @@ const createDeal = async (body, loggedUser) => {
 }
 
 const updateDeal = async (dealId, body, loggedUser) => {
+  console.log('dealId', dealId)
+  console.log('body', body)
   const deal = await dealDB.detail({
     query: { _id: dealId },
     populate: { path: 'client' }
   })
+  console.log('deal', deal)
   const dataDeal = await changeStatus(body, deal, loggedUser, body)
-
+  console.log('dataDeal', dataDeal)
   const updateDeal = await dealDB.update(dealId, dataDeal)
-
+  console.log('updateDeal', updateDeal)
   timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser)
   return updateDeal
 }
@@ -86,12 +89,14 @@ const createOrUpdateDeal = async (user, body) => {
   const deal = await findDealUser(user)
   // console.log('deal', deal)
   if (deal) {
-    // console.log('actualizo deal')
+    console.log('actualizar deal', deal.toJSON().students)
+    console.log('user', user)
+    console.log('body', body)
     const updateDeal = await editExistDeal(deal.toJSON(), user, body)
     return updateDeal
   } else {
     const deal = await createNewDeal(user, body)
-    // console.log('creo deal', deal)
+    console.log('creo deal', deal)
     createTimeline({ linked: user, deal:deal, type: 'Deal', name: 'Nuevo trato creado' })
     return deal
   }
@@ -146,9 +151,9 @@ const editExistDeal = async (deal, user, body) => {
     dataDeal.assessor = await assignedAssessor(body.courses)
     incProspects(dataDeal)
   }
-  // console.log('deal prepare', deal)
-  // console.log('body.courses', body.courses)
-  // console.log('dataDeal.students[0].courses', dataDeal.students[0].courses)
+  console.log('deal prepare', deal.students)
+  console.log('body.courses', body.courses)
+  // console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
   dataDeal.students[0]
     ? (dataDeal.students[0].courses = prepareCourses(
         user,
@@ -167,11 +172,11 @@ const editExistDeal = async (deal, user, body) => {
           }
         ]
     }
-  // console.log('dataDeal', dataDeal)
+  console.log('dataDeal', dataDeal)
   const updateDeal = await dealDB.update(deal._id, {
     ...dataDeal
   })
-  // console.log('updateDeal', updateDeal)
+  console.log('updateDeal', updateDeal.students)
   emitDeal(updateDeal)
   addCall(user, updateDeal)
   return updateDeal
@@ -325,6 +330,8 @@ const emitDeal = deal => {
     const assessor = deal.assessor.ref._id
       ? deal.assessor.ref._id
       : deal.assessor.ref
+    
+    console.log('deal emit', deal.assessor)
     io.to(assessor).emit('deal', deal)
   } catch (error) {
     console.log('error sockets', deal, error)
@@ -332,6 +339,8 @@ const emitDeal = deal => {
 }
 
 const prepareCourses = (lead, deal, oldCourses, newCourses, source = 'Sitio web') => {
+  // console.log('oldCourses', oldCourses)
+  // console.log('newCourses', newCourses)
   const courses = oldCourses.filter(course => {
     const index = newCourses.findIndex(item => {
       // console.log('item._id.toString()', item._id.toString())
@@ -343,7 +352,7 @@ const prepareCourses = (lead, deal, oldCourses, newCourses, source = 'Sitio web'
   newCourses.forEach(course => {
     // console.log('course', course)
     setTimeout(() => {
-      // console.log('prepare lead', deal.assessor)
+      console.log('prepare lead', deal.assessor)
       createTimeline({
         linked: lead,
         assigned: deal.assessor,

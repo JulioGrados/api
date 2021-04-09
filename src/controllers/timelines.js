@@ -19,6 +19,8 @@ const createTimeline = async (req, res) => {
 
 const updateTimeline = async (req, res) => {
   const timelineId = req.params.id
+  console.log('timelineId', timelineId)
+  console.log('req.timeline', req.timeline)
   try {
     const timeline = await service.updateTimeline(
       timelineId,

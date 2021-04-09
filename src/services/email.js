@@ -142,7 +142,7 @@ const getNewStatus = event => {
 }
 
 const emitEmail = email => {
-  // console.log('email.asigned', email.assigned)
+  console.log('email.asigned', email.assigned)
   if (email.assigned) {
     const io = getSocket()
     io.to(email.assigned.ref).emit('email', email)
