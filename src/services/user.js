@@ -71,7 +71,7 @@ const createOrUpdateUser = async body => {
     // console.log('params', params)
     const lead = await userDB.detail(params)
     // console.log('lead', lead)
-    if (body.source && body.source === 'Facebook Lead') {
+    if (body.source && body.source === 'Facebook') {
       const course = await searchCourse(body.courseId)
       if (course) {
         body.courses = [course]
@@ -87,6 +87,7 @@ const createOrUpdateUser = async body => {
       body.roles = ['Interesado']
     }
     user = await userDB.update(lead._id, { ...body })
+    // console.log('user', user)
     await createOrUpdateDeal(user.toJSON(), body)
   } catch (error) {
     if (error.status === 404) {
@@ -94,13 +95,13 @@ const createOrUpdateUser = async body => {
       body.roles = ['Interesado']
       user = await userDB.create(body)
       // courses en body
-      if (body.source && body.source === 'Facebook Lead') {
+      if (body.source && body.source === 'Facebook') {
         const course = await searchCourse(body.courseId)
         if (course) {
           body.courses = [course]
         }
       }
-      // console.log('user', user)
+      // console.log('body  nuevo', body)
       createTimeline({
         linked: user,
         type: 'Cuenta',

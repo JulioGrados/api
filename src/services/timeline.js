@@ -16,11 +16,11 @@ const createTimeline = async ({ linked, assigned, ...body }) => {
       ref: linked._id || linked.ref
     }
   }
-
+  console.log('assigned', assigned)
   if (assigned) {
     body.assigned = {
       username: assigned.username,
-      ref: assigned._id || assigned.ref._id ? assigned.ref._id : assigned.ref
+      ref: assigned._id ? assigned._id : assigned.ref ? assigned.ref._id ? assigned.ref._id  : assigned.ref : assigned.ref
     }
   }
   // console.log('body timeline', body)
@@ -46,7 +46,7 @@ const countDocuments = async params => {
 /* functions */
 
 const emitTimeline = timeline => {
-  // console.log('timeline emitTimeline', timeline)
+  console.log('timeline emitTimeline', timeline)
   try {
     if (timeline.assigned) {
       const io = getSocket()
