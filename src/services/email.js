@@ -1,7 +1,7 @@
 'use strict'
 
 const { emailDB } = require('../db')
-const { sendEmail } = require('utils/lib/sendgrid')
+const { sendEmail, sendCrm } = require('utils/lib/sendgrid')
 const { getSocket } = require('../lib/io')
 const { createTimeline } = require('./timeline')
 
@@ -11,7 +11,6 @@ const listEmails = async params => {
 }
 
 const createEmail = async (body, loggedUser) => {
-  // console.log('create', body)
   const dataEmail = prepareEmail(body)
   const email = await emailDB.create(dataEmail)
   if (email.template && email.template.ref) {
@@ -80,7 +79,8 @@ const sendEmailSengrid = ({ to, from, preheader, content, _id }) => {
       emailId: _id
     }
   }
-  sendEmail(userEmail)
+  console.log('userEmail', userEmail)
+  sendCrm(userEmail)
 }
 
 const updateEmailTimeline = async (emailId, status, time) => {
