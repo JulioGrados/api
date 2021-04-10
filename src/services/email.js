@@ -15,6 +15,8 @@ const createEmail = async (body, loggedUser) => {
   const email = await emailDB.create(dataEmail)
   if (email.template && email.template.ref) {
     sendEmailSengrid(email)
+    //send email desde el template
+    emitEmail(email)
   } else {
     emitEmail(email)
   }
