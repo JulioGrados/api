@@ -55,17 +55,17 @@ const createDeal = async (body, loggedUser) => {
 }
 
 const updateDeal = async (dealId, body, loggedUser) => {
-  console.log('dealId', dealId)
-  console.log('body', body)
+  // console.log('dealId', dealId)
+  // console.log('body', body)
   const deal = await dealDB.detail({
     query: { _id: dealId },
     populate: { path: 'client' }
   })
-  console.log('deal', deal)
+  // console.log('deal', deal)
   const dataDeal = await changeStatus(body, deal, loggedUser, body)
-  console.log('dataDeal', dataDeal)
+  // console.log('dataDeal', dataDeal)
   const updateDeal = await dealDB.update(dealId, dataDeal)
-  console.log('updateDeal', updateDeal)
+  // console.log('updateDeal', updateDeal)
   timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser)
   return updateDeal
 }
@@ -89,14 +89,10 @@ const createOrUpdateDeal = async (user, body) => {
   const deal = await findDealUser(user)
   // console.log('deal', deal)
   if (deal) {
-    console.log('actualizar deal', deal.toJSON().students)
-    console.log('user', user)
-    console.log('body', body)
     const updateDeal = await editExistDeal(deal.toJSON(), user, body)
     return updateDeal
   } else {
     const deal = await createNewDeal(user, body)
-    console.log('creo deal', deal)
     createTimeline({ linked: user, deal:deal, type: 'Deal', name: 'Nuevo trato creado' })
     return deal
   }
@@ -119,7 +115,7 @@ const findDealUser = async user => {
   }
 }
 
-const createNewDeal = async (user, body) => {
+const createNewDeal = async ({...user}, body) => {
   const dataDeal = await addInitialStatus(body)
   if (body.assessor && body.assessor.username) {
     dataDeal.assessor.username = body.assessor.username
@@ -127,13 +123,13 @@ const createNewDeal = async (user, body) => {
   } else {
     dataDeal.assessor = await assignedAssessor(body.courses)
   }
-
+  // console.log('user', {...user})
   const deal = await dealDB.create({
     ...dataDeal,
     client: user,
     students: [
       {
-        student: user,
+        student: {...user, ref: user},
         courses: body.courses
       }
     ]
@@ -151,8 +147,8 @@ const editExistDeal = async (deal, user, body) => {
     dataDeal.assessor = await assignedAssessor(body.courses)
     incProspects(dataDeal)
   }
-  console.log('deal prepare', deal.students)
-  console.log('body.courses', body.courses)
+  // console.log('deal prepare', deal.students)
+  // console.log('body.courses', body.courses)
   // console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
   dataDeal.students[0]
     ? (dataDeal.students[0].courses = prepareCourses(
@@ -172,11 +168,11 @@ const editExistDeal = async (deal, user, body) => {
           }
         ]
     }
-  console.log('dataDeal', dataDeal)
+  // console.log('dataDeal', dataDeal)
   const updateDeal = await dealDB.update(deal._id, {
     ...dataDeal
   })
-  console.log('updateDeal', updateDeal.students)
+  
   emitDeal(updateDeal)
   addCall(user, updateDeal)
   return updateDeal
@@ -338,6 +334,17 @@ const emitDeal = deal => {
   }
 }
 
+const emitAccounting = (deal, treasurer) => {
+  try {
+    const io = getSocket()
+    
+    console.log('accounting emit', treasurer)
+    io.to(treasurer._id).emit('accounting', deal)
+  } catch (error) {
+    console.log('error sockets', deal, error)
+  }
+}
+
 const prepareCourses = (lead, deal, oldCourses, newCourses, source = 'Sitio web') => {
   // console.log('oldCourses', oldCourses)
   // console.log('newCourses', newCourses)
@@ -352,7 +359,7 @@ const prepareCourses = (lead, deal, oldCourses, newCourses, source = 'Sitio web'
   newCourses.forEach(course => {
     // console.log('course', course)
     setTimeout(() => {
-      console.log('prepare lead', deal.assessor)
+      // console.log('prepare lead', deal.assessor)
       createTimeline({
         linked: lead,
         assigned: deal.assessor,
@@ -536,9 +543,9 @@ const addCoursesMoodle = async (student, courses, dealId, logged) => {
     query: { _id: dealId },
     populate: { path: 'client' }
   })
-
+  
   let user = await userDB.detail({
-    query: { _id: student._id }
+    query: { _id: student && student.ref && student.ref._id }
   })
   const timeline = {
     linked: {
@@ -704,5 +711,6 @@ module.exports = {
   deleteDeal,
   createOrUpdateDeal,
   emitDeal,
+  emitAccounting,
   enrolStudents
 }

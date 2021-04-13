@@ -76,6 +76,7 @@ const createOrUpdate = async (req, res) => {
 
 const enrolDeal = async (req, res) => {
   try {
+    console.log('req.body', req.body)
     const deal = await service.enrolStudents(req.body, req.user)
     return res.status(201).json(deal)
   } catch (error) {

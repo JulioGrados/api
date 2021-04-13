@@ -9,6 +9,7 @@ const eventWebhook = async (req, res) => {
     events.map(async event => {
       if (event.emailId) {
         try {
+          console.log('event', event)
           await updateStatusEmail(event)
         } catch (error) {
           console.log('error al actualizar el stado email', event, error)

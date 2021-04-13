@@ -1,6 +1,6 @@
 'use strict'
 
-const { emailDB } = require('../db')
+const { emailDB, dealDB } = require('../db')
 const { sendEmail, sendCrm } = require('utils/lib/sendgrid')
 const { getSocket } = require('../lib/io')
 const { createTimeline } = require('./timeline')
@@ -10,13 +10,43 @@ const listEmails = async params => {
   return emails
 }
 
+const createSendEmail = async (body, loggedUser) => {
+  const email = await createEmailEmit(body, loggedUser)
+  if (email) {
+    sendEmailSengrid(email)
+  }
+  return email
+}
+
+const emitDeal = deal => {
+  if (deal.assessor) {
+    const io = getSocket()
+    io.to(deal.assessor.ref).emit('deal', deal)
+  }
+}
+
+const createEmailEmit = async (body, loggedUser) => {
+  const dataEmail = prepareEmail(body)
+  const deal = await dealDB.detail({
+    query: { _id: dataEmail.deal },
+    populate: [
+      'students.student.ref',
+      'students.courses.ref',
+      'client',
+    ]
+  })
+  emitDeal(deal)
+  const email = await emailDB.create(dataEmail)
+  emitEmail(email)
+  return email
+}
+
 const createEmail = async (body, loggedUser) => {
+  console.log('2')
   const dataEmail = prepareEmail(body)
   const email = await emailDB.create(dataEmail)
   if (email.template && email.template.ref) {
     sendEmailSengrid(email)
-    //send email desde el template
-    emitEmail(email)
   } else {
     emitEmail(email)
   }
@@ -71,7 +101,7 @@ const prepareEmail = ({ template, ...data }) => {
   return dataEmail
 }
 
-const sendEmailSengrid = ({ to, from, preheader, content, _id }) => {
+const sendEmailSengrid = async ({ to, from, preheader, content, _id }) => {
   const userEmail = {
     to,
     from,
@@ -82,7 +112,7 @@ const sendEmailSengrid = ({ to, from, preheader, content, _id }) => {
     }
   }
   console.log('userEmail', userEmail)
-  sendCrm(userEmail)
+  return await sendCrm(userEmail)
 }
 
 const updateEmailTimeline = async (emailId, status, time) => {
@@ -95,7 +125,7 @@ const updateEmailTimeline = async (emailId, status, time) => {
     }
     throw error
   }
-  // console.log('email', email)
+  console.log('email deal', email)
   try {
     const timeline = createTimeline({
       linked: email.linked,
@@ -117,12 +147,12 @@ const updateStatusEmail = async ({ emailId, event }) => {
     query: { _id: emailId },
     select: 'status'
   })
-  // console.log('email', email)
+  console.log('email edit', email)
   const status = getNewStatus(event)
   if (email.status !== status) {
     const updateEmail = await emailDB.update(email._id, { status })
     const timeline = await updateEmailTimeline(email._id, status, event.timestamp)
-    emitEmail(updateEmail)
+    // emitEmail(updateEmail)
   }
 }
 
@@ -158,5 +188,6 @@ module.exports = {
   updateEmail,
   detailEmail,
   deleteEmail,
-  updateStatusEmail
+  updateStatusEmail,
+  createSendEmail
 }
