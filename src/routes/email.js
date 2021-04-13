@@ -13,6 +13,10 @@ router
   .post(Api.createEmail)
 
 router
+  .route('/create/emails')
+  .post(Api.createSendEmail)
+
+router
   .route('/emails/:id')
   .get(Api.detailEmail)
   .put(Api.updateEmail)

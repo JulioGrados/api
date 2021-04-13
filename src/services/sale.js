@@ -3,7 +3,7 @@
 const { saleDB, voucherDB, receiptDB, dealDB, progressDB, userDB } = require('../db')
 const { sumAmountOrders } = require('utils/functions/sale')
 const { saveFile } = require('utils/files/save')
-const { emitDeal } = require('./deal')
+const { emitDeal, emitAccounting } = require('./deal')
 
 /* Basicos */
 const listSales = async params => {
@@ -329,7 +329,10 @@ const changeStatusUser = async sale => {
       statusActivity,
       status
     })
+
+    const treasurer = await userDB.list({query: { roles: 'Asesor' }})
     emitDeal(updateDeal)
+    emitAccounting(updateDeal, treasurer)
   }
 }
 

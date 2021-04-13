@@ -17,6 +17,16 @@ const createEmail = async (req, res) => {
   }
 }
 
+const createSendEmail = async (req, res) => {
+  try {
+    const email = await service.createSendEmail(req.body, req.email)
+    return res.status(201).json(email)
+  } catch (error) {
+    console.log(error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 const updateEmail = async (req, res) => {
   const emailId = req.params.id
   try {
@@ -67,5 +77,6 @@ module.exports = {
   createEmail,
   updateEmail,
   detailEmail,
-  deleteEmail
+  deleteEmail,
+  createSendEmail
 }
