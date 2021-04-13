@@ -163,7 +163,7 @@ const editExistDeal = async (deal, user, body) => {
         client: user,
         students: [
           {
-            student: user,
+            student: {...user, ref: user},
             courses: prepareCourses(user, dataDeal, [], body.courses, body.source)
           }
         ]
