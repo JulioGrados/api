@@ -72,10 +72,9 @@ const createOrUpdateUser = async body => {
     const lead = await userDB.detail(params)
     // console.log('lead', lead)
     if (body.source && body.source === 'Facebook') {
-      const course = await searchCourse(body.courseId)
+      let course = await searchCourse(body.courseId)
       if (course) {
-        body.courses = [course]
-        body.sellCourses= []
+        body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
       }
     }
     // console.log('body', body)
@@ -96,9 +95,9 @@ const createOrUpdateUser = async body => {
       user = await userDB.create(body)
       // courses en body
       if (body.source && body.source === 'Facebook') {
-        const course = await searchCourse(body.courseId)
+        let course = await searchCourse(body.courseId)
         if (course) {
-          body.courses = [course]
+          body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
         }
       }
       // console.log('body  nuevo', body)

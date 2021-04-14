@@ -28,6 +28,17 @@ const updateDeal = async (req, res) => {
   }
 }
 
+const updateDealCreate = async (req, res) => {
+  const dealId = req.params.id
+  try {
+    const deal = await service.updateDealCreate(dealId, req.body, req.user)
+    return res.status(200).json(deal)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 const detailDeal = async (req, res) => {
   const dealId = req.params.id
   const params = req.query
@@ -90,6 +101,7 @@ module.exports = {
   listDeals,
   createDeal,
   updateDeal,
+  updateDealCreate,
   detailDeal,
   deleteDeal,
   createOrUpdate,
