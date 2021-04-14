@@ -70,6 +70,24 @@ const updateDeal = async (dealId, body, loggedUser) => {
   return updateDeal
 }
 
+const updateDealCreate = async (dealId, body, loggedUser) => {
+  // console.log('dealId', dealId)
+  // console.log('body', body)
+  const deal = await dealDB.detail({
+    query: { _id: dealId },
+    populate: { path: 'client' }
+  })
+  console.log('deal', deal)
+  // const dataDeal = await changeStatus(body, deal, loggedUser, body)
+  // // console.log('dataDeal', dataDeal)
+  // const updateDeal = await dealDB.update(dealId, dataDeal)
+  // // console.log('updateDeal', updateDeal)
+  // timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser)
+  return deal
+}
+
+
+
 const detailDeal = async params => {
   const deal = await dealDB.detail(params)
   return deal
@@ -707,6 +725,7 @@ module.exports = {
   listDeals,
   createDeal,
   updateDeal,
+  updateDealCreate,
   detailDeal,
   deleteDeal,
   createOrUpdateDeal,
