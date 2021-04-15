@@ -49,7 +49,7 @@ const updateDealCreate = async (dealId, body, loggedUser) => {
 
   deal.students[0].courses[0] = {...course.toJSON(), ref: course.toJSON()}
   deal.students[0].student = {...user.toJSON(), ref: user.toJSON()}
-  const updateDeal = await dealDB.update(dealId, {students: deal.students})
+  const updateDeal = await dealDB.update(dealId, {students: deal.students, origin: 'sitio web'})
   
   return updateDeal
 }
