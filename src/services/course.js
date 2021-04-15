@@ -1,6 +1,6 @@
 'use strict'
 
-const { courseDB, dealDB } = require('../db')
+const { courseDB, dealDB, userDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 
 const listCourses = async params => {
@@ -37,14 +37,18 @@ const updateDealCreate = async (dealId, body, loggedUser) => {
     query: { _id: dealId },
     populate: { path: 'client' }
   })
-  
+  const userId = deal.client._id
   const courseId = deal.students[0].courses[0] && deal.students[0].courses[0]._id
   const course = await courseDB.detail({
     query: { _id: courseId }
   })
 
+  const user = await userDB.detail({
+    query: { _id: userId }
+  })
+
   deal.students[0].courses[0] = {...course.toJSON(), ref: course.toJSON()}
-  
+  deal.students[0].student = {...user.toJSON(), ref: user.toJSON()}
   const updateDeal = await dealDB.update(dealId, {students: deal.students})
   
   return updateDeal

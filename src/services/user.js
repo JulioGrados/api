@@ -99,6 +99,9 @@ const createOrUpdateUser = async body => {
         if (course) {
           body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
         }
+        body.origin = 'facebook lead'
+      } else {
+        body.origin = 'sitio web'
       }
       // console.log('body  nuevo', body)
       createTimeline({
