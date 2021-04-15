@@ -14,14 +14,14 @@ const listCalls = async params => {
 const createCall = async (body, loggedCall) => {
   await validateExistCall(body)
   const call = await callDB.create(body)
-  updateUserStateFromCall(call)
+  await updateUserStateFromCall(call)
   emitCall(call)
   return call
 }
 
 const updateCall = async (callId, body, loggedCall) => {
   const call = await callDB.update(callId, body)
-  updateUserStateFromCall(call)
+  await updateUserStateFromCall(call)
   emitCall(call)
   return call
 }
@@ -73,7 +73,7 @@ const updateUserStateFromCall = async (call, emit) => {
     if (statusActivity === 'delay') {
       sendNotification(call, deal)
     }
-    deal = updateStatusDeal(deal, statusActivity)
+    deal = await updateStatusDeal(deal, statusActivity)
   }
   if (emit) {
     emitCall(call, deal)
@@ -98,6 +98,7 @@ const updateStatusDeal = async (deal, statusActivity) => {
   try {
     const updatedDeal = await dealDB.update(deal._id, { statusActivity }, false)
     emitDeal(updatedDeal)
+    return updatedDeal
   } catch (error) {
     console.log('error update user', deal, statusActivity, error)
   }
@@ -105,6 +106,7 @@ const updateStatusDeal = async (deal, statusActivity) => {
 
 const emitDeal = deal => {
   if (deal.assessor) {
+    console.log('llamado deal')
     const io = getSocket()
     io.to(deal.assessor.ref).emit('deal', deal)
   }
@@ -112,6 +114,7 @@ const emitDeal = deal => {
 
 const emitCall = call => {
   if (call.assigned) {
+    console.log('llamado call')
     const io = getSocket()
     io.to(call.assigned.ref).emit('call', call)
   }
