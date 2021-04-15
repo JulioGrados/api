@@ -78,11 +78,11 @@ const updateDealCreate = async (dealId, body, loggedUser) => {
     populate: { path: 'client' }
   })
   console.log('deal', deal)
-  // const dataDeal = await changeStatus(body, deal, loggedUser, body)
-  // // console.log('dataDeal', dataDeal)
-  // const updateDeal = await dealDB.update(dealId, dataDeal)
-  // // console.log('updateDeal', updateDeal)
-  // timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser)
+  const dataDeal = await changeStatus(body, deal, loggedUser, body)
+  // console.log('dataDeal', dataDeal)
+  const updateDeal = await dealDB.update(dealId, dataDeal)
+  // console.log('updateDeal', updateDeal)
+  timelineProgress(updateDeal.toJSON(), deal.toJSON(), loggedUser)
   return deal
 }
 
@@ -133,7 +133,7 @@ const findDealUser = async user => {
   }
 }
 
-const createNewDeal = async ({...user}, body) => {
+const createNewDeal = async (user, body) => {
   const dataDeal = await addInitialStatus(body)
   if (body.assessor && body.assessor.username) {
     dataDeal.assessor.username = body.assessor.username
