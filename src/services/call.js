@@ -14,15 +14,15 @@ const listCalls = async params => {
 const createCall = async (body, loggedCall) => {
   await validateExistCall(body)
   const call = await callDB.create(body)
-  await updateUserStateFromCall(call)
-  emitCall(call)
+  const deal = await updateUserStateFromCall(call)
+  emitDeal(deal)
   return call
 }
 
 const updateCall = async (callId, body, loggedCall) => {
   const call = await callDB.update(callId, body)
-  await updateUserStateFromCall(call)
-  emitCall(call)
+  const deal =  await updateUserStateFromCall(call)
+  emitDeal(deal)
   return call
 }
 
@@ -97,7 +97,6 @@ const getDealFromCall = async call => {
 const updateStatusDeal = async (deal, statusActivity) => {
   try {
     const updatedDeal = await dealDB.update(deal._id, { statusActivity }, false)
-    emitDeal(updatedDeal)
     return updatedDeal
   } catch (error) {
     console.log('error update user', deal, statusActivity, error)
