@@ -152,10 +152,11 @@ const createNewDeal = async (user, body) => {
       }
     ]
   })
+  
+  await addCall(user, deal, body.courses)
+  await prepareCourses(user, deal.toJSON(), [], body.courses, body.source)
+  await incProspects(dataDeal)
   emitDeal(deal)
-  addCall(user, deal, body.courses)
-  prepareCourses(user, deal.toJSON(), [], body.courses, body.source)
-  incProspects(dataDeal)
   return deal
 }
 
@@ -302,11 +303,12 @@ const addCall = async (client, deal) => {
   if (call) {
     return
   }
-  const lastCall = await callDB.detail({
+  const lastCall = await callDB.list({
     query: { deal: deal._id },
     sort: '-createdAt'
   })
-  const number = lastCall ? lastCall.number + 1 : 1
+  console.log('lst Call', lastCall)
+  const number = lastCall ? lastCall.length + 1 : 1
   const dataCall = {
     name: `Llamada ${number}`,
     number,
