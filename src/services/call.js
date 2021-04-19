@@ -148,9 +148,9 @@ const emitNotification = notification => {
 }
 
 const validateExistCall = async body => {
-  if (body.isCompleted === true) {
-    return true
-  }
+  // if (body.isCompleted === true) {
+  //   return true
+  // }
   try {
     const exist = await callDB.list({
       query: {

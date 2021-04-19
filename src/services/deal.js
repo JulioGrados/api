@@ -406,7 +406,7 @@ const sendEmailCourse = async (lead, deal, dataCourse, social = false) => {
   const content =
     'Se envio informacion del curso de la plantilla pre definida en sengrid.'
   const attachment = await getBase64(MEDIA_PATH + course.brochure)
-  const filename = course && 'Brochure - ' + course.name
+  const filename = course && 'Brochure - ' + course.name + '.pdf'
 
   const substitutions = getSubstitutions({
     course,
