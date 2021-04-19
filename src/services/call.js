@@ -15,14 +15,14 @@ const createCall = async (body, loggedCall) => {
   await validateExistCall(body)
   const call = await callDB.create(body)
   const deal = await updateUserStateFromCall(call)
-  emitDeal(deal)
+  // emitDeal(deal)
   return call
 }
 
 const updateCall = async (callId, body, loggedCall) => {
   const call = await callDB.update(callId, body)
   const deal =  await updateUserStateFromCall(call)
-  emitDeal(deal)
+  // emitDeal(deal)
   return call
 }
 

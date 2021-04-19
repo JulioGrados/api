@@ -42,12 +42,11 @@ const createEmailEmit = async (body, loggedUser) => {
 }
 
 const createEmail = async (body, loggedUser) => {
-  console.log('2')
   const dataEmail = prepareEmail(body)
   const email = await emailDB.create(dataEmail)
   if (email.template && email.template.ref) {
     sendEmailSengrid(email)
-  } else {
+  }else {
     emitEmail(email)
   }
   return email
