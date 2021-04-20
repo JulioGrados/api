@@ -5,6 +5,7 @@ const moment = require('moment-timezone')
 const { getSocket } = require('../lib/io')
 
 const { getNewActivityState, getFullDate } = require('utils/functions/call')
+const { userDB } = require('db/lib')
 
 const listCalls = async params => {
   const calls = await callDB.list(params)
@@ -26,6 +27,14 @@ const updateCall = async (callId, body, loggedCall) => {
   return call
 }
 
+const updateStatusCall = async (body, loggedCall) => {
+  const deal = await searchDeal(body)
+  const dataCall = await prepareCall(body, deal)
+  const call = await callDB.create(dataCall)
+  emitCall(call)
+  return call
+}
+
 const detailCall = async params => {
   const call = await callDB.detail(params)
   return call
@@ -42,6 +51,72 @@ const countDocuments = async params => {
 }
 
 /* functions */
+
+const prepareCall = async (body, deal) => {
+  const lastCall = await callDB.list({
+    query: { deal: deal._id },
+    sort: '-createdAt'
+  })
+  const called = body.called
+  const calling = body.calling
+  const phone = body.direction === 'OUT' ? called.substring(4, called.length) : called
+  
+  const number = lastCall ? lastCall.length + 1 : 1
+  const dataCall = {
+    name: `Llamada ${number}`,
+    number,
+    direction: body.direction,
+    cdrid: body.cdrid,
+    callingname: body.callingname,
+    calling: calling,
+    called: phone,
+    status: getStatusCalls(body.status),
+    duration: body.duration,
+    billseconds: body.billseconds,
+    price: body.price,
+    isCompleted: true,
+    service: true,
+    hour: moment(body.dialtime)
+      .add(1, 'minutes')
+      .format('HH:mm'),
+    date: moment(body.dialtime),
+    assigned: deal.assessor,
+    linked: {
+      names: deal.client.names,
+      ref: deal.client._id
+    },
+    deal: deal._id
+  }
+  return dataCall
+}
+
+const searchDeal = async (body) => {
+  const called = body.called
+  const calling = body.calling
+  const phone = body.direction === 'OUT' ? called.substring(4, called.length) : calling
+
+  try {
+    const user = await userDB.detail({ query: { mobile: phone } })
+    const deal = await dealDB.detail({ query: { client: user._id }, populate: { path: 'client' } })
+    return deal
+  } catch (error) {
+    throw error
+  }
+}
+
+const getStatusCalls = (event) => {
+  
+  switch (event) {
+    case 'ANSWER':
+      return 'Contestó'
+    case 'CANCEL':
+      return 'No contestó'
+    case 'CONGESTION':
+      return 'Congestion'
+    default:
+      return event
+  }
+}
 
 const getDelayCalls = async () => {
   const calls = await callDB.list({
@@ -183,5 +258,6 @@ module.exports = {
   updateCall,
   detailCall,
   deleteCall,
-  getDelayCalls
+  getDelayCalls,
+  updateStatusCall
 }
