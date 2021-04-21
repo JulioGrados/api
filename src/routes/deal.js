@@ -14,6 +14,10 @@ router
   .post(Api.createDeal)
 
 router
+  .route('/deals/search')
+  .get(Api.searchDeals)
+
+router
   .route('/deals/:id')
   .get(Api.detailDeal)
   .put(Api.updateDeal)

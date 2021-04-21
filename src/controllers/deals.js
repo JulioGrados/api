@@ -7,6 +7,11 @@ const listDeals = async (req, res) => {
   return res.status(200).json(deals)
 }
 
+const searchDeals = async (req, res) => {
+  const deals = await service.searchDeals(req.query)
+  return res.status(200).json(deals)
+}
+
 const createDeal = async (req, res) => {
   try {
     const deal = await service.createDeal(req.body, req.user)
@@ -99,6 +104,7 @@ const enrolDeal = async (req, res) => {
 module.exports = {
   countDocuments,
   listDeals,
+  searchDeals,
   createDeal,
   updateDeal,
   updateDealCreate,
