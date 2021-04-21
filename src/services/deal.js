@@ -23,6 +23,11 @@ const listDeals = async params => {
   return deals
 }
 
+const searchDeals = async params => {
+  const deals = await dealDB.search(params)
+  return deals
+}
+
 const createDeal = async (body, loggedUser) => {
   if (body.status === 'Abierto') {
     const existDeal = await findDealUser(body.client)
@@ -725,6 +730,7 @@ const enrolStudents = async ({ students, dealId }, logged) => {
 module.exports = {
   countDocuments,
   listDeals,
+  searchDeals,
   createDeal,
   updateDeal,
   updateDealCreate,
