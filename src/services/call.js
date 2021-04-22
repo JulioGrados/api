@@ -35,6 +35,32 @@ const updateStatusCall = async (body, loggedCall) => {
   return call
 }
 
+const updateStrangerCall = async (body) => {
+  const called = body.called
+  const calling = body.calling
+  const phone = body.direction === 'OUT' ? called.substring(4, called.length) : called
+  const dataCall = {
+    direction: body.direction,
+    cdrid: body.cdrid,
+    callingname: body.callingname,
+    calling: calling,
+    called: phone,
+    status: getStatusCalls(body.status),
+    duration: body.duration,
+    billseconds: body.billseconds,
+    price: body.price,
+    isCompleted: true,
+    service: true,
+    hour: moment(body.dialtime)
+      .add(1, 'minutes')
+      .format('HH:mm'),
+    date: moment(body.dialtime)
+  }
+
+  const call = await callDB.create(dataCall)
+  return call
+}
+
 const detailCall = async params => {
   const call = await callDB.detail(params)
   return call
@@ -259,5 +285,6 @@ module.exports = {
   detailCall,
   deleteCall,
   getDelayCalls,
-  updateStatusCall
+  updateStatusCall,
+  updateStrangerCall
 }
