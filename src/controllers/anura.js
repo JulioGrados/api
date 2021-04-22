@@ -1,6 +1,6 @@
 'use strict'
 
-const { updateStatusCall } = require('../services/call')
+const { updateStatusCall, updateStrangerCall } = require('../services/call')
 
 const eventWebhook = async (req, res) => {
   //
@@ -10,7 +10,8 @@ const eventWebhook = async (req, res) => {
     console.log('event', event)
     await updateStatusCall(event)
   } catch (error) {
-    console.log('error al actualizar el stado call', event, error)
+    const stranger = event && event.direction && await updateStrangerCall(event)
+    console.log('error al actualizar el stado call', stranger, event)
   }
   return res.status(200).json({ success: true })
 }
