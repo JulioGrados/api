@@ -9,15 +9,15 @@ const { createUserCertificate,
         enrolCron,
         certificateCron} = require('../services/moodle')
 
-// const job = new CronJob(
-//   '0 */2 9-19 * * *',
-//   getDelayCalls,
-//   null,
-//   true,
-//   'America/Bogota'
-// )
+const job = new CronJob(
+  '0 */8 9-19 * * *',
+  getDelayCalls,
+  null,
+  true,
+  'America/Bogota'
+)
 
-// job.start()
+job.start()
 
 // __dirname, '../uploads'
 // const certificate = new CronJob('32 * * * *', async function() {
@@ -36,7 +36,7 @@ const { createUserCertificate,
 // certificate.start();
 
 module.exports = {
-  // job
+  job
 }
 
 //0 0 * * 0 /usr/bin/mysqldump -u root --databases manvicio_ertmdl > /var/backups/moodle/moodle-"$(date +"%m-%d-%Y %H-%M")".sql
