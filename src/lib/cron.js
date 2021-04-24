@@ -10,7 +10,7 @@ const { createUserCertificate,
         certificateCron} = require('../services/moodle')
 
 const job = new CronJob(
-  '0 */8 9-19 * * *',
+  '0 */30 9-19 * * *',
   getDelayCalls,
   null,
   true,
