@@ -82,7 +82,7 @@ const updateDealCreate = async (dealId, body, loggedUser) => {
     query: { _id: dealId },
     populate: { path: 'client' }
   })
-  console.log('deal', deal)
+  
   const dataDeal = await changeStatus(body, deal, loggedUser, body)
   // console.log('dataDeal', dataDeal)
   const updateDeal = await dealDB.update(dealId, dataDeal)
@@ -112,8 +112,20 @@ const createOrUpdateDeal = async (user, body) => {
   const deal = await findDealUser(user)
   // console.log('deal', deal)
   if (deal) {
-    const updateDeal = await editExistDeal(deal.toJSON(), user, body)
-    return updateDeal
+    if (deal.status === 'Abierto') {
+      const updateDeal = await editExistDeal(deal.toJSON(), user, body)
+      return updateDeal
+    } else if (deal.status === 'Perdido') {
+      const updateDeal = await editExistDealAgain(deal.toJSON(), user, body)
+      return updateDeal
+    } else if (deal.status === 'Ganado') {
+      if (deal.statusPayment === 'Abierto') {
+        console.log('aun no pago todo')
+      } else if(deal.statusPayment === 'Pago') {
+        const updateDeal = await editExistDealAgain(deal.toJSON(), user, body)
+        return updateDeal
+      }
+    }
   } else {
     const deal = await createNewDeal(user, body)
     createTimeline({ linked: user, deal:deal, type: 'Deal', name: 'Nuevo trato creado' })
@@ -122,11 +134,12 @@ const createOrUpdateDeal = async (user, body) => {
 }
 
 const findDealUser = async user => {
+  // agregar el estado de pago de contabilidad 
   try {
     const deal = await dealDB.detail({
       query: {
         client: user._id || user,
-        status: 'Abierto'
+        // status: 'Abierto'
       },
       populate: {
         path: 'assessor.ref'
@@ -165,12 +178,47 @@ const createNewDeal = async (user, body) => {
   return deal
 }
 
+const editExistDealAgain = async (deal, user, body) => {
+  let dataDeal = await addInitialStatusAgain(deal)
+  if (!dataDeal.assessor) {
+    dataDeal.assessor = await assignedAssessor(body.courses)
+    incProspects(dataDeal)
+  }
+  
+  // console.log('deal prepare', deal.students)
+  // console.log('body.courses', body.courses)
+  // console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
+  dataDeal.students = []
+  
+  dataDeal = {
+    ...dataDeal,
+    client: user,
+    students: [
+      {
+        student: {...user, ref: user},
+        courses: prepareCourses(user, dataDeal, [], body.courses, body.source)
+      }
+    ]
+  }
+
+  const updateDeal = await dealDB.update(deal._id, {
+    ...dataDeal
+  })
+  console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
+  console.log('dataDeal.students[0].student', dataDeal.students[0].student && dataDeal.students[0].student)
+  console.log('updateDeal', updateDeal )
+  emitDeal(updateDeal)
+  addCall(user, updateDeal)
+  return updateDeal
+}
+
 const editExistDeal = async (deal, user, body) => {
   const dataDeal = await addInitialStatus(deal)
   if (!dataDeal.assessor) {
     dataDeal.assessor = await assignedAssessor(body.courses)
     incProspects(dataDeal)
   }
+  console.log('dataDeal', dataDeal)
   // console.log('deal prepare', deal.students)
   // console.log('body.courses', body.courses)
   // console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
@@ -192,11 +240,10 @@ const editExistDeal = async (deal, user, body) => {
           }
         ]
     }
-  // console.log('dataDeal', dataDeal)
   const updateDeal = await dealDB.update(deal._id, {
     ...dataDeal
   })
-  
+  console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
   emitDeal(updateDeal)
   addCall(user, updateDeal)
   return updateDeal
@@ -209,7 +256,18 @@ const addInitialStatus = async deal => {
   deal.isClosed = false
   deal.statusActivity = 'todo'
   deal.status = 'Abierto'
+  deal.statusPayment = 'Sale'
+  // agregar el estado de contabilidad nuevo
+  return deal
+}
 
+const addInitialStatusAgain = async deal => {
+  deal.progress = await changeStatusProgress('initial', deal)
+  deal.isClosed = false
+  deal.statusActivity = 'todo'
+  deal.status = 'Abierto'
+  deal.statusPayment = 'Sale'
+  // agregar el estado de contabilidad nuevo
   return deal
 }
 
@@ -362,7 +420,6 @@ const emitDeal = deal => {
 const emitAccounting = (deal, treasurer) => {
   try {
     const io = getSocket()
-    
     console.log('accounting emit', treasurer)
     io.to(treasurer._id).emit('accounting', deal)
   } catch (error) {
