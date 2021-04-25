@@ -323,14 +323,15 @@ const changeStatusUser = async sale => {
     }
     const statusActivity = 'done'
     const status = 'Ganado'
-
+    const statusPayment = 'Abierto'
     const updateDeal = await dealDB.update(sale.deal, {
       progressPayment,
       statusActivity,
-      status
+      status,
+      statusPayment
     })
 
-    const treasurer = await userDB.list({query: { roles: 'Asesor' }})
+    const treasurer = await userDB.detail({query: { roles: 'Tesorero' }})
     emitDeal(updateDeal)
     emitAccounting(updateDeal, treasurer)
   }
