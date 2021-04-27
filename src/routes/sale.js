@@ -13,6 +13,10 @@ router
   .post(Api.createSales)
 
 router
+  .route('/sales/admin/:id')
+  .put(Api.updateSaleOne)
+
+router
   .route('/sales/:id')
   .get(Api.detailSale)
   .put(Api.updateSale)
