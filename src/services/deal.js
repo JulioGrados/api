@@ -59,6 +59,11 @@ const createDeal = async (body, loggedUser) => {
   return deal
 }
 
+const updateDealOne = async (dealId, body, loggedUser) => {
+  const updateDeal = await dealDB.updateOne(dealId, body)
+  return updateDeal
+}
+
 const updateDeal = async (dealId, body, loggedUser) => {
   // console.log('dealId', dealId)
   // console.log('body', body)
@@ -790,6 +795,7 @@ module.exports = {
   searchDeals,
   createDeal,
   updateDeal,
+  updateDealOne,
   updateDealCreate,
   detailDeal,
   deleteDeal,

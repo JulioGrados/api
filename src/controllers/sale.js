@@ -18,6 +18,18 @@ const createSales = async (req, res) => {
   }
 }
 
+const updateSaleOne = async (req, res) => {
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
+  const files = req.files
+  const saleId = req.params.id
+  try {
+    const sale = await service.updateSaleOne(saleId, req.body, files, req.user)
+    return res.status(200).json(sale)
+  } catch (error) {
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 const updateSale = async (req, res) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const files = req.files
@@ -69,6 +81,7 @@ module.exports = {
   listSales,
   createSales,
   updateSale,
+  updateSaleOne,
   detailSale,
   deleteSale
 }

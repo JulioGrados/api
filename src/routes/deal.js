@@ -18,6 +18,10 @@ router
   .get(Api.searchDeals)
 
 router
+  .route('/deals/admin/:id')
+  .put(Api.updateDealOne)
+
+router
   .route('/deals/:id')
   .get(Api.detailDeal)
   .put(Api.updateDeal)

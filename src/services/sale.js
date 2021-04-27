@@ -44,6 +44,27 @@ const updateSale = async (saleId, body, files, loggedUser) => {
   }
 }
 
+const updateSaleOne = async (saleId, body, files, loggedUser) => {
+  if (body.status === 'Pendiente' || body.status === 'Pagando' || body.status === 'Finalizada') {
+    const copyOrders = JSON.parse(JSON.stringify(body.orders))
+    body.orders = await prepareOrdersOne(body, files)
+    // console.log('body.orders', body.orders)
+    body.status = getStatusSale(body)
+    console.log('body', body)
+    // const sale = await saleDB.updateOne(saleId, body)
+    sale.orders = await editVoucher(sale.orders, copyOrders)
+    // changeStatusUser(sale, body.detail)
+    // console.log('sale', sale)
+    return sale
+  } else {
+    const error = {
+      status: 402,
+      message: 'La venta ya no se puede editar.'
+    }
+    throw error
+  }
+}
+
 const detailSale = async params => {
   const sale = await saleDB.detail(params)
   return sale
@@ -99,7 +120,7 @@ const editVoucher = async (orders, dataOrders) => {
 
 const prepareOrders = async ({ orders, amount, user }, files) => {
   const sum = sumAmountOrders(orders)
-
+  console.log('orders', orders)
   if (sum !== amount) {
     const error = {
       status: 402,
@@ -114,8 +135,40 @@ const prepareOrders = async ({ orders, amount, user }, files) => {
     console.log('order length', orders.length)
     results = await Promise.all(
       orders.map(async order => {
-        console.log('order', order)
         const orderRes = await changeOrder(order, user, files)
+        return orderRes
+      })
+    )
+  } catch (error) {
+    const errorMessage = {
+      status: error.status || 500,
+      message: error.message || 'Error al crear las ordenes',
+      error
+    }
+    throw errorMessage
+  }
+
+  return results
+}
+
+const prepareOrdersOne = async ({ orders, amount, user }, files) => {
+  const sum = sumAmountOrders(orders)
+  console.log('orders', orders)
+  if (sum !== amount) {
+    const error = {
+      status: 402,
+      message:
+        'La suma de montos de las ordenes debe coincidir con el monto de la venta'
+    }
+    throw error
+  }
+
+  let results
+  try {
+    // console.log('order length', orders.length)
+    results = await Promise.all(
+      orders.map(async order => {
+        const orderRes = await changeOrderOne(order, user, files)
         return orderRes
       })
     )
@@ -147,6 +200,44 @@ const changeOrder = async (order, linked, files) => {
       if (order.receipt) {
         const { _id, isBill, ruc, dni, name, businessName, code } = order.receipt
         const data = { isBill, ruc, dni, name, businessName, code, _id }
+        console.log('data', order.receipt)
+        const receipt = await findOrAddReceipt(data, files, order.assigned, linked)
+        order.receipt.code = receipt.code
+        order.receipt.ref = receipt
+      }
+    }
+    return order
+  } catch (error) {
+    if (error.status && error.message) {
+      throw error
+    } else {
+      const errorMsg = {
+        status: 500,
+        message: 'error al guardar la orden'
+      }
+      throw errorMsg
+    }
+  }
+}
+
+const changeOrderOne = async (order, linked, files) => {
+  try {
+    if (order.voucher) {
+      order.status = 'Pagada'
+      order.paymentDate = Date()
+      const voucher = await findOrAddVoucher(
+        order.voucher,
+        order.amount,
+        order.assigned,
+        files
+      )
+      order.voucher.code = voucher.code
+      order.voucher.ref = voucher
+      
+      if (order.receipt) {
+        const { _id, isBill, ruc, dni, name, businessName, code } = order.receipt.ref
+        const data = { isBill, ruc, dni, name, businessName, code, _id }
+        data.code ? data.code : delete data.code
         const receipt = await findOrAddReceipt(data, files, order.assigned, linked)
         order.receipt.code = receipt.code
         order.receipt.ref = receipt
@@ -203,7 +294,28 @@ const findOrAddVoucher = async (voucher, orderAmount, assigned, files) => {
         isUsed: true
       })
       return updateVoucher
-    } else {
+    } else if (voucher.ref && voucher.ref._id) { 
+      console.log('con id ref voucher')
+      getResidueVoucher(voucher.amount, orderAmount)
+      if (files) {
+        const file = files[voucher.ref.code]
+        if (file) {
+          const route = await saveFile(file, '/vouchers')
+          voucher.ref.image = route
+        }
+      }
+      const updateVoucher = await voucherDB.update( voucher.ref._id, {
+        ...voucher,
+        bank: voucher.ref.bank && {
+          ...voucher.ref.bank,
+          name: voucher.ref.bank.label
+        },
+        assigned,
+        residue: voucher.ref.amount,
+        isUsed: true
+      })
+      return updateVoucher
+    }else {
       console.log('no existe voucher')
       getResidueVoucher(voucher.amount, orderAmount)
       if (files) {
@@ -252,6 +364,7 @@ const getResidueVoucher = (voucherAmount, orderAmount) => {
 const findOrAddReceipt = async (receipt, files, assigned, linked) => {
   try {
     if (receipt._id || receipt.ref) {
+      console.log('receipt', receipt)
       receipt.status = 'Procesado'
       const ref = receipt._id ? receipt._id : receipt.ref
       if (files) {
@@ -342,6 +455,7 @@ module.exports = {
   listSales,
   createSale,
   updateSale,
+  updateSaleOne,
   detailSale,
   deleteSale
 }
