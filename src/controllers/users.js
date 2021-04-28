@@ -112,6 +112,18 @@ const createOrUpdateUser = async (req, res) => {
   }
 }
 
+const createDealUser = async (req, res) => {
+  const body = req.body
+  try {
+    console.log('body', body)
+    const user = await service.createDealUser(body)
+    return res.status(201).json(user)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 const recoverPassword = async (req, res) => {
   const body = req.body
   try {
@@ -127,6 +139,7 @@ module.exports = {
   countDocuments,
   listUsers,
   createUser,
+  createDealUser,
   updateUser,
   detailUser,
   deleteUser,
