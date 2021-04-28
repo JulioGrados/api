@@ -198,9 +198,9 @@ const changeOrder = async (order, linked, files) => {
       order.voucher.code = voucher.code
       order.voucher.ref = voucher
       if (order.receipt) {
-        const { _id, isBill, ruc, dni, name, businessName, code } = order.receipt
-        const data = { isBill, ruc, dni, name, businessName, code, _id }
-        console.log('data', order.receipt)
+        const { _id, isBill, ruc, dni, name, businessName, serie, sequential } = order.receipt
+        const code = serie ? serie + '-' + sequential : null
+        const data = code ? { isBill, ruc, dni, name, businessName, serie, sequential, code, _id } :  { isBill, ruc, dni, name, businessName, _id }
         const receipt = await findOrAddReceipt(data, files, order.assigned, linked)
         order.receipt.code = receipt.code
         order.receipt.ref = receipt
@@ -233,7 +233,7 @@ const changeOrderOne = async (order, linked, files) => {
       )
       order.voucher.code = voucher.code
       order.voucher.ref = voucher
-      
+      console.log('files', files)
       if (order.receipt) {
         const { _id, isBill, ruc, dni, name, businessName, code } = order.receipt.ref
         const data = { isBill, ruc, dni, name, businessName, code, _id }
@@ -364,7 +364,6 @@ const getResidueVoucher = (voucherAmount, orderAmount) => {
 const findOrAddReceipt = async (receipt, files, assigned, linked) => {
   try {
     if (receipt._id || receipt.ref) {
-      console.log('receipt', receipt)
       receipt.status = 'Procesado'
       const ref = receipt._id ? receipt._id : receipt.ref
       if (files) {
@@ -379,6 +378,7 @@ const findOrAddReceipt = async (receipt, files, assigned, linked) => {
         assigned,
         linked
       })
+      console.log('updateReceipt', updateReceipt)
       return updateReceipt
     } else {
       delete receipt.code
@@ -395,6 +395,7 @@ const findOrAddReceipt = async (receipt, files, assigned, linked) => {
         assigned,
         linked
       })
+      console.log('newReceipt', newReceipt)
       return newReceipt
     }
   } catch (error) {
