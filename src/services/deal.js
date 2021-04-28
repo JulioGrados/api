@@ -138,6 +138,57 @@ const createOrUpdateDeal = async (user, body) => {
   }
 }
 
+const createDealUserOnly = async (user, body, lead = {}, update = false) => {
+  const deal = await findDealUser(user)
+  // console.log('deal', deal)
+  if (deal) {
+    if (deal.status === 'Abierto') {
+      // error ya existe
+      const error = {
+        status: 402,
+        message: 'Ya existe un trato abierto para el cliente.'
+      }
+      throw error
+    } else if (deal.status === 'Perdido') {
+      // actualizar
+      const updateDeal = await editExistDealOnly(deal.toJSON(), user, body)
+      update && (
+      createTimeline({
+        linked: user,
+        assigned: updateDeal.assessor,
+        deal: updateDeal,
+        type: 'Deal',
+        name: `Actualizado: [Nombres]: ${lead.names ? lead.names : ''} - [Email]: ${lead.email ? lead.email : ''} - [Celular]: ${lead.mobile ? lead.mobile : ''} - [País]: ${lead.country ? lead.country : ''} - [Ciudad]: ${lead.city ? lead.city : ''}`
+      }))
+      return updateDeal
+    } else if (deal.status === 'Ganado') {
+      if (deal.statusPayment === 'Abierto') {
+        const error = {
+          status: 402,
+          message: 'Ya existe un trato abierto para el cliente.'
+        }
+        throw error
+      } else if(deal.statusPayment === 'Pago') {
+        // actualizar
+        const updateDeal = await editExistDealOnly(deal.toJSON(), user, body)
+        update && (
+        createTimeline({
+          linked: user,
+          assigned: updateDeal.assessor,
+          deal: updateDeal,
+          type: 'Deal',
+          name: `Actualizado: [Nombres]: ${lead.names ? lead.names : ''} - [Email]: ${lead.email ? lead.email : ''} - [Celular]: ${lead.mobile ? lead.mobile : ''} - [País]: ${lead.country ? lead.country : ''} - [Ciudad]: ${lead.city ? lead.city : ''}`
+        }))
+        return updateDeal
+      }
+    }
+  } else {
+    const deal = await createNewDealOnly(user, body)
+    createTimeline({ linked: user, deal:deal, type: 'Deal', name: 'Nuevo trato creado' })
+    return deal
+  }
+}
+
 const findDealUser = async user => {
   // agregar el estado de pago de contabilidad 
   try {
@@ -181,6 +232,66 @@ const createNewDeal = async (user, body) => {
   await incProspects(dataDeal)
   emitDeal(deal)
   return deal
+}
+
+const createNewDealOnly = async (user, body) => {
+  const dataDeal = await addInitialStatus(body)
+  if (body.assessor && body.assessor.username) {
+    dataDeal.assessor.username = body.assessor.username
+    dataDeal.assessor.ref = await assignedAssessorOne(body.assessor.username)
+  } else {
+    dataDeal.assessor = await assignedAssessor(body.courses)
+  }
+  // console.log('user', {...user})
+  const deal = await dealDB.create({
+    ...dataDeal,
+    client: user,
+    students: [
+      {
+        student: {...user, ref: user},
+        courses: body.courses
+      }
+    ]
+  })
+  
+  // await addCall(user, deal, body.courses)
+  // await prepareCourses(user, deal.toJSON(), [], body.courses, body.source)
+  await incProspects(dataDeal)
+  emitDeal(deal)
+  return deal
+}
+
+const editExistDealOnly = async (deal, user, body) => {
+  let dataDeal = await addInitialStatusAgain(deal)
+  if (!dataDeal.assessor) {
+    dataDeal.assessor = await assignedAssessor(body.courses)
+    incProspects(dataDeal)
+  }
+  
+  // console.log('deal prepare', deal.students)
+  // console.log('body.courses', body.courses)
+  // console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
+  dataDeal.students = []
+  
+  dataDeal = {
+    ...dataDeal,
+    client: user,
+    students: [
+      {
+        student: {...user, ref: user},
+        courses: prepareCoursesOnly(user, dataDeal, [], body.courses, body.source)
+      }
+    ]
+  }
+
+  const updateDeal = await dealDB.update(deal._id, {
+    ...dataDeal
+  })
+  console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
+  console.log('dataDeal.students[0].student', dataDeal.students[0].student && dataDeal.students[0].student)
+  console.log('updateDeal', updateDeal )
+  emitDeal(updateDeal)
+  return updateDeal
 }
 
 const editExistDealAgain = async (deal, user, body) => {
@@ -430,6 +541,20 @@ const emitAccounting = (deal, treasurer) => {
   } catch (error) {
     console.log('error sockets', deal, error)
   }
+}
+
+const prepareCoursesOnly = (lead, deal, oldCourses, newCourses, source = 'Sitio web') => {
+  // console.log('oldCourses', oldCourses)
+  // console.log('newCourses', newCourses)
+  const courses = oldCourses.filter(course => {
+    const index = newCourses.findIndex(item => {
+      // console.log('item._id.toString()', item._id.toString())
+      // console.log('course._id.toString()', course._id.toString())
+      return item.ref && item.ref.toString() === course.ref && course.ref.toString() || item._id && item._id.toString() === course._id && course._id.toString()
+    })
+    return index === -1
+  })
+  return [...newCourses, ...courses]
 }
 
 const prepareCourses = (lead, deal, oldCourses, newCourses, source = 'Sitio web') => {
@@ -800,6 +925,7 @@ module.exports = {
   detailDeal,
   deleteDeal,
   createOrUpdateDeal,
+  createDealUserOnly,
   emitDeal,
   emitAccounting,
   enrolStudents

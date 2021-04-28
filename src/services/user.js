@@ -6,7 +6,7 @@ const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
 const { createFindQuery } = require('utils/functions/user')
-const { createOrUpdateDeal } = require('./deal')
+const { createOrUpdateDeal, createDealUserOnly } = require('./deal')
 const { createTimeline } = require('./timeline')
 const { loginUser } = require('./auth')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
@@ -117,6 +117,50 @@ const createOrUpdateUser = async body => {
   return user
 }
 
+const createDealUser = async body => {
+  let user
+  try {
+    const params = createFindQuery(body)
+    // console.log('params', params)
+    const lead = await userDB.detail(params)
+    
+    // console.log('body', body)
+    if (lead.roles && lead.roles.length) {
+      if (lead.roles.findIndex(role => role === 'Interesado') === -1) {
+        body.roles = ['Interesado', ...lead.roles]
+      }
+    } else {
+      body.roles = ['Interesado']
+    }
+    body.source = body.origin
+    user = await userDB.update(lead._id, { ...body })
+    console.log('user', user)
+    // createTimeline({
+    //   linked: user,
+    //   type: 'Cuenta',
+    //   name: `Persona actualizada: [Nombres]: ${lead.names} - [Email]: ${lead.email} - [Celular]: ${lead.mobile} - [País]: ${lead.country} - [Ciudad]: ${lead.city}`
+    // })
+    await createDealUserOnly(user.toJSON(), body, lead, true)
+  } catch (error) {
+    if (error.status === 404) {
+      // console.log('nuevo lead', body)
+      body.source = body.origin
+      body.roles = ['Interesado']
+      user = await userDB.create(body)
+      
+      createTimeline({
+        linked: user,
+        type: 'Cuenta',
+        name: 'Persona creada'
+      })
+      await createDealUserOnly(user.toJSON(), body)
+    } else {
+      throw error
+    }
+  }
+  return user
+}
+
 const countDocuments = async params => {
   const count = await userDB.count(params)
   return count
@@ -194,6 +238,7 @@ module.exports = {
   detailUser,
   deleteUser,
   createOrUpdateUser,
+  createDealUser,
   emitLead,
   recoverPassword
 }
