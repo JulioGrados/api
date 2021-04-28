@@ -17,7 +17,7 @@ const { createUserCertificate,
 //   'America/Bogota'
 // )
 
-job.start()
+// job.start()
 
 // __dirname, '../uploads'
 // const certificate = new CronJob('32 * * * *', async function() {
