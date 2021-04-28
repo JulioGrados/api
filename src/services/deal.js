@@ -263,9 +263,11 @@ const createNewDealOnly = async (user, body) => {
 
 const editExistDealOnly = async (deal, user, body) => {
   let dataDeal = await addInitialStatusAgain(deal)
-  if (!dataDeal.assessor) {
+  if (body.assessor && body.assessor.username) {
+    dataDeal.assessor.username = body.assessor.username
+    dataDeal.assessor.ref = await assignedAssessorOne(body.assessor.username)
+  } else {
     dataDeal.assessor = await assignedAssessor(body.courses)
-    incProspects(dataDeal)
   }
   
   // console.log('deal prepare', deal.students)
@@ -289,7 +291,8 @@ const editExistDealOnly = async (deal, user, body) => {
   })
   console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
   console.log('dataDeal.students[0].student', dataDeal.students[0].student && dataDeal.students[0].student)
-  console.log('updateDeal', updateDeal )
+  console.log('updateDeal', updateDeal)
+  incProspects(dataDeal)
   emitDeal(updateDeal)
   return updateDeal
 }
