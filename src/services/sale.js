@@ -51,7 +51,7 @@ const updateSaleOne = async (saleId, body, files, loggedUser) => {
     // console.log('body.orders', body.orders)
     body.status = getStatusSale(body)
     console.log('body', body)
-    // const sale = await saleDB.updateOne(saleId, body)
+    const sale = await saleDB.updateOne(saleId, body)
     sale.orders = await editVoucher(sale.orders, copyOrders)
     // changeStatusUser(sale, body.detail)
     // console.log('sale', sale)
@@ -199,7 +199,7 @@ const changeOrder = async (order, linked, files) => {
       order.voucher.ref = voucher
       if (order.receipt) {
         const { _id, isBill, ruc, dni, name, businessName, serie, sequential } = order.receipt
-        const code = serie ? serie + '-' + sequential : null
+        const code = (serie && sequential) ? serie + '-' + sequential : null
         const data = code ? { isBill, ruc, dni, name, businessName, serie, sequential, code, _id } :  { isBill, ruc, dni, name, businessName, _id }
         const receipt = await findOrAddReceipt(data, files, order.assigned, linked)
         order.receipt.code = receipt.code
