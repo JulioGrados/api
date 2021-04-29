@@ -171,9 +171,9 @@ const updateUserStateFromCall = async (call, emit) => {
   let deal = await getDealFromCall(call)
   const statusActivity = getNewActivityState(call)
   if (statusActivity !== deal.statusActivity) {
-    if (statusActivity === 'delay') {
-      sendNotification(call, deal)
-    }
+    // if (statusActivity === 'delay') {
+    //   sendNotification(call, deal)
+    // }
     deal = await updateStatusDeal(deal, statusActivity)
   }
   if (emit) {
