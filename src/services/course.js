@@ -38,7 +38,8 @@ const updateDealCreate = async (dealId, body, loggedUser) => {
     populate: { path: 'client' }
   })
   const userId = deal.client._id
-  const courseId = deal.students[0].courses[0] && deal.students[0].courses[0]._id
+  // const courseId = deal.students[0].courses[0] && deal.students[0].courses[0]._id
+  const courseId = "5efd111e179f0412e5dcde5f"
   const course = await courseDB.detail({
     query: { _id: courseId }
   })
