@@ -48,8 +48,8 @@ const updateDealCreate = async (dealId, body, loggedUser) => {
     query: { _id: userId }
   })
 
-  dataDeal = {
-    ...dataDeal,
+  const dataDeal = {
+    ...deal,
     client: user,
     students: [
       {
