@@ -38,27 +38,18 @@ const updateDealCreate = async (dealId, body, loggedUser) => {
     populate: { path: 'client' }
   })
   const userId = deal.client._id
-  // const courseId = deal.students[0].courses[0] && deal.students[0].courses[0]._id
-  const courseId = "sistema-de-gestion-de-la-calidad"
+  const courseId = deal.students[0].courses[0] && deal.students[0].courses[0]._id
   const course = await courseDB.detail({
-    query: { slug: courseId }
+    query: { _id: courseId }
   })
 
   const user = await userDB.detail({
     query: { _id: userId }
   })
 
-  
-  const students = [
-      {
-        student: {...user, ref: user},
-        courses: {...course.toJSON(), ref: course.toJSON()}
-      }
-    ]
-
-  // deal.students[0].courses[0] = {...course.toJSON(), ref: course.toJSON()}
-  // deal.students[0].student = {...user.toJSON(), ref: user.toJSON()}
-  const updateDeal = await dealDB.update(dealId, {students: students})
+  deal.students[0].courses[0] = {...course.toJSON(), ref: course.toJSON()}
+  deal.students[0].student = {...user.toJSON(), ref: user.toJSON()}
+  const updateDeal = await dealDB.update(dealId, {students: deal.students, origin: 'sitio web'})
   
   return updateDeal
 }
