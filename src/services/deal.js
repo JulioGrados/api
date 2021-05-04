@@ -19,6 +19,9 @@ const { createNewUser, createEnrolUser, searchUser } = require('./moodle')
 let randomize = require('randomatic')
 
 const listDeals = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('DEALS')
+  console.log('--------------------------------------------------------')
   const deals = await dealDB.list(params)
   return deals
 }
@@ -113,7 +116,7 @@ const countDocuments = async params => {
   return count
 }
 
-const createOrUpdateDeal = async (user, body) => {
+const createOrUpdateDeal = async (user, body, lead = {}, update = false) => {
   const deal = await findDealUser(user)
   // console.log('deal', deal)
   if (deal) {
@@ -122,12 +125,26 @@ const createOrUpdateDeal = async (user, body) => {
       return updateDeal
     } else if (deal.status === 'Perdido') {
       const updateDeal = await editExistDealAgain(deal.toJSON(), user, body)
+      update && (createTimeline({
+        linked: user,
+        assigned: updateDeal.assessor,
+        deal: updateDeal,
+        type: 'Deal',
+        name: `Actualizado: [Nombres]: ${lead.names ? lead.names : ''} - [Email]: ${lead.email ? lead.email : ''} - [Celular]: ${lead.mobile ? lead.mobile : ''} - [País]: ${lead.country ? lead.country : ''} - [Ciudad]: ${lead.city ? lead.city : ''}`
+      }))
       return updateDeal
     } else if (deal.status === 'Ganado') {
       if (deal.statusPayment === 'Abierto') {
         console.log('aun no pago todo')
-      } else if(deal.statusPayment === 'Pago') {
+      } else if (deal.statusPayment === 'Pago') {
         const updateDeal = await editExistDealAgain(deal.toJSON(), user, body)
+        lead && (createTimeline({
+          linked: user,
+          assigned: updateDeal.assessor,
+          deal: updateDeal,
+          type: 'Deal',
+          name: `Actualizado: [Nombres]: ${lead.names ? lead.names : ''} - [Email]: ${lead.email ? lead.email : ''} - [Celular]: ${lead.mobile ? lead.mobile : ''} - [País]: ${lead.country ? lead.country : ''} - [Ciudad]: ${lead.city ? lead.city : ''}`
+        }))
         return updateDeal
       }
     }

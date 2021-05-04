@@ -7,6 +7,9 @@ const { emitDeal, emitAccounting } = require('./deal')
 
 /* Basicos */
 const listSales = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('SALES')
+  console.log('--------------------------------------------------------')
   const sales = await saleDB.list(params)
   return sales
 }

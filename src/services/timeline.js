@@ -4,6 +4,9 @@ const { timelineDB } = require('../db')
 const { getSocket } = require('../lib/io')
 
 const listTimelines = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('TIMELINE')
+  console.log('--------------------------------------------------------')
   const timelines = await timelineDB.list(params)
   return timelines
 }
