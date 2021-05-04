@@ -13,6 +13,9 @@ const { sendMailTemplate } = require('utils/lib/sendgrid')
 const uniqid = require('uniqid')
 
 const listUsers = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('USERS')
+  console.log('--------------------------------------------------------')
   const users = await userDB.list(params)
   return users
 }
@@ -87,7 +90,7 @@ const createOrUpdateUser = async body => {
     }
     user = await userDB.update(lead._id, { ...body })
     // console.log('user', user)
-    await createOrUpdateDeal(user.toJSON(), body)
+    await createOrUpdateDeal(user.toJSON(), body, lead, true)
   } catch (error) {
     if (error.status === 404) {
       // console.log('nuevo lead', body)

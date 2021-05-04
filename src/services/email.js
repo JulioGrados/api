@@ -6,6 +6,9 @@ const { getSocket } = require('../lib/io')
 const { createTimeline } = require('./timeline')
 
 const listEmails = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('EMAILS')
+  console.log('--------------------------------------------------------')
   const emails = await emailDB.list(params)
   return emails
 }

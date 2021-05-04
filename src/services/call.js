@@ -8,6 +8,9 @@ const { getNewActivityState, getFullDate } = require('utils/functions/call')
 const { userDB } = require('db/lib')
 
 const listCalls = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('LLAMADAS')
+  console.log('--------------------------------------------------------')
   const calls = await callDB.list(params)
   return calls
 }

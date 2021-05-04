@@ -3,6 +3,9 @@
 const { whastsappDB } = require('../db')
 
 const listWhatsapps = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('WHATSAPP')
+  console.log('--------------------------------------------------------')
   const whatsapps = await whastsappDB.list(params)
   return whatsapps
 }

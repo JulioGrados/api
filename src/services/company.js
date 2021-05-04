@@ -4,6 +4,9 @@ const { companyDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 
 const listCompanies = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('COMPANY')
+  console.log('--------------------------------------------------------')
   const companies = await companyDB.list(params)
   return companies
 }
