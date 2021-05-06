@@ -14,9 +14,11 @@ const listEmails = async params => {
 }
 
 const createSendEmail = async (body, loggedUser) => {
-  const email = await createEmailEmit(body, loggedUser)
+  const dataEmail = prepareEmail(body)
+  const email = await emailDB.create(dataEmail)
+  await sendEmailSengrid(email)
   if (email) {
-    sendEmailSengrid(email)
+    emitEmail(email)
   }
   return email
 }
@@ -30,18 +32,21 @@ const emitDeal = deal => {
 
 const createEmailEmit = async (body, loggedUser) => {
   const dataEmail = prepareEmail(body)
-  const deal = await dealDB.detail({
-    query: { _id: dataEmail.deal },
-    populate: [
-      'students.student.ref',
-      'students.courses.ref',
-      'client'
-      // 'assessor.ref'
-    ]
-  })
-  emitDeal(deal)
+  // const deal = await dealDB.detail({
+  //   query: { _id: dataEmail.deal },
+  //   populate: [
+  //     'students.student.ref',
+  //     'students.courses.ref',
+  //     'client'
+  //     // 'assessor.ref'
+  //   ]
+  // })
+  // emitDeal(deal)
   const email = await emailDB.create(dataEmail)
-  emitEmail(email)
+  await sendEmailSengrid(email)
+  if (email) {
+    emitEmail(email)
+  }
   return email
 }
 
