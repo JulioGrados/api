@@ -30,18 +30,21 @@ const emitDeal = deal => {
 
 const createEmailEmit = async (body, loggedUser) => {
   const dataEmail = prepareEmail(body)
-  const deal = await dealDB.detail({
-    query: { _id: dataEmail.deal },
-    populate: [
-      'students.student.ref',
-      'students.courses.ref',
-      'client'
-      // 'assessor.ref'
-    ]
-  })
-  emitDeal(deal)
+  // const deal = await dealDB.detail({
+  //   query: { _id: dataEmail.deal },
+  //   populate: [
+  //     'students.student.ref',
+  //     'students.courses.ref',
+  //     'client'
+  //     // 'assessor.ref'
+  //   ]
+  // })
+  // emitDeal(deal)
   const email = await emailDB.create(dataEmail)
-  emitEmail(email)
+  await sendEmailSengrid(email)
+  if (email) {
+    emitEmail(email)
+  }
   return email
 }
 
