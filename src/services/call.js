@@ -192,7 +192,13 @@ const getDealFromCall = async call => {
   } else {
     deal = await dealDB.detail({
       query: { _id: call.deal },
-      select: 'statusActivity'
+      select: 'statusActivity',
+      populate: [
+        'students.student.ref',
+        'students.courses.ref',
+        'client',
+        'assessor.ref'
+      ]
     })
   }
   return deal

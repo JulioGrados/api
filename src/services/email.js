@@ -36,6 +36,7 @@ const createEmailEmit = async (body, loggedUser) => {
       'students.student.ref',
       'students.courses.ref',
       'client',
+      'assessor.ref'
     ]
   })
   emitDeal(deal)
