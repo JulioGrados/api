@@ -14,10 +14,10 @@ const listEmails = async params => {
 }
 
 const createSendEmail = async (body, loggedUser) => {
-  const email = await createEmailEmit(body, loggedUser)
-  if (email) {
-    sendEmailSengrid(email)
-  }
+  const dataEmail = prepareEmail(body)
+  const email = await emailDB.create(dataEmail)
+  // console.log('email', email)
+  await sendEmailSengrid(dataEmail)
   return email
 }
 
@@ -26,23 +26,6 @@ const emitDeal = deal => {
     const io = getSocket()
     io.to(deal.assessor.ref).emit('deal', deal)
   }
-}
-
-const createEmailEmit = async (body, loggedUser) => {
-  const dataEmail = prepareEmail(body)
-  const deal = await dealDB.detail({
-    query: { _id: dataEmail.deal },
-    populate: [
-      'students.student.ref',
-      'students.courses.ref',
-      'client',
-      'assessor.ref'
-    ]
-  })
-  emitDeal(deal)
-  const email = await emailDB.create(dataEmail)
-  emitEmail(email)
-  return email
 }
 
 const createEmail = async (body, loggedUser) => {
@@ -114,7 +97,7 @@ const sendEmailSengrid = async ({ to, from, preheader, content, _id }) => {
       emailId: _id
     }
   }
-  console.log('userEmail', userEmail)
+  // console.log('userEmail', userEmail)
   return await sendCrm(userEmail)
 }
 
@@ -150,7 +133,7 @@ const updateStatusEmail = async ({ emailId, event }) => {
     query: { _id: emailId },
     select: 'status'
   })
-  console.log('email edit', email)
+  // console.log('email edit', email)
   const status = getNewStatus(event)
   if (email.status !== status) {
     const updateEmail = await emailDB.update(email._id, { status })
