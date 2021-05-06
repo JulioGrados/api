@@ -14,9 +14,11 @@ const listEmails = async params => {
 }
 
 const createSendEmail = async (body, loggedUser) => {
-  const email = await createEmailEmit(body, loggedUser)
+  const dataEmail = prepareEmail(body)
+  const email = await emailDB.create(dataEmail)
+  await sendEmailSengrid(email)
   if (email) {
-    sendEmailSengrid(email)
+    emitEmail(email)
   }
   return email
 }
