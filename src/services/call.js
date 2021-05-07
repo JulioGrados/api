@@ -30,6 +30,7 @@ const updateCall = async (callId, body, loggedCall) => {
   return call
 }
 
+
 const updateStatusCall = async (body, loggedCall) => {
   const deal = await searchDeal(body)
   const dataCall = await prepareCall(body, deal)
@@ -62,6 +63,30 @@ const updateStrangerCall = async (body) => {
 
   const call = await callDB.create(dataCall)
   return call
+}
+
+const popUpCall = async (body, loggedCall) => {
+  const receptionist = await userDB.detail({
+    query: {
+      roles: 'Recepcionista'
+    }
+  })
+  
+  try {
+    const deal = await searchDeal(body)
+    const dataDeal = {
+      ...deal.toJSON(),
+      exist: true
+    }
+    emitPopUp(dataDeal, receptionist)
+    return deal
+  } catch (error) {
+    const dataDeal = {
+      ...body,
+      exist: false
+    }
+    emitPopUp(dataDeal, receptionist)
+  }
 }
 
 const detailCall = async params => {
@@ -223,6 +248,14 @@ const emitCall = call => {
   }
 }
 
+const emitPopUp = (deal, assigned) => {
+  if (assigned) {
+    console.log('llamada entrante')
+    const io = getSocket()
+    io.to(assigned._id).emit('popup', deal)
+  }
+}
+
 const sendNotification = async (call, deal) => {
   const date = getFullDate(call)
   const data = {
@@ -287,6 +320,7 @@ module.exports = {
   updateCall,
   detailCall,
   deleteCall,
+  popUpCall,
   getDelayCalls,
   updateStatusCall,
   updateStrangerCall
