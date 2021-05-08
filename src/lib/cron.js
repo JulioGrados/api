@@ -1,7 +1,7 @@
 const CronJob = require('cron').CronJob
 const path = require('path')
 
-// const { readFile } = require('utils/files/read')
+const { readFile } = require('utils/files/read')
 const { getDelayCalls } = require('../services/call')
 
 const { createUserCertificate,
@@ -20,23 +20,24 @@ const job = new CronJob(
 job.start()
 
 // __dirname, '../uploads'
-// const certificate = new CronJob('32 * * * *', async function() {
-//   console.log('You will see this message every minuto');
-//   const dir = path.resolve(__dirname, '../../backup/data.json')
-//   const arr = await readFile(dir)
-//   const users = await createUserCertificate(arr)
-//   const grades = await gradesCron(arr)
-//   const enrols = grades && await enrolCron(grades)
-//   const certi = enrols && enrols.validEnrols && await certificateCron(enrols.validEnrols)
-//   console.log('users', users)
-//   console.log('grades', grades)
-//   console.log('enrols', enrols)
-//   enrols && enrols.validEnrols && console.log('certi', certi)
-// }, null, true, 'America/Lima');
-// certificate.start();
+const certificate = new CronJob('0 20 17 * * *', async function() {
+  console.log('You will see this message every minuto');
+  const dir = path.resolve(__dirname, '../../backup/data.json')
+  const arr = await readFile(dir)
+  const users = await createUserCertificate(arr)
+  const grades = await gradesCron(arr)
+  const enrols = grades && await enrolCron(grades)
+  const certi = enrols && enrols.validEnrols && await certificateCron(enrols.validEnrols)
+  console.log('users', users)
+  console.log('grades', grades)
+  console.log('enrols', enrols)
+  enrols && enrols.validEnrols && console.log('certi', certi)
+}, null, true, 'America/Bogota');
+certificate.start();
 
 module.exports = {
-  job
+  job,
+  certificate
 }
 
 //0 0 * * 0 /usr/bin/mysqldump -u root --databases manvicio_ertmdl > /var/backups/moodle/moodle-"$(date +"%m-%d-%Y %H-%M")".sql
