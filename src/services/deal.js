@@ -225,14 +225,23 @@ const findDealUser = async user => {
 }
 
 const createNewDeal = async (user, body) => {
+  console.log('createNewDeal')
   const dataDeal = await addInitialStatus(body)
-  if (body.assessor && body.assessor.username) {
-    dataDeal.assessor.username = body.assessor.username
-    dataDeal.assessor.ref = await assignedAssessorOne(body.assessor.username)
-  } else {
-    dataDeal.assessor = await assignedAssessor(body.courses)
+  // if (body.assessor && body.assessor.username) {
+  //   dataDeal.assessor.username = body.assessor.username
+  //   dataDeal.assessor.ref = await assignedAssessorOne(body.assessor.username)
+  // } else {
+  //   dataDeal.assessor = await assignedPosition()
+  // }
+  const assessor = await assignedPosition()
+  const assessorAssigned = {
+    username: assessor.username,
+    ref: assessor
   }
-  // console.log('user', {...user})
+  dataDeal.assessor = assessorAssigned
+
+  console.log('dataDeal', dataDeal)
+
   const deal = await dealDB.create({
     ...dataDeal,
     client: user,
@@ -422,6 +431,63 @@ const changeStatusProgress = async (key, data) => {
     return data.progress
   }
 }
+
+const assignedPosition = async () => {
+  
+  const assessors = await userDB.list({
+    query: {
+      roles: 'Asesor'
+    },
+    sort: 'createdAt'
+  })
+  console.log('assessors', assessors)
+  const {position, initial} = getPosition(assessors)
+  const userPosition = assessors[position]
+  const userInitial = assessors[initial]
+  // console.log('assessors[initial]', assessors[initial])
+  // console.log('position', position)
+  // console.log('initial', initial)
+
+  // console.log('userPosition', userPosition)
+  // console.log('userInitial', userInitial)
+
+  const updateInitial = await userDB.update(userInitial._id, {position: false})
+  const updatePosition = await userDB.update(userPosition._id, { position: true })
+  
+  // console.log('updateInitial', updateInitial)
+  // console.log('updatePosition', updatePosition)
+
+  return updatePosition
+}
+
+const getPosition = (assessors) => {
+  const size = assessors.length - 1
+  let initial = assessors.findIndex(x => x.position === true);
+  let active = initial
+  let found = false
+  let position
+
+  do {
+    let next = active + 1;
+    if (assessors[next].status === true) {
+      found = true
+      position = next
+    } else {
+      if ( size === next ) {
+        active = -1
+      } else if ( initial === next ) {
+        found = true
+        position = initial
+      } else {
+        active = active + 1
+      }
+    }
+  } while (found === false)
+
+  return {position, initial}
+}
+
+
 
 const assignedAssessor = async courses => {
   const coursesId = courses.map(course => course._id)
