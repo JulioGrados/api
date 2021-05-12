@@ -190,11 +190,14 @@ const getStatusCalls = (event) => {
 }
 
 const getDelayCalls = async () => {
+  // console.log('start', moment().subtract(1, 'days').endOf('day'))
+  // console.log('start', moment().endOf('day'))
   const calls = await callDB.list({
     query: {
       isCompleted: false,
       date: {
-        $lte: moment().endOf('day')
+        $gte: moment().subtract(2, 'days').startOf('day'),
+        $lte: moment().startOf('day')
       },
       deal: { $exists: true }
     },
@@ -205,8 +208,11 @@ const getDelayCalls = async () => {
     }
   })
 
+  // console.log('calls', calls)
+
   calls.map(async call => {
     if (call.deal) {
+
       await updateUserStateFromCall(call, true)
     }
   })
@@ -214,7 +220,10 @@ const getDelayCalls = async () => {
 
 const updateUserStateFromCall = async (call, emit) => {
   let deal = await getDealFromCall(call)
+  // console.log('deal', deal)
   const statusActivity = getNewActivityState(call)
+  // console.log('statusActivity', statusActivity)
+  // console.log('deal.statusActivity', deal.statusActivity)
   if (statusActivity !== deal.statusActivity) {
     // if (statusActivity === 'delay') {
     //   sendNotification(call, deal)
