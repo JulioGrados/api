@@ -271,6 +271,7 @@ const createNewDealOnly = async (user, body) => {
   // console.log('user', {...user})
   const deal = await dealDB.create({
     ...dataDeal,
+    statusActivity: 'done',
     client: user,
     students: [
       {
