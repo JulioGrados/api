@@ -195,10 +195,10 @@ const getDelayCalls = async () => {
   const calls = await callDB.list({
     query: {
       isCompleted: false,
-      date: {
-        $gte: moment().subtract(2, 'days').startOf('day'),
-        $lte: moment().startOf('day')
-      },
+      // date: {
+      //   $gte: moment().subtract(2, 'days').startOf('day'),
+      //   $lte: moment().startOf('day')
+      // },
       deal: { $exists: true }
     },
     populate: {
