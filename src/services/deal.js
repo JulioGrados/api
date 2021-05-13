@@ -441,7 +441,7 @@ const assignedPosition = async () => {
     },
     sort: 'createdAt'
   })
-  console.log('assessors', assessors)
+  // console.log('assessors', assessors)
   const {position, initial} = getPosition(assessors)
   const userPosition = assessors[position]
   const userInitial = assessors[initial]
@@ -470,13 +470,13 @@ const getPosition = (assessors) => {
 
   do {
     let next = active + 1;
-    if (assessors[next].status === true) {
+    if (assessors[next] && assessors[next].status === true) {
       found = true
       position = next
     } else {
-      if ( size === next ) {
+      if ( size === next || next > size ) {
         active = -1
-      } else if ( initial === next ) {
+      } else if (initial === next) {
         found = true
         position = initial
       } else {
