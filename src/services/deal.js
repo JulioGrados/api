@@ -470,13 +470,18 @@ const getPosition = (assessors) => {
 
   do {
     let next = active + 1;
-    if (assessors[next].status === true) {
+    console.log('active', active)
+    console.log('initial', initial)
+    console.log('size', size)
+    console.log('next', next)
+    console.log('assessors[next]', assessors[next])
+    if (assessors[next] && assessors[next].status === true) {
       found = true
       position = next
     } else {
-      if ( size === next ) {
+      if ( size === next || next > size ) {
         active = -1
-      } else if ( initial === next ) {
+      } else if (initial === next) {
         found = true
         position = initial
       } else {
