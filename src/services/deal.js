@@ -781,6 +781,20 @@ const changeStatus = async (dataDeal, deal, assigned, body) => {
         name: `[Trato Reabierto]`
       })
     }
+
+    if (dataDeal.reassigned) {
+      dataDeal.isClosed = false
+      dataDeal.statusActivity = 'todo'
+      dataDeal.status = 'Abierto'
+      incProspects(deal)
+      createTimeline({
+        linked: deal.client,
+        deal,
+        assigned,
+        type: 'Deal',
+        name: `[Trato Reasignado] ${body.reassignedReason}`
+      })
+    }
     return dataDeal
   } catch (error) {
     console.log(error)

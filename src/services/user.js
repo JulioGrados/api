@@ -1,7 +1,7 @@
 'use strict'
 
 const config = require('config')
-const { userDB, courseDB } = require('../db')
+const { userDB, courseDB, dealDB } = require('../db')
 const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
@@ -113,6 +113,48 @@ const createOrUpdateUser = async body => {
         name: 'Persona creada'
       })
       await createOrUpdateDeal(user.toJSON(), body)
+    } else {
+      throw error
+    }
+  }
+  return user
+}
+
+const createStudent = async body => {
+  let user
+  try {
+    const params = createFindQuery(body)
+    const lead = await userDB.detail(params)
+
+    const deal = await dealDB.detail({
+      query: {
+        $or: [
+          { client: lead },
+          { students: { $elemMatch: { 'student.ref': lead } } }
+        ]
+      }})
+    
+    if (lead.roles && lead.roles.length) {
+      if (lead.roles.findIndex(role => role === 'Interesado') === -1) {
+        body.roles = ['Interesado', ...lead.roles]
+      }
+    } else {
+      body.roles = ['Interesado']
+    }
+    
+    if (deal) {
+      const error = {
+        status: 402,
+        message: 'Ya existe este trato.'
+      }
+      throw error
+    } else {
+      return lead
+    }
+  } catch (error) {
+    if (error.status === 404) {
+      body.roles = ['Interesado']
+      user = await userDB.create(body)
     } else {
       throw error
     }
@@ -243,5 +285,6 @@ module.exports = {
   createOrUpdateUser,
   createDealUser,
   emitLead,
-  recoverPassword
+  recoverPassword,
+  createStudent
 }

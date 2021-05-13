@@ -112,6 +112,17 @@ const createOrUpdateUser = async (req, res) => {
   }
 }
 
+const createStudent = async (req, res) => {
+  const body = req.body
+  try {
+    const user = await service.createStudent(body)
+    return res.status(201).json(user)
+  } catch (error) {
+    console.log('error', error)
+    return res.status(error.status || 500).json(error)
+  }
+}
+
 const createDealUser = async (req, res) => {
   const body = req.body
   try {
@@ -145,5 +156,6 @@ module.exports = {
   deleteUser,
   listTeachers,
   createOrUpdateUser,
-  recoverPassword
+  recoverPassword,
+  createStudent
 }
