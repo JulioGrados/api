@@ -80,10 +80,18 @@ const validate = (body) => {
 
   if (!mobile) {
     delete body.mobile
-  } 
+  } else {
+    if (mobile.length === 2 && (mobile.charCodeAt(0) === 39 && mobile.charCodeAt(1) === 39) || (mobile.charCodeAt(0) === 34 && mobile.charCodeAt(1) === 34)) {
+      delete body.mobile 
+    }
+  }
 
   if (!email) {
     delete body.email
+  } else {
+    if (email.length === 2 && (email.charCodeAt(0) === 39 && email.charCodeAt(1) === 39) || (email.charCodeAt(0) === 34 && email.charCodeAt(1) === 34)) {
+      delete body.email 
+    }
   }
 
   return body

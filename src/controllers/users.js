@@ -93,7 +93,7 @@ const createOrUpdateUser = async (req, res) => {
   
   try {
     if (body.source && body.source === 'Facebook') {
-      const number = body.phone && body.phone.substring(1)
+      const number = body.phone && body.phone.charAt(0) === '+' ? body.phone.substring(1) : body.phone
       const phone = number && searchCodeNumber(number)
       
       if (!phone.country) {
