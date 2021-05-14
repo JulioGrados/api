@@ -1366,10 +1366,14 @@ const certificateCron = async (arr) => {
       enrol.linked &&
       enrol.linked.ref &&
       certificates.find(item => {
+        console.log('item', item)
+        console.log('enrol', enrol)
         if (
+          enrol.course && enrol.course.ref &&
+          item.course && item.course.ref &&
           item.linked &&
           item.linked.ref &&
-          item.linked.ref.email === enrol.linked.email
+          item.linked.ref.email === enrol.linked.email && item.course.ref.toString() === enrol.course.ref.toString()
         ) {
           return item
         }
