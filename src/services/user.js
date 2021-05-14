@@ -67,8 +67,27 @@ const searchCourse = async (courseId) => {
   }
 }
 
+const validate = (body) => {
+  const { mobile, dni, email } = body
+  
+  if (!dni) {
+    body.dni = undefined
+  } 
+
+  if (!mobile) {
+    body.mobile = undefined
+  } 
+
+  if (!email) {
+    body.email = undefined
+  }
+
+  return body
+}
+
 const createOrUpdateUser = async body => {
   let user
+  body = validate(body)
   try {
     const params = createFindQuery(body)
     // console.log('params', params)

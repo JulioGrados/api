@@ -83,7 +83,6 @@ const searchCodeNumber = number => {
     if (!country) {
       code = number.substring(0, code.length + 1)
     }
-    console.log('entro')
   } while (code.length < 5 && !country)
 
   return {code, country}
@@ -91,19 +90,21 @@ const searchCodeNumber = number => {
 
 const createOrUpdateUser = async (req, res) => {
   const body = req.body
+  
   try {
     if (body.source && body.source === 'Facebook') {
       const number = body.phone && body.phone.substring(1)
-      const phone = searchCodeNumber(number)
+      const phone = number && searchCodeNumber(number)
+      
       if (!phone.country) {
-        body.mobile = number
+        body.mobile = number ? number : ''
       } else {
-        body.mobileCode = phone.code
-        body.mobile = number.replace(phone.code, '')
-        body.country = phone.country && phone.country.name
+        body.mobileCode = phone ? phone.code : ''
+        body.mobile = number ? number.replace(phone.code, '') : ''
+        body.country = phone ? phone.country && phone.country.name : ''
       }
     } 
-    // console.log('body', body)
+    
     const user = await service.createOrUpdateUser(body)
     return res.status(201).json(user)
   } catch (error) {
