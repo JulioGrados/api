@@ -1366,8 +1366,6 @@ const certificateCron = async (arr) => {
       enrol.linked &&
       enrol.linked.ref &&
       certificates.find(item => {
-        console.log('item', item)
-        console.log('enrol', enrol)
         if (
           enrol.course && enrol.course.ref &&
           item.course && item.course.ref &&
