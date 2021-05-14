@@ -71,15 +71,19 @@ const validate = (body) => {
   const { mobile, dni, email } = body
   
   if (!dni) {
-    body.dni = undefined
-  } 
+    delete body.dni
+  } else {
+    if (dni.length === 2 && (dni.charCodeAt(0) === 39 && dni.charCodeAt(1) === 39) || (dni.charCodeAt(0) === 34 && dni.charCodeAt(1) === 34)) {
+      delete body.dni 
+    }
+  }
 
   if (!mobile) {
-    body.mobile = undefined
+    delete body.mobile
   } 
 
   if (!email) {
-    body.email = undefined
+    delete body.email
   }
 
   return body
