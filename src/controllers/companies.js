@@ -7,7 +7,7 @@ const listCompanies = async (req, res) => {
   return res.status(200).json(companies)
 }
 
-const createCompany = async (req, res) => {
+const createCompany = async (req, res, next) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   console.log('body', body)
   const file = req.files && req.files.image
@@ -16,11 +16,11 @@ const createCompany = async (req, res) => {
     return res.status(201).json(company)
   } catch (error) {
     console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateCompany = async (req, res) => {
+const updateCompany = async (req, res, next) => {
   const companyId = req.params.id
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.image
@@ -28,11 +28,11 @@ const updateCompany = async (req, res) => {
     const company = await service.updateCompany(companyId, body, file, req.user)
     return res.status(200).json(company)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailCompany = async (req, res) => {
+const detailCompany = async (req, res, next) => {
   const companyId = req.params.id
   const params = req.query
   if (params.query) {
@@ -47,17 +47,17 @@ const detailCompany = async (req, res) => {
     const company = await service.detailCompany(params)
     return res.status(200).json(company)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteCompany = async (req, res) => {
+const deleteCompany = async (req, res, next) => {
   const companyId = req.params.id
   try {
     const company = await service.deleteCompany(companyId, req.user)
     return res.status(201).json(company)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

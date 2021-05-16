@@ -7,26 +7,26 @@ const listLogs = async (req, res) => {
   return res.status(200).json(logs)
 }
 
-const createLog = async (req, res) => {
+const createLog = async (req, res, next) => {
   try {
     const log = await service.createLog(req.body, req.user)
     return res.status(201).json(log)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateLog = async (req, res) => {
+const updateLog = async (req, res, next) => {
   const logId = req.params.id
   try {
     const log = await service.updateLog(logId, req.body, req.user)
     return res.status(200).json(log)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailLog = async (req, res) => {
+const detailLog = async (req, res, next) => {
   const logId = req.params.id
   const params = req.query
   if (params.query) {
@@ -41,17 +41,17 @@ const detailLog = async (req, res) => {
     const log = await service.detailLog(params)
     return res.status(200).json(log)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteLog = async (req, res) => {
+const deleteLog = async (req, res, next) => {
   const logId = req.params.id
   try {
     const log = await service.deleteLog(logId, req.user)
     return res.status(201).json(log)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

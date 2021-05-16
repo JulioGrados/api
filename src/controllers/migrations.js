@@ -1,18 +1,17 @@
 const service = require('../services/migration')
 const { csv2json } = require('utils/functions/csv')
 
-const migrateTeachers = async (req, res) => {
+const migrateTeachers = async (req, res, next) => {
   const data = JSON.parse(req.files.data.data.toString())
   try {
     const teachers = await service.migrateTeachers(data)
     return res.status(200).json(teachers)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const migrateCourses = async (req, res) => {
+const migrateCourses = async (req, res, next) => {
   req.setTimeout(0)
   const dataCourses = JSON.parse(req.files.courses.data.toString())
   const dataTeachers = JSON.parse(req.files.teachers.data.toString())
@@ -27,82 +26,74 @@ const migrateCourses = async (req, res) => {
     )
     return res.status(200).json(response)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const migrateMoodleCourses = async (req, res) => {
+const migrateMoodleCourses = async (req, res, next) => {
   try {
     const response = await service.migrateMoodleCourses()
     return res.status(200).json(response)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const migrateMoodleUsers = async (req, res) => {
+const migrateMoodleUsers = async (req, res, next) => {
   try {
     const response = await service.migrateUsersMoodle()
     return res.status(200).json(response)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const migrateMoodleEnroll = async (req, res) => {
+const migrateMoodleEnroll = async (req, res, next) => {
   req.setTimeout(0)
   try {
     const response = await service.migrateEnrollMoodle()
     return res.status(200).json(response)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const migrateMoodleEvaluations = async (req, res) => {
+const migrateMoodleEvaluations = async (req, res, next) => {
   req.setTimeout(0)
   try {
     const response = await service.migrateEvaluationsMoodle()
     return res.status(200).json(response)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const migrateQuizMoodle = async (req, res) => {
+const migrateQuizMoodle = async (req, res, next) => {
   req.setTimeout(0)
   try {
     const response = await service.migrateQuizMoodle()
     return res.status(200).json(response)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
-const migrateTaskMoodle = async (req, res) => {
+const migrateTaskMoodle = async (req, res, next) => {
   req.setTimeout(0)
   try {
     const response = await service.migrateTaskMoodle()
     return res.status(200).json(response)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
-const migrateCertificates = async (req, res) => {
+const migrateCertificates = async (req, res, next) => {
   req.setTimeout(0)
   const dataCertificate = JSON.parse(req.files.certificate.data.toString())
   try {
     const response = await service.migrateCertificates(dataCertificate)
     return res.status(200).json(response)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

@@ -21,10 +21,13 @@
     "standard": "^14.3.1"
   },
   "dependencies": {
+    "@sentry/node": "^6.3.6",
+    "@sentry/tracing": "^6.3.6",
     "body-parser": "^1.19.0",
     "config": "file:../config",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
+    "custom-error-instance": "^2.1.2",
     "db": "file:../db",
     "express": "^4.17.1",
     "express-fileupload": "^1.1.6",

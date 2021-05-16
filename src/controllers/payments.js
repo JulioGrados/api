@@ -7,17 +7,16 @@ const listPayments = async (req, res) => {
   return res.status(200).json(payments)
 }
 
-const createPayment = async (req, res) => {
+const createPayment = async (req, res, next) => {
   try {
     const payment = await service.createPayment(req.body, req.user)
     return res.status(201).json(payment)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updatePayment = async (req, res) => {
+const updatePayment = async (req, res, next) => {
   const paymentId = req.params.id
   try {
     const payment = await service.updatePayment(
@@ -27,11 +26,11 @@ const updatePayment = async (req, res) => {
     )
     return res.status(200).json(payment)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailPayment = async (req, res) => {
+const detailPayment = async (req, res, next) => {
   const paymentId = req.params.id
   const params = req.query
   if (params.query) {
@@ -46,17 +45,17 @@ const detailPayment = async (req, res) => {
     const whatsapp = await service.detailPayment(params)
     return res.status(200).json(whatsapp)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deletePayment = async (req, res) => {
+const deletePayment = async (req, res, next) => {
   const paymentId = req.params.id
   try {
     const payment = await service.deletePayment(paymentId, req.whatsapp)
     return res.status(201).json(payment)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

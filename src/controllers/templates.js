@@ -7,16 +7,16 @@ const listTemplates = async (req, res) => {
   return res.status(200).json(templates)
 }
 
-const createTemplate = async (req, res) => {
+const createTemplate = async (req, res, next) => {
   try {
     const template = await service.createTemplate(req.body, req.user)
     return res.status(201).json(template)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateTemplate = async (req, res) => {
+const updateTemplate = async (req, res, next) => {
   const templateId = req.params.id
   try {
     const template = await service.updateTemplate(
@@ -26,11 +26,11 @@ const updateTemplate = async (req, res) => {
     )
     return res.status(200).json(template)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailTemplate = async (req, res) => {
+const detailTemplate = async (req, res, next) => {
   const templateId = req.params.id
   const params = req.query
   if (params.query) {
@@ -45,17 +45,17 @@ const detailTemplate = async (req, res) => {
     const template = await service.detailTemplate(params)
     return res.status(200).json(template)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteTemplate = async (req, res) => {
+const deleteTemplate = async (req, res, next) => {
   const templateId = req.params.id
   try {
     const template = await service.deleteTemplate(templateId, req.user)
     return res.status(201).json(template)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

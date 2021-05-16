@@ -7,37 +7,35 @@ const listEmails = async (req, res) => {
   return res.status(200).json(emails)
 }
 
-const createEmail = async (req, res) => {
+const createEmail = async (req, res, next) => {
   try {
     const email = await service.createEmail(req.body, req.email)
     return res.status(201).json(email)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const createSendEmail = async (req, res) => {
+const createSendEmail = async (req, res, next) => {
   try {
     const email = await service.createSendEmail(req.body, req.email)
     return res.status(201).json(email)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateEmail = async (req, res) => {
+const updateEmail = async (req, res, next) => {
   const emailId = req.params.id
   try {
     const email = await service.updateEmail(emailId, req.body, req.email)
     return res.status(200).json(email)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailEmail = async (req, res) => {
+const detailEmail = async (req, res, next) => {
   const emailId = req.params.id
   const params = req.query
   if (params.query) {
@@ -52,17 +50,17 @@ const detailEmail = async (req, res) => {
     const email = await service.detailEmail(params)
     return res.status(200).json(email)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteEmail = async (req, res) => {
+const deleteEmail = async (req, res, next) => {
   const emailId = req.params.id
   try {
     const email = await service.deleteEmail(emailId, req.email)
     return res.status(201).json(email)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

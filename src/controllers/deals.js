@@ -7,9 +7,13 @@ const listDeals = async (req, res) => {
   return res.status(200).json(deals)
 }
 
-const searchDeals = async (req, res) => {
-  const deals = await service.searchDeals(req.query)
-  return res.status(200).json(deals)
+const searchDeals = async (req, res, next) => {
+  try {
+    const deals = await service.searchDeals(req.query)
+    return res.status(200).json(deals)
+  } catch (error) {
+    next(error)
+  }
 }
 
 const createDeal = async (req, res) => {
@@ -17,45 +21,41 @@ const createDeal = async (req, res) => {
     const deal = await service.createDeal(req.body, req.user)
     return res.status(201).json(deal)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateDeal = async (req, res) => {
+const updateDeal = async (req, res, next) => {
   const dealId = req.params.id
   try {
     const deal = await service.updateDeal(dealId, req.body, req.user)
     return res.status(200).json(deal)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateDealOne = async (req, res) => {
+const updateDealOne = async (req, res, next) => {
   const dealId = req.params.id
   try {
     const deal = await service.updateDealOne(dealId, req.body, req.user)
     return res.status(200).json(deal)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateDealCreate = async (req, res) => {
+const updateDealCreate = async (req, res, next) => {
   const dealId = req.params.id
   try {
     const deal = await service.updateDealCreate(dealId, req.body, req.user)
     return res.status(200).json(deal)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailDeal = async (req, res) => {
+const detailDeal = async (req, res, next) => {
   const dealId = req.params.id
   const params = req.query
   if (params.query) {
@@ -72,17 +72,17 @@ const detailDeal = async (req, res) => {
     const deal = await service.detailDeal(params)
     return res.status(200).json(deal)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteDeal = async (req, res) => {
+const deleteDeal = async (req, res, next) => {
   const dealId = req.params.id
   try {
     const deal = await service.deleteDeal(dealId, req.user)
     return res.status(201).json(deal)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
@@ -91,24 +91,21 @@ const countDocuments = async (req, res) => {
   return res.json(count)
 }
 
-const createOrUpdate = async (req, res) => {
+const createOrUpdate = async (req, res, next) => {
   try {
     const deal = await service.createOrUpdate(req.body)
     return res.status(201).json(deal)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const enrolDeal = async (req, res) => {
+const enrolDeal = async (req, res, next) => {
   try {
-    console.log('req.body', req.body)
     const deal = await service.enrolStudents(req.body, req.user)
     return res.status(201).json(deal)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

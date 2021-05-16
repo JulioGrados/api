@@ -7,18 +7,18 @@ const listReceipts = async (req, res) => {
   return res.status(200).json(receipts)
 }
 
-const createReceipt = async (req, res) => {
+const createReceipt = async (req, res, next) => {
   const body = JSON.parse(req.body.data)
   const files = req.files
   try {
     const receipt = await service.createReceipt(body, files, req.user)
     return res.status(201).json(receipt)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateReceipt = async (req, res) => {
+const updateReceipt = async (req, res, next) => {
   const receiptId = req.params.id
   const body = JSON.parse(req.body.data)
   const files = req.files
@@ -31,11 +31,11 @@ const updateReceipt = async (req, res) => {
     )
     return res.status(200).json(receipt)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailReceipt = async (req, res) => {
+const detailReceipt = async (req, res, next) => {
   const receiptId = req.params.id
   const params = req.query
   if (params.query) {
@@ -50,17 +50,17 @@ const detailReceipt = async (req, res) => {
     const receipt = await service.detailReceipt(params)
     return res.status(200).json(receipt)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteReceipt = async (req, res) => {
+const deleteReceipt = async (req, res, next) => {
   const receiptId = req.params.id
   try {
     const receipt = await service.deleteReceipt(receiptId, req.receipt)
     return res.status(201).json(receipt)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

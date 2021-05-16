@@ -7,26 +7,26 @@ const listLessons = async (req, res) => {
   return res.status(200).json(lessons)
 }
 
-const createLesson = async (req, res) => {
+const createLesson = async (req, res, next) => {
   try {
     const lesson = await service.createLesson(req.body, req.user)
     return res.status(201).json(lesson)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateLesson = async (req, res) => {
+const updateLesson = async (req, res, next) => {
   const lessonId = req.params.id
   try {
     const lesson = await service.updateLesson(lessonId, req.body, req.user)
     return res.status(200).json(lesson)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailLesson = async (req, res) => {
+const detailLesson = async (req, res, next) => {
   const lessonId = req.params.id
   const params = req.query
   if (lessonId) {
@@ -43,17 +43,17 @@ const detailLesson = async (req, res) => {
     const lesson = await service.detailLesson(params)
     return res.status(200).json(lesson)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteLesson = async (req, res) => {
+const deleteLesson = async (req, res, next) => {
   const lessonId = req.params.id
   try {
     const lesson = await service.deleteLesson(lessonId, req.user)
     return res.status(201).json(lesson)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
