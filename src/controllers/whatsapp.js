@@ -7,16 +7,16 @@ const listWhatsapps = async (req, res) => {
   return res.status(200).json(whatsapps)
 }
 
-const createWhatsapp = async (req, res) => {
+const createWhatsapp = async (req, res, next) => {
   try {
     const whatsapp = await service.createWhatsapp(req.body, req.whatsapp)
     return res.status(201).json(whatsapp)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateWhatsapp = async (req, res) => {
+const updateWhatsapp = async (req, res, next) => {
   const whatsappId = req.params.id
   try {
     const whatsapp = await service.updateWhatsapp(
@@ -26,11 +26,11 @@ const updateWhatsapp = async (req, res) => {
     )
     return res.status(200).json(whatsapp)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailWhatsapp = async (req, res) => {
+const detailWhatsapp = async (req, res, next) => {
   const whatsappId = req.params.id
   const params = req.query
   if (params.query) {
@@ -45,17 +45,17 @@ const detailWhatsapp = async (req, res) => {
     const whatsapp = await service.detailWhatsapp(params)
     return res.status(200).json(whatsapp)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteWhatsapp = async (req, res) => {
+const deleteWhatsapp = async (req, res, next) => {
   const whatsappId = req.params.id
   try {
     const whatsapp = await service.deleteWhatsapp(whatsappId, req.whatsapp)
     return res.status(201).json(whatsapp)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

@@ -2,6 +2,7 @@
 
 const _ = require('lodash')
 const moment = require('moment-timezone')
+const CustomError = require('custom-error-instance')
 const { generateHash } = require('utils/functions/auth')
 
 const { dealDB, userDB, progressDB, callDB } = require('../db')
@@ -35,22 +36,16 @@ const createDeal = async (body, loggedUser) => {
   if (body.status === 'Abierto') {
     const existDeal = await findDealUser(body.client)
     if (existDeal) {
-      const error = {
-        status: 402,
-        message: 'Ya existe un trato abierto para el cliente.'
-      }
-      throw error
+      const InvalidError = CustomError('InvalidError', { message: 'Ya existe un trato abierto para el cliente.', code: 'EINVLD' }, CustomError.factory.expectReceive)
+      throw new InvalidError()
     }
   } else if (body.status === 'Perdido') {
     body.isClosed = true
     body.endDate = Date()
   } else if (body.status === 'Ganado') {
     if (!body.client.moodleId) {
-      const error = {
-        status: 402,
-        message: 'El usuario debe ser cliente en moodle'
-      }
-      throw error
+      const InvalidError = CustomError('InvalidError', { message: 'El usuario debe ser cliente en moodle', code: 'EINVLD' }, CustomError.factory.expectReceive)
+      throw new InvalidError()
     }
   }
   const deal = await dealDB.create(body)
@@ -161,11 +156,8 @@ const createDealUserOnly = async (user, body, lead = {}, update = false) => {
   if (deal) {
     if (deal.status === 'Abierto') {
       // error ya existe
-      const error = {
-        status: 402,
-        message: 'Ya existe un trato abierto para el cliente.'
-      }
-      throw error
+      const InvalidError = CustomError('InvalidError', { message: 'Ya existe un trato abierto para el cliente.', code: 'EINVLD', deal: { ...deal.toJSON() } }, CustomError.factory.expectReceive);
+      throw new InvalidError()
     } else if (deal.status === 'Perdido') {
       // actualizar
       const updateDeal = await editExistDealOnly(deal.toJSON(), user, body)
@@ -180,11 +172,8 @@ const createDealUserOnly = async (user, body, lead = {}, update = false) => {
       return updateDeal
     } else if (deal.status === 'Ganado') {
       if (deal.statusPayment === 'Abierto') {
-        const error = {
-          status: 402,
-          message: 'Ya existe un trato abierto para el cliente.'
-        }
-        throw error
+        const InvalidError = CustomError('InvalidError', { message: 'Ya existe un trato abierto para el cliente.', code: 'EINVLD', deal: { ...deal.toJSON() } }, CustomError.factory.expectReceive);
+        throw new InvalidError()
       } else if(deal.statusPayment === 'Pago') {
         // actualizar
         const updateDeal = await editExistDealOnly(deal.toJSON(), user, body)
@@ -685,6 +674,7 @@ const sendEmailCourse = async (lead, deal, dataCourse, social = false) => {
   const content =
     'Se envio informacion del curso de la plantilla pre definida en sengrid.'
   const attachment = await getBase64(MEDIA_PATH + course.brochure)
+  const attachment1 = await getBase64('https://media.eai.edu.pe/brochure/cursos.pdf')
   const filename = course && 'Brochure - ' + course.name + '.pdf'
 
   const substitutions = getSubstitutions({
@@ -710,6 +700,7 @@ const sendEmailCourse = async (lead, deal, dataCourse, social = false) => {
       from,
       fromname,
       attachment,
+      attachment1,
       filename,
       substitutions,
       templateId: templateId,

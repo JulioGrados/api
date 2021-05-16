@@ -7,16 +7,16 @@ const listProgresses = async (req, res) => {
   return res.status(200).json(progresses)
 }
 
-const createProgress = async (req, res) => {
+const createProgress = async (req, res, next) => {
   try {
     const progress = await service.createProgress(req.body, req.progress)
     return res.status(201).json(progress)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateProgress = async (req, res) => {
+const updateProgress = async (req, res, next) => {
   const progressId = req.params.id
   try {
     const progress = await service.updateProgress(
@@ -26,11 +26,11 @@ const updateProgress = async (req, res) => {
     )
     return res.status(200).json(progress)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailProgress = async (req, res) => {
+const detailProgress = async (req, res, next) => {
   const progressId = req.params.id
   const params = req.query
   if (params.query) {
@@ -45,17 +45,17 @@ const detailProgress = async (req, res) => {
     const progress = await service.detailProgress(params)
     return res.status(200).json(progress)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteProgress = async (req, res) => {
+const deleteProgress = async (req, res, next) => {
   const progressId = req.params.id
   try {
     const progress = await service.deleteProgress(progressId, req.progress)
     return res.status(201).json(progress)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

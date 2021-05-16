@@ -2,8 +2,9 @@
 
 const { callDB, notificationDB, dealDB } = require('../db')
 const moment = require('moment-timezone')
-const { getSocket } = require('../lib/io')
+const CustomError = require('custom-error-instance')
 
+const { getSocket } = require('../lib/io')
 const { getNewActivityState, getFullDate } = require('utils/functions/call')
 const { userDB } = require('db/lib')
 
@@ -325,12 +326,8 @@ const validateExistCall = async body => {
     })
     console.log('exist', exist)
     if (exist.length > 0) {
-      const error = {
-        status: 402,
-        message:
-          'No puedes tener más de una llamada pendiente, completa las demas para poder crear una nueva.'
-      }
-      throw error
+      const InvalidError = CustomError('InvalidError', { message: 'No puedes tener más de una llamada pendiente, completa las demas para poder crear una nueva.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()
     } else {
       return true
     }

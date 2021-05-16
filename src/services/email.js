@@ -1,4 +1,5 @@
 'use strict'
+const CustomError = require('custom-error-instance')
 
 const { emailDB, dealDB } = require('../db')
 const { sendEmail, sendCrm } = require('utils/lib/sendgrid')
@@ -127,11 +128,8 @@ const updateEmailTimeline = async (emailId, status, time) => {
   const email = await emailDB.detail({query: { _id: emailId }})
 
   if (email === null) {
-    const error = {
-      status: 404,
-      message: 'El email que intentas editar no existe.'
-    }
-    throw error
+    const InvalidError = CustomError('CastError', { message: 'El email que intentas editar no existe.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
   }
   console.log('email deal', email)
   try {

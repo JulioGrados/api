@@ -7,18 +7,18 @@ const listSales = async (req, res) => {
   return res.status(200).json(sales)
 }
 
-const createSales = async (req, res) => {
+const createSales = async (req, res, next) => {
   try {
     const body = req.body.data ? JSON.parse(req.body.data) : req.body
     const files = req.files
     const sale = await service.createSale(body, files, req.user)
     return res.status(201).json(sale)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateSaleOne = async (req, res) => {
+const updateSaleOne = async (req, res, next) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const files = req.files
   const saleId = req.params.id
@@ -26,11 +26,11 @@ const updateSaleOne = async (req, res) => {
     const sale = await service.updateSaleOne(saleId, req.body, files, req.user)
     return res.status(200).json(sale)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateSale = async (req, res) => {
+const updateSale = async (req, res, next) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const files = req.files
   const saleId = req.params.id
@@ -38,11 +38,11 @@ const updateSale = async (req, res) => {
     const sale = await service.updateSale(saleId, body, files, req.user)
     return res.status(200).json(sale)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailSale = async (req, res) => {
+const detailSale = async (req, res, next) => {
   const saleId = req.params.id
   const params = req.query
   if (params.query) {
@@ -57,17 +57,17 @@ const detailSale = async (req, res) => {
     const sale = await service.detailSale(params)
     return res.status(200).json(sale)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteSale = async (req, res) => {
+const deleteSale = async (req, res, next) => {
   const saleId = req.params.id
   try {
     const sale = await service.deleteSale(saleId, req.sale)
     return res.status(201).json(sale)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

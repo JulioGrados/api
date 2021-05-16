@@ -1,5 +1,6 @@
 'use strict'
 
+const { next } = require('cheerio/lib/api/traversing')
 const service = require('../services/agreement')
 
 const listAgreements = async (req, res) => {
@@ -7,18 +8,18 @@ const listAgreements = async (req, res) => {
   return res.status(200).json(agreements)
 }
 
-const createAgreement = async (req, res) => {
+const createAgreement = async (req, res, next) => {
   const body = JSON.parse(req.body.data)
   const file = req.files && req.files.image
   try {
     const agreement = await service.createAgreement(body, file, req.user)
     return res.status(201).json(agreement)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateAgreement = async (req, res) => {
+const updateAgreement = async (req, res, next) => {
   const agreementId = req.params.id
   const body = JSON.parse(req.body.data)
   const file = req.files && req.files.image
@@ -31,12 +32,11 @@ const updateAgreement = async (req, res) => {
     )
     return res.status(200).json(agreement)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailAgreement = async (req, res) => {
+const detailAgreement = async (req, res, next) => {
   const agreementId = req.params.id
   const params = req.query
   if (params.query) {
@@ -51,17 +51,17 @@ const detailAgreement = async (req, res) => {
     const agreement = await service.detailAgreement(params)
     return res.status(200).json(agreement)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteAgreement = async (req, res) => {
+const deleteAgreement = async (req, res, next) => {
   const agreementId = req.params.id
   try {
     const agreement = await service.deleteAgreement(agreementId, req.user)
     return res.status(201).json(agreement)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

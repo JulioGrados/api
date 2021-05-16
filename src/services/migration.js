@@ -22,7 +22,7 @@ const {
   certificateDB,
   testimonyDB
 } = require('../db')
-const c = require('config')
+const config = require('config')
 
 const migrateTeachers = async data => {
   const promises = data.map(async item => {

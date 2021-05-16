@@ -1478,9 +1478,11 @@ const createCertificatesCourse = async course => {
       enrol.linked.ref &&
       certificates.find(item => {
         if (
+          enrol.course && enrol.course.ref &&
+          item.course && item.course.ref &&
           item.linked &&
           item.linked.ref &&
-          item.linked.ref.email === enrol.linked.ref.email
+          item.linked.ref.email === enrol.linked.email && item.course.ref.toString() === enrol.course.ref.toString()
         ) {
           return item
         }

@@ -8,18 +8,18 @@ const listUsers = async (req, res) => {
   return res.status(200).json(users)
 }
 
-const createUser = async (req, res) => {
+const createUser = async (req, res, next) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.photo
   try {
     const user = await service.createUser(body, file, req.user)
     return res.status(201).json(user)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateUser = async (req, res) => {
+const updateUser = async (req, res, next) => {
   const userId = req.params.id
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.photo
@@ -27,11 +27,11 @@ const updateUser = async (req, res) => {
     const user = await service.updateUser(userId, body, file, req.user)
     return res.status(200).json(user)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailUser = async (req, res) => {
+const detailUser = async (req, res, next) => {
   const userId = req.params.id
   const params = req.query
   if (params.query) {
@@ -46,17 +46,17 @@ const detailUser = async (req, res) => {
     const user = await service.detailUser(params)
     return res.status(200).json(user)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteUser = async (req, res) => {
+const deleteUser = async (req, res, next) => {
   const userId = req.params.id
   try {
     const user = await service.deleteUser(userId, req.user)
     return res.status(201).json(user)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
@@ -88,13 +88,13 @@ const searchCodeNumber = number => {
   return {code, country}
 }
 
-const createOrUpdateUser = async (req, res) => {
+const createOrUpdateUser = async (req, res, next) => {
   const body = req.body
   
   try {
     if (body.source && body.source === 'Facebook') {
       const number = body.phone && body.phone.charAt(0) === '+' ? body.phone.substring(1) : body.phone
-      const phone = number && searchCodeNumber(number)
+      const phone = number && number.length > 6 ? searchCodeNumber(number) : number
       
       if (!phone.country) {
         body.mobile = number ? number : ''
@@ -104,46 +104,43 @@ const createOrUpdateUser = async (req, res) => {
         body.country = phone ? phone.country && phone.country.name : ''
       }
     } 
-    
     const user = await service.createOrUpdateUser(body)
     return res.status(201).json(user)
   } catch (error) {
     console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const createStudent = async (req, res) => {
+const createStudent = async (req, res, next) => {
   const body = req.body
   try {
     const user = await service.createStudent(body)
     return res.status(201).json(user)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    // console.log('error', error)
+    next(error)
   }
 }
 
-const createDealUser = async (req, res) => {
+const createDealUser = async (req, res, next) => {
   const body = req.body
   try {
     console.log('body', body)
     const user = await service.createDealUser(body)
     return res.status(201).json(user)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const recoverPassword = async (req, res) => {
+const recoverPassword = async (req, res, next) => {
   const body = req.body
   try {
     const user = await service.recoverPassword(body)
     return res.status(201).json(user)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

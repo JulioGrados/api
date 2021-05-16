@@ -12,18 +12,18 @@ const listTestimoniesCourse = async (req, res) => {
   return res.status(200).json(testimonies)
 }
 
-const createTestimony = async (req, res) => {
+const createTestimony = async (req, res, next) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.image
   try {
     const testimony = await service.createTestimony(body, file, req.user)
     return res.status(201).json(testimony)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateTestimony = async (req, res) => {
+const updateTestimony = async (req, res, next) => {
   const testimonyId = req.params.id
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const file = req.files && req.files.image
@@ -36,11 +36,11 @@ const updateTestimony = async (req, res) => {
     )
     return res.status(200).json(testimony)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailTestimony = async (req, res) => {
+const detailTestimony = async (req, res, next) => {
   const testimonyId = req.params.id
   const params = req.query
   if (params.query) {
@@ -55,17 +55,17 @@ const detailTestimony = async (req, res) => {
     const testimony = await service.detailTestimony(params)
     return res.status(200).json(testimony)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteTestimony = async (req, res) => {
+const deleteTestimony = async (req, res, next) => {
   const testimonyId = req.params.id
   try {
     const testimony = await service.deleteTestimony(testimonyId, req.user)
     return res.status(201).json(testimony)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

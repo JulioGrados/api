@@ -7,16 +7,16 @@ const listNotifications = async (req, res) => {
   return res.status(200).json(notifications)
 }
 
-const createNotification = async (req, res) => {
+const createNotification = async (req, res, next) => {
   try {
     const whatsapp = await service.createNotification(req.body, req.whatsapp)
     return res.status(201).json(whatsapp)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateNotification = async (req, res) => {
+const updateNotification = async (req, res, next) => {
   const notificationId = req.params.id
   try {
     const whatsapp = await service.updateNotification(
@@ -26,11 +26,11 @@ const updateNotification = async (req, res) => {
     )
     return res.status(200).json(whatsapp)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailNotification = async (req, res) => {
+const detailNotification = async (req, res, next) => {
   const notificationId = req.params.id
   const params = req.query
   if (params.query) {
@@ -45,11 +45,11 @@ const detailNotification = async (req, res) => {
     const whatsapp = await service.detailNotification(params)
     return res.status(200).json(whatsapp)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteNotification = async (req, res) => {
+const deleteNotification = async (req, res, next) => {
   const notificationId = req.params.id
   try {
     const notification = await service.deleteNotification(
@@ -58,7 +58,7 @@ const deleteNotification = async (req, res) => {
     )
     return res.status(201).json(notification)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

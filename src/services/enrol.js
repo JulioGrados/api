@@ -100,7 +100,6 @@ const updateMoodle = async (enrolId, body, loggedUser) => {
     course = await courseDB.detail({ query: { moodleId: enrol.course.moodleId } })
     // console.log('course', course)
   } catch (error) {
-    console.log('error')
     throw error
   }
 

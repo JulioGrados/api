@@ -7,17 +7,17 @@ const listClaims = async (req, res) => {
   return res.status(200).json(claims)
 }
 
-const createClaim = async (req, res) => {
+const createClaim = async (req, res, next) => {
   try {
     const claim = await service.createClaim(req.body, req.claim)
     console.log('claim', claim)
     return res.status(201).json(claim)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateClaim = async (req, res) => {
+const updateClaim = async (req, res, next) => {
   const claimId = req.params.id
   try {
     const claim = await service.updateClaim(
@@ -27,11 +27,11 @@ const updateClaim = async (req, res) => {
     )
     return res.status(200).json(claim)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailClaim = async (req, res) => {
+const detailClaim = async (req, res, next) => {
   const claimId = req.params.id
   const params = req.query
   if (params.query) {
@@ -46,17 +46,17 @@ const detailClaim = async (req, res) => {
     const claim = await service.detailClaim(params)
     return res.status(200).json(claim)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteClaim = async (req, res) => {
+const deleteClaim = async (req, res, next) => {
   const claimId = req.params.id
   try {
     const claim = await service.deleteClaim(claimId, req.claim)
     return res.status(201).json(claim)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

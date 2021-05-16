@@ -7,18 +7,18 @@ const listCourses = async (req, res) => {
   return res.status(200).json(courses)
 }
 
-const createCourse = async (req, res) => {
+const createCourse = async (req, res, next) => {
   const body = JSON.parse(req.body.data)
   const files = req.files
   try {
     const course = await service.createCourse(body, files, req.user)
     return res.status(201).json(course)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateCourse = async (req, res) => {
+const updateCourse = async (req, res, next) => {
   const courseId = req.params.id
   const body = JSON.parse(req.body.data)
   const files = req.files
@@ -26,22 +26,21 @@ const updateCourse = async (req, res) => {
     const course = await service.updateCourse(courseId, body, files, req.user)
     return res.status(200).json(course)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateDealCreate = async (req, res) => {
+const updateDealCreate = async (req, res, next) => {
   const dealId = req.params.id
   try {
     const deal = await service.updateDealCreate(dealId, req.body, req.user)
     return res.status(200).json(deal)
   } catch (error) {
-    console.log('error', error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailCourse = async (req, res) => {
+const detailCourse = async (req, res, next) => {
   let courseId
   const params = req.query
   console.log(params)
@@ -72,11 +71,11 @@ const detailCourse = async (req, res) => {
     const course = await service.detailCourse(params)
     return res.status(200).json(course)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailCourseFirst = async (req, res) => {
+const detailCourseFirst = async (req, res, next) => {
   const courseId = req.params.id
   const params = req.query
   if (params.query && courseId) {
@@ -91,17 +90,17 @@ const detailCourseFirst = async (req, res) => {
     const course = await service.detailCourse(params)
     return res.status(200).json(course)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteCourse = async (req, res) => {
+const deleteCourse = async (req, res, next) => {
   const courseId = req.params.id
   try {
     const course = await service.deleteCourse(courseId, req.user)
     return res.status(201).json(course)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

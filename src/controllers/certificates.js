@@ -7,16 +7,16 @@ const listCertificates = async (req, res) => {
   return res.status(200).json(certificates)
 }
 
-const createCertificate = async (req, res) => {
+const createCertificate = async (req, res, next) => {
   try {
     const certificate = await service.createCertificate(req.body, req.user)
     return res.status(201).json(certificate)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateCertificate = async (req, res) => {
+const updateCertificate = async (req, res, next) => {
   const certificateId = req.params.id
   try {
     const certificate = await service.updateCertificate(
@@ -26,11 +26,11 @@ const updateCertificate = async (req, res) => {
     )
     return res.status(200).json(certificate)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailCertificate = async (req, res) => {
+const detailCertificate = async (req, res, next) => {
   const certificateId = req.params.id
   const params = req.query
   
@@ -46,11 +46,11 @@ const detailCertificate = async (req, res) => {
     const certificate = await service.detailCertificate(params)
     return res.status(200).json(certificate)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailCertificateOpen = async (req, res) => {
+const detailCertificateOpen = async (req, res, next) => {
   const certificateId = req.params.id
   const params = req.query
   if (certificateId) {
@@ -67,17 +67,17 @@ const detailCertificateOpen = async (req, res) => {
     const certificate = await service.detailCertificate(params)
     return res.status(200).json(certificate)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteCertificate = async (req, res) => {
+const deleteCertificate = async (req, res, next) => {
   const certificateId = req.params.id
   try {
     const certificate = await service.deleteCertificate(certificateId, req.user)
     return res.status(201).json(certificate)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

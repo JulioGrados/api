@@ -7,48 +7,46 @@ const listEnrols = async (req, res) => {
   return res.status(200).json(enrols)
 }
 
-const sendEnrolEmail = async (req, res) => {
+const sendEnrolEmail = async (req, res, next) => {
   try {
     const enrol = await service.createEmailEnrol(req.body)
     return res.status(201).json(enrol)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const createEnrol = async (req, res) => {
+const createEnrol = async (req, res, next) => {
   try {
     const enrol = await service.createEnrol(req.body, req.user)
     return res.status(201).json(enrol)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateEnrol = async (req, res) => {
+const updateEnrol = async (req, res, next) => {
   const enrolId = req.params.id
   try {
     const enrol = await service.updateEnrol(enrolId, req.body, req.user)
     return res.status(200).json(enrol)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateMoodleEnrol = async (req, res) => {
+const updateMoodleEnrol = async (req, res, next) => {
   const enrolId = req.params.id
   
   try {
     const enrol = await service.updateMoodle(enrolId, req.body, req.user)
     return res.status(200).json(enrol)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailEnrol = async (req, res) => {
+const detailEnrol = async (req, res, next) => {
   const enrolId = req.params.id
   const params = req.query
   if (params.query) {
@@ -63,17 +61,17 @@ const detailEnrol = async (req, res) => {
     const enrol = await service.detailEnrol(params)
     return res.status(200).json(enrol)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteEnrol = async (req, res) => {
+const deleteEnrol = async (req, res, next) => {
   const enrolId = req.params.id
   try {
     const enrol = await service.deleteEnrol(enrolId, req.user)
     return res.status(201).json(enrol)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

@@ -1,5 +1,6 @@
 'use strict'
 
+const CustomError = require('custom-error-instance')
 const { saleDB, voucherDB, receiptDB, dealDB, progressDB, userDB } = require('../db')
 const { sumAmountOrders } = require('utils/functions/sale')
 const { saveFile } = require('utils/files/save')
@@ -39,11 +40,8 @@ const updateSale = async (saleId, body, files, loggedUser) => {
     changeStatusUser(sale, body.detail)
     return sale
   } else {
-    const error = {
-      status: 402,
-      message: 'La venta ya no se puede editar.'
-    }
-    throw error
+    const InvalidError = CustomError('CastError', { message: 'La venta ya no se puede editar.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
   }
 }
 
@@ -60,11 +58,8 @@ const updateSaleOne = async (saleId, body, files, loggedUser) => {
     // console.log('sale', sale)
     return sale
   } else {
-    const error = {
-      status: 402,
-      message: 'La venta ya no se puede editar.'
-    }
-    throw error
+    const InvalidError = CustomError('CastError', { message: 'La venta ya no se puede editar.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
   }
 }
 
@@ -112,11 +107,8 @@ const editVoucher = async (orders, dataOrders) => {
     if (error.status && error.message) {
       throw error
     } else {
-      const errorMsg = {
-        status: 500,
-        message: 'error al gurdar las ordenes'
-      }
-      throw errorMsg
+      const InvalidError = CustomError('MongoError', { message: 'error al gurdar las ordenes', code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()
     }
   }
 }
@@ -125,12 +117,8 @@ const prepareOrders = async ({ orders, amount, user }, files) => {
   const sum = sumAmountOrders(orders)
   console.log('orders', orders)
   if (sum !== amount) {
-    const error = {
-      status: 402,
-      message:
-        'La suma de montos de las ordenes debe coincidir con el monto de la venta'
-    }
-    throw error
+    const InvalidError = CustomError('CastError', { message: 'La suma de montos de las ordenes debe coincidir con el monto de la venta', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
   }
 
   let results
@@ -158,12 +146,8 @@ const prepareOrdersOne = async ({ orders, amount, user }, files) => {
   const sum = sumAmountOrders(orders)
   console.log('orders', orders)
   if (sum !== amount) {
-    const error = {
-      status: 402,
-      message:
-        'La suma de montos de las ordenes debe coincidir con el monto de la venta'
-    }
-    throw error
+    const InvalidError = CustomError('CastError', { message: 'La suma de montos de las ordenes debe coincidir con el monto de la venta', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
   }
 
   let results
@@ -176,12 +160,7 @@ const prepareOrdersOne = async ({ orders, amount, user }, files) => {
       })
     )
   } catch (error) {
-    const errorMessage = {
-      status: error.status || 500,
-      message: error.message || 'Error al crear las ordenes',
-      error
-    }
-    throw errorMessage
+    throw error
   }
 
   return results
@@ -214,11 +193,8 @@ const changeOrder = async (order, linked, files) => {
     if (error.status && error.message) {
       throw error
     } else {
-      const errorMsg = {
-        status: 500,
-        message: 'error al guardar la orden'
-      }
-      throw errorMsg
+      const InvalidError = CustomError('MongoError', { message: 'error al guardar la orden', code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()
     }
   }
 }
@@ -251,11 +227,8 @@ const changeOrderOne = async (order, linked, files) => {
     if (error.status && error.message) {
       throw error
     } else {
-      const errorMsg = {
-        status: 500,
-        message: 'error al guardar la orden'
-      }
-      throw errorMsg
+      const InvalidError = CustomError('MongoError', { message: 'error al guardar la orden', code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()
     }
   }
 }
@@ -266,11 +239,7 @@ const findVoucher = async (voucher) => {
     
     return dbVoucher
   } catch (error) {
-      const errorMsg = {
-        status: 402,
-        message: 'No existe voucher'
-      }
-      throw errorMsg
+    throw error
   }
 }
 
@@ -352,12 +321,8 @@ const getResidueVoucher = (voucherAmount, orderAmount) => {
   const residue = parseFloat(voucherAmount) - parseFloat(orderAmount)
   let isUsed = false
   if (residue < 0) {
-    const error = {
-      status: 402,
-      message:
-        'El monto de la orden debe ser menor o igual al monto del voucher'
-    }
-    throw error
+    const InvalidError = CustomError('CastError', { message: 'El monto de la orden debe ser menor o igual al monto del voucher', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
   } else if (residue === 0) {
     isUsed = true
   }

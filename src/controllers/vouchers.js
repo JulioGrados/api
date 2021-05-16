@@ -7,18 +7,18 @@ const listVouchers = async (req, res) => {
   return res.status(200).json(vouchers)
 }
 
-const createVoucher = async (req, res) => {
+const createVoucher = async (req, res, next) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const files = req.files
   try {
     const voucher = await service.createVoucher(body, files, req.user)
     return res.status(201).json(voucher)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateVoucher = async (req, res) => {
+const updateVoucher = async (req, res, next) => {
   const voucherId = req.params.id
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
   const files = req.files
@@ -31,11 +31,11 @@ const updateVoucher = async (req, res) => {
     )
     return res.status(200).json(voucher)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailVoucher = async (req, res) => {
+const detailVoucher = async (req, res, next) => {
   const voucherId = req.params.id
   const params = req.query
   if (params.query) {
@@ -50,17 +50,17 @@ const detailVoucher = async (req, res) => {
     const voucher = await service.detailVoucher(params)
     return res.status(200).json(voucher)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteVoucher = async (req, res) => {
+const deleteVoucher = async (req, res, next) => {
   const voucherId = req.params.id
   try {
     const voucher = await service.deleteVoucher(voucherId, req.user)
     return res.status(201).json(voucher)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

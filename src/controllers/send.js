@@ -7,27 +7,26 @@ const listSends = async (req, res) => {
   return res.status(200).json(sends)
 }
 
-const createSend = async (req, res) => {
+const createSend = async (req, res, next) => {
   try {
     const send = await service.createSend(req.body, req.send)
     return res.status(201).json(send)
   } catch (error) {
-    console.log(error)
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateSend = async (req, res) => {
+const updateSend = async (req, res, next) => {
   const sendId = req.params.id
   try {
     const send = await service.updateSend(sendId, req.body, req.send)
     return res.status(200).json(send)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailSend = async (req, res) => {
+const detailSend = async (req, res, next) => {
   const sendId = req.params.id
   const params = req.query
   if (params.query) {
@@ -42,17 +41,17 @@ const detailSend = async (req, res) => {
     const send = await service.detailSend(params)
     return res.status(200).json(send)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteSend = async (req, res) => {
+const deleteSend = async (req, res, next) => {
   const sendId = req.params.id
   try {
     const send = await service.deleteSend(sendId, req.send)
     return res.status(201).json(email)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

@@ -7,26 +7,26 @@ const listLabels = async (req, res) => {
   return res.status(200).json(labels)
 }
 
-const createLabel = async (req, res) => {
+const createLabel = async (req, res, next) => {
   try {
     const label = await service.createLabel(req.body, req.user)
     return res.status(201).json(label)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateLabel = async (req, res) => {
+const updateLabel = async (req, res, next) => {
   const labelId = req.params.id
   try {
     const label = await service.updateLabel(labelId, req.body, req.user)
     return res.status(200).json(label)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailLabel = async (req, res) => {
+const detailLabel = async (req, res, next) => {
   const labelId = req.params.id
   const params = req.query
   if (params.query) {
@@ -41,17 +41,17 @@ const detailLabel = async (req, res) => {
     const label = await service.detailLabel(params)
     return res.status(200).json(label)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteLabel = async (req, res) => {
+const deleteLabel = async (req, res, next) => {
   const labelId = req.params.id
   try {
     const label = await service.deleteLabel(labelId, req.user)
     return res.status(201).json(label)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 

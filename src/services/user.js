@@ -1,6 +1,7 @@
 'use strict'
 
 const config = require('config')
+const CustomError = require('custom-error-instance')
 const { userDB, courseDB, dealDB } = require('../db')
 const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
@@ -174,11 +175,8 @@ const createStudent = async body => {
     }
     
     if (deal) {
-      const error = {
-        status: 402,
-        message: 'Ya existe este trato.'
-      }
-      throw error
+      const InvalidError = CustomError('InvalidError', { message: 'Ya existe este trato.', code: 'EINVLD', deal: {...deal.toJSON()} }, CustomError.factory.expectReceive);
+      throw new InvalidError()
     } else {
       return lead
     }

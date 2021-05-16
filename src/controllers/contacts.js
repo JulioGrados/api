@@ -7,16 +7,16 @@ const listContacts = async (req, res) => {
   return res.status(200).json(contacts)
 }
 
-const createContact = async (req, res) => {
+const createContact = async (req, res, next) => {
   try {
     const contact = await service.createContact(req.body, req.contact)
     return res.status(201).json(contact)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const updateContact = async (req, res) => {
+const updateContact = async (req, res, next) => {
   const contactId = req.params.id
   try {
     const contact = await service.updateContact(
@@ -26,11 +26,11 @@ const updateContact = async (req, res) => {
     )
     return res.status(200).json(contact)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const detailContact = async (req, res) => {
+const detailContact = async (req, res, next) => {
   const contactId = req.params.id
   const params = req.query
   if (params.query) {
@@ -45,17 +45,17 @@ const detailContact = async (req, res) => {
     const contact = await service.detailContact(params)
     return res.status(200).json(contact)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
-const deleteContact = async (req, res) => {
+const deleteContact = async (req, res, next) => {
   const contactId = req.params.id
   try {
     const contact = await service.deleteContact(contactId, req.contact)
     return res.status(201).json(contact)
   } catch (error) {
-    return res.status(error.status || 500).json(error)
+    next(error)
   }
 }
 
