@@ -80,35 +80,72 @@ server.use((error, request, response, next) => {
   // if (err.status && err.message) {
   //   return err
   // }
-  const errors = []
-  console.error(error)
-  if (error.name === 'ValidationError') {
-    
-    if (error.errors) {
-      for (const field in error.errors) {
-        errors.push(error.errors[field])
+  if (error) {
+    const errors = []
+    console.error(error)
+    if (error.name === 'ValidationError') {
+      
+      if (error.errors) {
+        for (const field in error.errors) {
+          errors.push(error.errors[field])
+        }
       }
+      error.message = errors[0] ? errors[0].message : 'Error en la base de datos'
+      // error.status = 402
+      return response.status(402).json(error)
+    } else if (error.name === 'InvalidError') {
+      error.message = error.message ? error.message : 'Error en la base de datos.'
+      // error.status = 500
+      return response.status(402).json(error)
+    } else if (error.name === 'MongoError') {
+      error.message = error.message ? error.message : 'Error en la base de datos.'
+      // error.status = 500
+      return response.status(500).json(error)
+    } else if (error.name === 'CastError') {
+      error.message = error.message ? error.message : 'Error en la base de datos.'
+      // error.status = 500
+      return response.status(404).json(error)
+    } else {
+      error.message = error.message ? error.message : '!Ups ocurrio un error en el servidor¡'
+      // error.status = 500
+      return response.status(500).json(error)
     }
-    error.message = errors[0] ? errors[0].message : 'Error en la base de datos'
-    // error.status = 402
-    return response.status(402).json(error)
-  } else if (error.name === 'InvalidError') {
-    error.message = error.message ? error.message : 'Error en la base de datos.'
-    // error.status = 500
-    return response.status(402).json(error)
-  } else if (error.name === 'MongoError') {
-    error.message = error.message ? error.message : 'Error en la base de datos.'
-    // error.status = 500
-    return response.status(500).json(error)
-  } else if (error.name === 'CastError') {
-    error.message = error.message ? error.message : 'Error en la base de datos.'
-    // error.status = 500
-    return response.status(404).json(error)
-  } else {
-    error.message = error.message ? error.message : '!Ups ocurrio un error en el servidor¡'
-    // error.status = 500
-    return response.status(500).json(error)
   }
 })
 
 module.exports = server
+
+/*
+
+
+db.deals.aggregate(
+  [
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'client',
+        foreignField: '_id',
+        as: 'client'
+      }
+    },
+    {
+      $unwind: '$client'
+    },
+    { $match: { $and:[ {status: 'Abierto'}, {'assessor.ref': ObjectId("5f03afa571df9b0318797ae5")}] } },
+    {   
+      $project:{
+          students : 1,
+          startDate : 1,
+          progress : 1,
+          progressPayment : 1,
+          statusActivity : 1,
+          status : 1,
+          createdAt : 1,
+          assessor : 1,
+          client: { names: 1, firstName: 1, lastName: 1, email: 1, mobile: 1, dni: 1, country: 1, city: 1, extras: 1}
+      } 
+    }
+  ]
+).pretty()
+
+*/
