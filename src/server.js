@@ -74,9 +74,7 @@ routesOpen(server)
 server.use(authHandler)
 routes(server)
 
-if (config.server.env !== 'development') {
-  server.use(Sentry.Handlers.errorHandler())
-}
+server.use(Sentry.Handlers.errorHandler())
 
 server.use((error, request, response, next) => {
   // if (err.status && err.message) {
