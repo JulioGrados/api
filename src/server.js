@@ -74,7 +74,7 @@ routesOpen(server)
 server.use(authHandler)
 routes(server)
 
-if (config.server.env === 'production') {
+if (config.server.env !== 'development') {
   server.use(Sentry.Handlers.errorHandler())
 }
 
