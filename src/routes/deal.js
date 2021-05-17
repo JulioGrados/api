@@ -14,6 +14,10 @@ router
   .post(Api.createDeal)
 
 router
+  .route('/deals/general')
+  .get(Api.generalDeals)
+
+router
   .route('/deals/search')
   .get(Api.searchDeals)
 
