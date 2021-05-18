@@ -18,6 +18,10 @@ router
   .get(Api.generalDeals)
 
 router
+  .route('/deals/assessor')
+  .get(Api.assessorDeals)
+
+router
   .route('/deals/search')
   .get(Api.searchDeals)
 

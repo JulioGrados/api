@@ -43,7 +43,7 @@ const updateDealCreate = async (req, res, next) => {
 const detailCourse = async (req, res, next) => {
   let courseId
   const params = req.query
-  console.log(params)
+  
   if (params && params.params) {
     const paramsID = JSON.parse(params.params)
     courseId = paramsID.id
