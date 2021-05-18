@@ -118,7 +118,7 @@ module.exports = server
 /*
 
 
-db.deals.aggregate(
+db.deals.explain('executionStats').aggregate(
   [
     {
       $lookup: {

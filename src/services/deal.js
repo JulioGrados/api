@@ -37,6 +37,14 @@ const generalDeals = async params => {
   return deals
 }
 
+const assessorDeals = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('DEALS ASSESSOR')
+  console.log('--------------------------------------------------------')
+  const deals = await dealDB.assessor(params)
+  return deals
+}
+
 const createDeal = async (body, loggedUser) => {
   if (body.status === 'Abierto') {
     const existDeal = await findDealUser(body.client)
@@ -1015,6 +1023,7 @@ module.exports = {
   countDocuments,
   listDeals,
   generalDeals,
+  assessorDeals,
   searchDeals,
   createDeal,
   updateDeal,

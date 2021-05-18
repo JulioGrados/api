@@ -9,7 +9,6 @@ const listCompanies = async (req, res) => {
 
 const createCompany = async (req, res, next) => {
   const body = req.body.data ? JSON.parse(req.body.data) : req.body
-  console.log('body', body)
   const file = req.files && req.files.image
   try {
     const company = await service.createCompany(body, file, req.user)

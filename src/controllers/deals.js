@@ -16,6 +16,15 @@ const generalDeals = async (req, res, next) => {
   }
 }
 
+const assessorDeals = async (req, res, next) => {
+  try {
+    const deals = await service.assessorDeals(req.query)
+    return res.status(200).json(deals)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const searchDeals = async (req, res, next) => {
   try {
     const deals = await service.searchDeals(req.query)
@@ -122,6 +131,7 @@ module.exports = {
   countDocuments,
   listDeals,
   generalDeals,
+  assessorDeals,
   searchDeals,
   createDeal,
   updateDeal,
