@@ -67,13 +67,18 @@ const updateStrangerCall = async (body) => {
 }
 
 const popUpCall = async (body, loggedCall) => {
-  const assessors = await userDB.list({
+  // const assessors = await userDB.list({
+  //   query: {
+  //     roles: 'Asesor'
+  //   }
+  // })
+
+  // const receptionist = assessors.find(assessor => assessor.roles && assessor.roles.includes('Recepcionista') === true)
+  const receptionist = await userDB.detail({
     query: {
-      roles: 'Asesor'
+      roles: 'Recepcionista'
     }
   })
-
-  const receptionist = assessors.find(assessor => assessor.roles && assessor.roles.includes('Recepcionista') === true)
   // console.log('receptionist', receptionist)
   // Asesor que este activo de acuerdo al trato
   // Activo, mandar la notificación
@@ -86,17 +91,18 @@ const popUpCall = async (body, loggedCall) => {
       exist: true
     }
 
-    const assigend = deal && deal.assessor && deal.assessor.ref
-    const assessor = assigend && assessors.find(item => item._id.toString() === assigend.toString())
+    // const assigend = deal && deal.assessor && deal.assessor.ref
+    // const assessor = assigend && assessors.find(item => item._id.toString() === assigend.toString())
 
     // console.log('assigend', assigend)
     // console.log('assessor', assessor)
 
-    if ( assessor && assessor.status ) {
-      emitPopUp(dataDeal, assessor)
-    } else {
-      emitPopUp(dataDeal, receptionist)
-    }
+    // if ( assessor && assessor.status ) {
+    //   emitPopUp(dataDeal, assessor)
+    // } else {
+    //   emitPopUp(dataDeal, receptionist)
+    // }
+    emitPopUp(dataDeal, receptionist)
     return deal
   } catch (error) {
     const dataDeal = {
