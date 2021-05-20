@@ -74,7 +74,7 @@ routesOpen(server)
 server.use(authHandler)
 routes(server)
 
-server.use(Sentry.Handlers.errorHandler())
+// server.use(Sentry.Handlers.errorHandler())
 
 server.use((error, request, response, next) => {
   // if (err.status && err.message) {
@@ -118,7 +118,7 @@ module.exports = server
 /*
 
 
-db.deals.explain('executionStats').aggregate(
+db.deals.aggregate(
   [
     {
       $lookup: {
@@ -146,6 +146,60 @@ db.deals.explain('executionStats').aggregate(
       } 
     }
   ]
-).pretty()
+)
 
+db.enrols.aggregate(
+  [
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'linked.ref',
+        foreignField: '_id',
+        as: 'linked.ref'
+      }
+    },
+    {
+      $unwind: '$linked.ref'
+    },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'course.ref',
+        foreignField: '_id',
+        as: 'course.ref'
+      }
+    },
+    {
+      $unwind: '$course.ref'
+    },
+    {
+      $lookup: {
+        from: 'certificates',
+        localField: 'certificate.ref',
+        foreignField: '_id',
+        as: 'certificate.ref'
+      }
+    },
+    {
+      $unwind: '$certificate.ref'
+    },
+    { $match: { $and:[ {isFinished: true}] } },
+    {   
+      $project:{
+        linked : {
+          ref: { email: 1, firstName: 1, lastName: 1 }
+        },
+        course : {
+          ref: { name: 1, agreement: 1, numberEvaluation: 1, academicHours: 1 }
+        },
+        exams : 1,
+        tasks : 1,
+        certificate : {
+          ref: { shortCode: 1, score: 1, date: 1, createdAt: 1 }
+        }
+      } 
+    }
+  ]
+).count()
+client: { names: 1, firstName: 1, lastName: 1, email: 1, mobile: 1, dni: 1, country: 1, city: 1, extras: 1}
 */

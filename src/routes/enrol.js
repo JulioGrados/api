@@ -14,6 +14,10 @@ router
   .post(Api.createEnrol)
 
 router
+  .route('/enrols/ratings')
+  .get(Api.listRatings)
+
+router
   .route('/enrols/:id')
   .get(Api.detailEnrol)
   .put(Api.updateEnrol)

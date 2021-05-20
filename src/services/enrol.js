@@ -58,6 +58,11 @@ const listEnrols = async params => {
   return enrols
 }
 
+const listRatings = async params => {
+  const enrols = await enrolDB.ratings(params)
+  return enrols
+}
+
 const createEnrol = async (body, loggedUser) => {
   const enrol = await enrolDB.create(body)
   return enrol
@@ -347,6 +352,7 @@ const countDocuments = async params => {
 module.exports = {
   countDocuments,
   listEnrols,
+  listRatings,
   createEnrol,
   createEmailEnrol,
   updateEnrol,
