@@ -1659,6 +1659,76 @@ const createShippingUser = async course => {
   }
 }
 
+const createShippingEnrol = async course => {
+  console.log('course', course)
+  const enrols = await enrolDB.list({
+    query: { 'course.moodleId': course.courseId },
+    select: 'linked course',
+    populate: [ 'linked.ref']
+  })
+  
+  const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
+    courseids: [course.courseId]
+  })
+
+  const feedback = feedBackCourse.feedbacks.find(
+    item => item.name.indexOf('certificado') > -1
+  )
+  if (feedback) {
+    const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
+      feedbackid: feedback.id
+    })
+
+    const newsFeedBack = feedBackModule.attempts.map(async element => {
+      const enrol = enrols.find(
+        item => item.linked && item.linked.ref && parseInt(item.linked.ref.moodleId) === parseInt(element.userid)
+      )
+      const shipping = {
+        moodleId: parseInt(element.id),
+        date: element.timemodified,
+        firstName: element.responses[0].rawval,
+        lastName: element.responses[1].rawval,
+        dni: element.responses[2].rawval,
+        cellphone: element.responses[3].rawval,
+        address: element.responses[4].rawval,
+        priority: 'Principal'
+      }
+      if (enrol) {
+        
+        try {
+          const updateEnrol = await enrolDB.update(enrol._id, {
+            shipping: shipping
+          })
+          console.log('Se actualizó usuario shipping:', updateEnrol)
+          return updateEnrol
+        } catch (error) {
+          console.log('error al editar enrol')
+          throw {
+            type: 'Actualizar enrol',
+            message: `No actualizó el enrol ${enrol._id}`,
+            metadata: enrol,
+            error: error
+          }
+        }
+      } else {
+        throw {
+          type: 'Actualizar enrol',
+          message: `No se encontro enrol ${element.fullname}`,
+          metadata: element,
+          error: error
+        }
+      }
+    })
+    const results = await Promise.all(newsFeedBack.map(p => p.catch(e => e)))
+    const validShipping = results.filter(result => !result.error)
+    const errorShipping = results.filter(result => result.error)
+
+    return { validShipping, errorShipping }
+  } else {
+    return {}
+  }
+}
+
 const usersGrades = async ({ courseId, usersMoodle }) => {
   console.log('userMoodle', usersMoodle)
   let grades = []
@@ -2466,6 +2536,7 @@ const testimoniesCourse = async ({ courseId }) => {
 module.exports = {
   createNewUser,
   createUserCertificate,
+  createShippingEnrol,
   gradesCron,
   enrolCron,
   certificateCron,

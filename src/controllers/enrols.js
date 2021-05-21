@@ -27,6 +27,12 @@ const listRatings = async (req, res, next) => {
       info.agreement = enrol && enrol.course && enrol.course.ref && enrol.course.ref.agreement ? enrol.course.ref.agreement.institution : ''
       info.score = enrol && enrol.certificate && enrol.certificate.ref ? enrol.certificate.ref.score : ''
       info.code = enrol && enrol.certificate && enrol.certificate.ref ? enrol.certificate.ref.shortCode : ''
+      info.delivery = enrol && enrol.shipping && enrol.shipping.date 
+      info.shippingFirstName = enrol && enrol.shipping && enrol.shipping.firstName
+      info.shippingLastName = enrol && enrol.shipping && enrol.shipping.lastName
+      info.shippingDni = enrol && enrol.shipping && enrol.shipping.dni
+      info.shippingCellPhone = enrol && enrol.shipping && enrol.shipping.cellphone
+      info.shippingAddress = enrol && enrol.shipping && enrol.shipping.address
       const appraisal = enrol && [...enrol.exams, ...enrol.tasks]
       const modules = appraisal && appraisal.sort((a, b) => a.name.split(" ")[1] - b.name.split(" ")[1])
       modules && modules.forEach(

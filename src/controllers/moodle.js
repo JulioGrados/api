@@ -89,6 +89,15 @@ const migrateTestimonies = async (req, res, next) => {
   }
 }
 
+const migrateShipping = async (req, res, next) => {
+  try {
+    const resp = await services.createShippingEnrol(req.body)
+    return res.json(resp)
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   createUser,
   enrrollUser,
@@ -99,5 +108,6 @@ module.exports = {
   migrateEnrols,
   createCertificates,
   createModulesCourse,
+  migrateShipping,
   migrateTestimonies
 }
