@@ -15,6 +15,7 @@ router.route('/migrations/certificates').post(Api.migrateCertificates)
 router.route('/migrations/course').post(Api.enrrollUser)
 router.route('/migrations/lessons').post(Api.createModulesCourse)
 router.route('/migrate/testimonies').post(Api.migrateTestimonies)
+router.route('/migrate/shippings').post(Api.migrateShipping)
 // router.route('/migrations/modules').get(Api.createModulesCourse)
 
 module.exports = router
