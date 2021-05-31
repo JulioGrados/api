@@ -98,9 +98,11 @@ const createOrUpdateUser = async (req, res, next) => {
       
       if (!phone.country) {
         body.mobile = number ? number : ''
+        body.mobile = body.mobile.replace(/ /g, '')
       } else {
         body.mobileCode = phone ? phone.code : ''
         body.mobile = number ? number.replace(phone.code, '') : ''
+        body.mobile = body.mobile.replace(/ /g, '')
         body.country = phone ? phone.country && phone.country.name : ''
       }
     } 
