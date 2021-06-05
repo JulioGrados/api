@@ -9,9 +9,7 @@ const listSales = async (req, res) => {
 
 const createSales = async (req, res, next) => {
   try {
-    const body = req.body.data ? JSON.parse(req.body.data) : req.body
-    const files = req.files
-    const sale = await service.createSale(body, files, req.user)
+    const sale = await service.createSale(req.body, req.user)
     return res.status(201).json(sale)
   } catch (error) {
     next(error)
@@ -31,11 +29,9 @@ const updateSaleOne = async (req, res, next) => {
 }
 
 const updateSale = async (req, res, next) => {
-  const body = req.body.data ? JSON.parse(req.body.data) : req.body
-  const files = req.files
   const saleId = req.params.id
   try {
-    const sale = await service.updateSale(saleId, body, files, req.user)
+    const sale = await service.updateSale(saleId, req.body, req.user)
     return res.status(200).json(sale)
   } catch (error) {
     next(error)
