@@ -2,7 +2,7 @@
 
 const CustomError = require('custom-error-instance')
 const { saleDB, voucherDB, receiptDB, dealDB, progressDB, userDB } = require('../db')
-const { sumAmountOrders } = require('utils/functions/sale')
+const { sumAmountOrders, existOrders } = require('utils/functions/sale')
 const { saveFile } = require('utils/files/save')
 const { emitDeal, emitAccounting } = require('./deal')
 
@@ -15,29 +15,21 @@ const listSales = async params => {
   return sales
 }
 
-const createSale = async (body, files, loggedUser) => {
-  const copyOrders = JSON.parse(JSON.stringify(body.orders))
-  body.orders = await prepareOrders(body, files)
-  body.status = getStatusSale(body)
+const createSale = async (body, loggedUser) => {
+  body.orders = existOrders(body.orders)
+  body.orders = prepareOrders(body)
+  body.status = getStatusSale(body.orders, body.amount)
   const sale = await saleDB.create(body)
-  try {
-    sale.orders = await editVoucher(sale.orders, copyOrders)
-    changeStatusUser(sale, body.detail)
-  } catch (error) {
-    await sale.remove()
-    throw error
-  }
   return sale
 }
 
-const updateSale = async (saleId, body, files, loggedUser) => {
+const updateSale = async (saleId, body) => {
+  console.log('entrooo 2')
   if (body.status === 'Pendiente' || body.status === 'Pagando' || body.status === 'Finalizada') {
-    const copyOrders = JSON.parse(JSON.stringify(body.orders))
-    body.orders = await prepareOrders(body, files)
-    body.status = getStatusSale(body)
+    body.orders = existOrders(body.orders)
+    body.orders = await prepareOrders(body)
+    body.status = getStatusSale(body.orders, body.amount)
     const sale = await saleDB.update(saleId, body)
-    sale.orders = await editVoucher(sale.orders, copyOrders)
-    changeStatusUser(sale, body.detail)
     return sale
   } else {
     const InvalidError = CustomError('CastError', { message: 'La venta ya no se puede editar.', code: 'EINVLD' }, CustomError.factory.expectReceive);
@@ -113,33 +105,20 @@ const editVoucher = async (orders, dataOrders) => {
   }
 }
 
-const prepareOrders = async ({ orders, amount, user }, files) => {
+const prepareOrders = ({ orders, amount }) => {
   const sum = sumAmountOrders(orders)
   console.log('orders', orders)
+  console.log('sum', sum)
+  console.log('amount', amount)
   if (sum !== amount) {
     const InvalidError = CustomError('CastError', { message: 'La suma de montos de las ordenes debe coincidir con el monto de la venta', code: 'EINVLD' }, CustomError.factory.expectReceive);
     throw new InvalidError()
+  } else {
+    const results = orders.map(order => {
+      return order._id && { ...order }
+    })
+    return results
   }
-
-  let results
-  try {
-    console.log('order length', orders.length)
-    results = await Promise.all(
-      orders.map(async order => {
-        const orderRes = await changeOrder(order, user, files)
-        return orderRes
-      })
-    )
-  } catch (error) {
-    const errorMessage = {
-      status: error.status || 500,
-      message: error.message || 'Error al crear las ordenes',
-      error
-    }
-    throw errorMessage
-  }
-
-  return results
 }
 
 const prepareOrdersOne = async ({ orders, amount, user }, files) => {
@@ -371,7 +350,9 @@ const findOrAddReceipt = async (receipt, files, assigned, linked) => {
   }
 }
 
-const getStatusSale = ({ orders, amount }) => {
+const getStatusSale = (orders, amount) => {
+  console.log('orders', orders)
+  console.log('amount', amount)
   const sum = sumAmountOrders(orders, 'Pagada')
 
   if (sum === amount) {

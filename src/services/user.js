@@ -103,7 +103,7 @@ const createOrUpdateUser = async body => {
   body = validate(body)
   try {
     const params = createFindQuery(body)
-    // console.log('params', params)
+    // console.log('params', params.query)
     const lead = await userDB.detail(params)
     // console.log('lead', lead)
     if (body.source && body.source === 'Facebook') {
@@ -112,7 +112,7 @@ const createOrUpdateUser = async body => {
         body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
       }
     }
-    // console.log('body', body)
+    
     if (lead.roles && lead.roles.length) {
       if (lead.roles.findIndex(role => role === 'Interesado') === -1) {
         body.roles = ['Interesado', ...lead.roles]
@@ -120,6 +120,11 @@ const createOrUpdateUser = async body => {
     } else {
       body.roles = ['Interesado']
     }
+    
+    if (lead.dni === body.dni) {
+      delete body.dni
+    }
+    // console.log('body', body)
     user = await userDB.update(lead._id, { ...body })
     // console.log('user', user)
     await createOrUpdateDeal(user.toJSON(), body, lead, true)

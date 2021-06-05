@@ -13,6 +13,10 @@ router
   .post(Api.createVoucher)
 
 router
+  .route('/vouchers/search')
+  .get(Api.getOneVoucher)
+
+router
   .route('/vouchers/:id')
   .get(Api.detailVoucher)
   .put(Api.updateVoucher)

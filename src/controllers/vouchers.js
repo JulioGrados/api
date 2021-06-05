@@ -54,6 +54,16 @@ const detailVoucher = async (req, res, next) => {
   }
 }
 
+const getOneVoucher = async (req, res, next) => {
+  const params = req.query
+  try {
+    const voucher = await service.detailVoucher(params)
+    return res.status(200).json(voucher)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const deleteVoucher = async (req, res, next) => {
   const voucherId = req.params.id
   try {
@@ -75,5 +85,6 @@ module.exports = {
   createVoucher,
   updateVoucher,
   detailVoucher,
+  getOneVoucher,
   deleteVoucher
 }
