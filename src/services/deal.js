@@ -703,7 +703,6 @@ const sendEmailCourse = async (lead, deal, dataCourse, social = false) => {
     linked,
     assigned
   })
-  
   try {
     const email = await createEmail({
       linked,
@@ -734,6 +733,32 @@ const sendEmailCourse = async (lead, deal, dataCourse, social = false) => {
   }
 }
 
+const getStart = ( start = new Date() ) => {
+  const day = new Date().getDay()
+  let sum1 = 0; let sum2 = 0; let sum3 = 0
+  if (day >= 0 && day < 4) {
+    sum1 = 1
+    sum2 = 2
+    sum3 = 3
+  } else if (day === 4) {
+    sum1 = 1
+    sum2 = 2
+    sum3 = 4
+  } else if (day === 5) {
+    sum1 = 1
+    sum2 = 3
+    sum3 = 4
+  } else if (day === 6) {
+    sum1 = 2
+    sum2 = 3
+    sum3 = 4
+  }
+  const day1 = moment(start).add(sum1, 'days').format('D') + ' de ' + moment(start).add(sum1, 'days').format('MMMM')
+  const day2 = moment(start).add(sum2, 'days').format('D') + ' de ' + moment(start).add(sum2, 'days').format('MMMM')
+  const day3 = moment(start).add(sum3, 'days').format('D') + ' de ' + moment(start).add(sum3, 'days').format('MMMM')
+  return day1 + ', ' + day2 + ' y ' + day3
+}
+
 const getSubstitutions = ({ course, linked, assigned }) => {
   const substitutions = {
     nombre: linked.shortName,
@@ -741,14 +766,14 @@ const getSubstitutions = ({ course, linked, assigned }) => {
     password: linked.password,
     curso: course.name,
     shortName: course.shortName,
-    inicio: course.startCourse ? course.startCourse : moment().add(7, 'days').format('LL'),
+    inicio: getStart(),
     precio: course.price,
     precio_oferta: course.priceOffert,
     horas: course.academicHours,
     brochure: MEDIA_PATH + course.brochure,
     celular: assigned.mobile
   }
-
+  
   return substitutions
 }
 
