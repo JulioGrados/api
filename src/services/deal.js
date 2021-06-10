@@ -923,7 +923,7 @@ const timelineProgress = (updateDeal, deal, assigned) => {
   }
 }
 
-const addCoursesMoodle = async (student, courses, dealId, logged) => {
+const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) => {
   const deal = await dealDB.detail({
     query: { _id: dealId },
     populate: { path: 'client' }
@@ -938,12 +938,14 @@ const addCoursesMoodle = async (student, courses, dealId, logged) => {
       ref: user._id
     },
     assigned: {
-      username: logged.username,
-      ref: logged._id
+      username: loggedUser.username,
+      ref: loggedUser._id
     },
     deal: deal,
     type: 'Curso'
   }
+
+  console.log('timeline', timeline)
   const code = randomize('0', 8)
   if (!user.moodleId) {
     // console.log('registrar usuario moodle')
@@ -1030,7 +1032,7 @@ const sendEmailAccess = async (user, logged) => {
       preheader,
       content
     })
-    sendMailTemplate({
+    await sendMailTemplate({
       to,
       from,
       fromname,
@@ -1045,7 +1047,7 @@ const sendEmailAccess = async (user, logged) => {
   }
 }
 
-const enrolStudents = async ({ students, dealId }, logged) => {
+const enrolStudents = async ({ students, dealId, loggedUser }, logged) => {
   //const deal = await dealDB.detail({ query: { _id: dealId } })
   const enrols = await Promise.all(
     students.map(async item => {
@@ -1053,6 +1055,7 @@ const enrolStudents = async ({ students, dealId }, logged) => {
         item.student,
         item.courses,
         dealId,
+        loggedUser,
         logged
       )
       return courses
