@@ -73,6 +73,16 @@ const updateDealCreate = async (req, res, next) => {
   }
 }
 
+const updateWinner = async (req, res, next) => {
+  const dealId = req.params.id
+  try {
+    const deal = await service.updateWinner(dealId, req.body, req.user)
+    return res.status(200).json(deal)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const detailDeal = async (req, res, next) => {
   const dealId = req.params.id
   const params = req.query
@@ -137,6 +147,7 @@ module.exports = {
   updateDeal,
   updateDealOne,
   updateDealCreate,
+  updateWinner,
   detailDeal,
   deleteDeal,
   createOrUpdate,

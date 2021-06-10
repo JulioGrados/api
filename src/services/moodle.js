@@ -272,20 +272,16 @@ const createNewUser = async user => {
     username: user.username,
     password: user.password
   }
-  console.log('dataUser', dataUser)
+  
   const userMoodle = await actionMoodle('POST', createUser, {
     users: [dataUser]
   })
-
-  console.log('userMoodle', userMoodle[0])
+  
   if (userMoodle && userMoodle.length) {
     await userDB.update(user._id, { moodleId: userMoodle[0].id })
   } else {
-    const error = {
-      status: 500,
-      message: 'No se pudo crear el usuario de Moodle'
-    }
-    throw error
+    const InvalidError = CustomError('CastError', { message: 'No se pudo crear el usuario de Moodle, por un parametro invalido', code: 'EINVLD' }, CustomError.factory.expectReceive)
+    throw new InvalidError()
   }
   return userMoodle[0]
 }
@@ -2375,7 +2371,7 @@ const createEnrolUser = async ({ user, course }) => {
   }
 
   let userId
-  console.log('user moodle create', user)
+  
   if (user.moodleId) {
     userId = user.moodleId
   } else {
