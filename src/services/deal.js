@@ -107,7 +107,42 @@ const updateDealCreate = async (dealId, body, loggedUser) => {
   return deal
 }
 
+const updateWinner = async (dealId, body, loggedUser) => {
+  const deal = await dealDB.detail({
+    query: { _id: dealId },
+    populate: { path: 'client' }
+  })
 
+  const progress = await progressDB.detail({ query: { key: 'won' } })
+  let progressPayment
+  if (progress) {
+    progressPayment = {
+      name: progress.name,
+      ref: progress._id
+    }
+  }
+
+  if (deal.client && deal.client._id) {
+    const user = await userDB.detail({ query: { _id: deal.client._id } })
+    await userDB.update(user._id, {
+      roles: [...user.roles, 'Cliente']
+    })
+  }
+  const statusActivity = 'done'
+  const status = 'Ganado'
+  const statusPayment = 'Abierto'
+  const updateDeal = await dealDB.update(deal._id, {
+    progressPayment,
+    statusActivity,
+    status,
+    statusPayment
+  })
+  
+  const treasurer = await userDB.detail({query: { roles: 'Tesorero' }})
+  emitDeal(updateDeal)
+  emitAccounting(updateDeal, treasurer)
+  return updateDeal
+}
 
 const detailDeal = async params => {
   const deal = await dealDB.detail(params)
@@ -893,7 +928,7 @@ const addCoursesMoodle = async (student, courses, dealId, logged) => {
     query: { _id: dealId },
     populate: { path: 'client' }
   })
-  
+  // console.log('student && student.ref && student.ref._id', student)
   let user = await userDB.detail({
     query: { _id: student && student.ref && student.ref._id }
   })
@@ -938,13 +973,12 @@ const addCoursesMoodle = async (student, courses, dealId, logged) => {
     }
     user = await userDB.update(user._id, dataUser)
     user.password = code
-    createTimeline({
+    await createTimeline({
       ...timeline,
-      type: 'Cuenta',
-      name: '[Cuenta] se creó la cuenta en Moodle'
+      name: '[Cuenta] se creó la cuenta en Moodle [User] ' + dataUser.username
     })
     
-    sendEmailAccess(user.toJSON(), logged)
+    await sendEmailAccess(user.toJSON(), logged)
   }
   // console.log('registro de cursos')
   try {
@@ -952,40 +986,21 @@ const addCoursesMoodle = async (student, courses, dealId, logged) => {
       courses.map(async course => {
         user.password = code
         await createEnrolUser({ course, user })
-        createTimeline({
+        await createTimeline({
           ...timeline,
-          name: `[Matricula] ${course.name}`
+          name: `[Matricula] ${course.name} [User] ${user.username}`
         })
-
-        /*         if (course.changeActive) {
-          console.log('cange')
-          if (course.isEnrollActive) {
-            createTimeline({
-              ...timeline,
-              name: `[Reactivación] ${course.name}`
-            })
-          } else {
-            createTimeline({
-              ...timeline,
-              name: `[Suspensión] ${course.name}`
-            })
-          }
-        } */
         return course
       })
     )
     return coursesEnrol
   } catch (error) {
-    // console.log('error', error)
+    console.log('error', error)
     if (error.status) {
       throw error
     } else {
-      const err = {
-        status: 500,
-        message: 'Ocurrio un error al matricular en Moodle',
-        error
-      }
-      throw err
+      const InvalidError = CustomError('CastError', { message: 'Ocurrio un error al matricular un curso en Moodle', code: 'EINVLD' }, CustomError.factory.expectReceive)
+      throw new InvalidError()
     }
   }
 }
@@ -1060,6 +1075,7 @@ module.exports = {
   searchDeals,
   createDeal,
   updateDeal,
+  updateWinner,
   updateDealOne,
   updateDealCreate,
   detailDeal,

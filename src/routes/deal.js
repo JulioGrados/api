@@ -35,4 +35,8 @@ router
   .put(Api.updateDeal)
   .delete(Api.deleteDeal)
 
+router
+  .route('/deals/winner/:id')
+  .put(Api.updateWinner)
+
 module.exports = router
