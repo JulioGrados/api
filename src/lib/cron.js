@@ -9,6 +9,8 @@ const { createUserCertificate,
         enrolCron,
         certificateCron} = require('../services/moodle')
 
+const { createAddressEnrol } = require('../services/enrol')
+
 const job = new CronJob(
   '0 0 7 * * *',
   getDelayCalls,
@@ -16,7 +18,6 @@ const job = new CronJob(
   true,
   'America/Bogota'
 )
-
 job.start()
 
 // __dirname, '../uploads'
@@ -35,9 +36,19 @@ const certificate = new CronJob('0 40 5 * * *', async function() {
 }, null, true, 'America/Bogota');
 certificate.start();
 
+const address = new CronJob('0 10 6 * * *', async function() {
+  console.log('You will see this message every minuto');
+  const dir = path.resolve(__dirname, '../../backup/data.json')
+  const arr = await readFile(dir)
+  const enrols = await createAddressEnrol(arr)
+  console.log('enrols', enrols)
+}, null, true, 'America/Bogota');
+address.start();
+
 module.exports = {
   job,
-  certificate
+  certificate,
+  address
 }
 
 //0 0 * * 0 /usr/bin/mysqldump -u root --databases manvicio_ertmdl > /var/backups/moodle/moodle-"$(date +"%m-%d-%Y %H-%M")".sql
