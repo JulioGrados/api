@@ -1085,6 +1085,8 @@ module.exports = {
   deleteDeal,
   createOrUpdateDeal,
   createDealUserOnly,
+  incProspects,
+  addInitialStatus,
   emitDeal,
   emitAccounting,
   enrolStudents

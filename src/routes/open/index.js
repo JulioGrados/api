@@ -15,6 +15,7 @@ const routesCertificate = require('./certificate')
 const routesTestimony = require('./testimony')
 const routesMoodle = require('./moodle')
 const routesAnura = require('./anura')
+const routesMigration = require('./migration')
 
 module.exports = server => {
   server.use('/api/open', routesAuth)
@@ -32,4 +33,5 @@ module.exports = server => {
   server.use('/api/open', routesTestimony)
   server.use('/api/open', routesMoodle)
   server.use('/api/open', routesAnura)
+  server.use('/api/open', routesMigration)
 }
