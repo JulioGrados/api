@@ -334,6 +334,110 @@ const updateMoodle = async (enrolId, body, loggedUser) => {
   return enrolUpdate
 }
 
+const createAddressEnrol = async arr => {
+  const address = arr.map(async element => {
+    let course
+    try {
+      course = await courseDB.detail({
+        query: { moodleId: element.courseid },
+        select: 'name slug'
+      })
+    } catch (error) {
+      throw error
+    }
+    let user
+    try {
+      user = await userDB.detail({
+        query: { email: element.email },
+        select: 'username email moodleId'
+      })
+    } catch (error) {
+      throw error
+    }
+
+    // console.log('course', course)
+    // console.log('user', user)
+
+    let enrol
+    try {
+      enrol = await enrolDB.detail({
+        query: { 'linked.ref': user, 'course.ref': course },
+        select: 'linked course shipping'
+      })
+    } catch (error) {
+      throw error
+    }
+
+    // console.log('enrol', enrol)
+
+    const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
+      courseids: [element.courseid]
+    })
+    console.log('feedback', feedback)
+    const feedback = feedBackCourse.feedbacks.find(
+      item => item.name.indexOf('certificado') > -1
+    )
+
+    if (feedback) {
+      const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
+        feedbackid: feedback.id
+      })
+
+      const newsFeedBack = feedBackModule.attempts.find(element => 
+        (parseInt(user.moodleId) === parseInt(element.userid))
+      )
+
+      
+      if (newsFeedBack) {
+        const shipping = {
+          moodleId: parseInt(newsFeedBack.id),
+          date: newsFeedBack.timemodified,
+          firstName: newsFeedBack.responses[0].rawval,
+          lastName: newsFeedBack.responses[1].rawval,
+          dni: newsFeedBack.responses[2].rawval,
+          cellphone: newsFeedBack.responses[3].rawval,
+          address: newsFeedBack.responses[4].rawval,
+          priority: 'Principal'
+        }
+
+        try {
+          const updateEnrol = await enrolDB.update(enrol._id, {
+            shipping: shipping
+          })
+          // console.log('Se actualizó usuario shipping:', updateEnrol)
+          return updateEnrol
+        } catch (error) {
+          // console.log('error al editar enrol')
+          throw {
+            type: 'Actualizar enrol',
+            message: `No actualizó el enrol ${enrol._id}`,
+            metadata: enrol,
+            error: error
+          }
+        }
+      } else {
+        throw {
+          type: 'No se encontro la dirección de envío',
+          message: `No actualizó el enrol ${user.email}`,
+          metadata: user.email
+        }
+      }
+    } else {
+      throw {
+        type: 'No se encontro el curso en moodle',
+        message: `No actualizó el enrol ${user.email}`,
+        metadata: user.email
+      }
+    }
+  })
+
+  const results = await Promise.all(address.map(p => p.catch(e => e)))
+  const validAddress = results.filter(result => !result.error)
+  const errorAddress = results.filter(result => result.error)
+  return { validAddress, errorAddress }
+  // return results
+}
+
 const detailEnrol = async params => {
   const enrol = await enrolDB.detail(params)
   return enrol
@@ -355,6 +459,7 @@ module.exports = {
   listRatings,
   createEnrol,
   createEmailEnrol,
+  createAddressEnrol,
   updateEnrol,
   updateMoodle,
   detailEnrol,
