@@ -1,6 +1,19 @@
 const service = require('../services/migration')
 const { csv2json } = require('utils/functions/csv')
 
+const migrateDealsUsers = async (req, res, next) => {
+  console.log('req.files', req.files)
+  const data = await csv2json(req.files.csv.data)
+  // const data = JSON.parse(req.files.data.data.toString())
+  console.log('data', data)
+  try {
+    const teachers = await service.migrateTeachers(data)
+    return res.status(200).json(teachers)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const migrateTeachers = async (req, res, next) => {
   const data = JSON.parse(req.files.data.data.toString())
   try {
@@ -98,6 +111,7 @@ const migrateCertificates = async (req, res, next) => {
 }
 
 module.exports = {
+  migrateDealsUsers,
   migrateTeachers,
   migrateCourses,
   migrateMoodleCourses,
