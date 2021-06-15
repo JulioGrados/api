@@ -18,6 +18,7 @@ const createReceipt = async (body, files, loggedUser) => {
           body[label] = route
         }
       }
+      body.status = 'Finalizada'
       const receipt = await receiptDB.create(body)
       const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
       const bdReceipt = await receiptDB.detail({
@@ -54,12 +55,14 @@ const createReceipt = async (body, files, loggedUser) => {
 const prepareOrders = async (orders, receipt, status) => {
   let results
   try {
-    console.log('order length', orders.length)
     results = await Promise.all(
       orders.map(async order => {
         const orderRes = await orderDB.update(order._id, {
           status: status,
-          receipt: receipt
+          receipt: {
+            ...receipt.toJSON(),
+            ref: receipt.toJSON()
+          }
         })
         return orderRes
       })

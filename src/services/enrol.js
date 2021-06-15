@@ -373,7 +373,7 @@ const createAddressEnrol = async arr => {
     const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
       courseids: [element.courseid]
     })
-    console.log('feedback', feedback)
+    
     const feedback = feedBackCourse.feedbacks.find(
       item => item.name.indexOf('certificado') > -1
     )
