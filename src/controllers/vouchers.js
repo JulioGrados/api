@@ -35,6 +35,21 @@ const updateVoucher = async (req, res, next) => {
   }
 }
 
+const updateAdminVoucher = async (req, res, next) => {
+  const voucherId = req.params.id
+  
+  try {
+    const voucher = await service.updateAdminVoucher(
+      voucherId,
+      req.body,
+      req.user
+    )
+    return res.status(200).json(voucher)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const detailVoucher = async (req, res, next) => {
   const voucherId = req.params.id
   const params = req.query
@@ -103,6 +118,7 @@ module.exports = {
   listVouchers,
   createVoucher,
   updateVoucher,
+  updateAdminVoucher,
   detailVoucher,
   detailAdminVoucher,
   getOneVoucher,

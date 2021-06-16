@@ -32,6 +32,30 @@ const updateVoucher = async (voucherId, body, files, loggedUser) => {
   return voucher
 }
 
+const updateAdminVoucher = async (voucherId, body, loggedUser) => {
+  const { orders, voucher } = body
+  
+  try {
+    await Promise.all(
+      orders.map(async order => {
+        const orderRes = await orderDB.update(order._id, {
+          voucher: undefined,
+          status: 'Por Pagar'
+        })
+        return orderRes
+      })
+    )
+  } catch (error) {
+    throw error
+  }
+
+  const updateVoucher = await voucherDB.update(voucherId, {
+    residue: voucher.amount,
+    isUsed: false
+  })
+  return updateVoucher
+}
+
 const detailVoucher = async params => {
   const voucher = await voucherDB.detail(params)
   return voucher
@@ -64,6 +88,7 @@ module.exports = {
   listVouchers,
   createVoucher,
   updateVoucher,
+  updateAdminVoucher,
   detailVoucher,
   detailAdminVoucher,
   deleteVoucher
