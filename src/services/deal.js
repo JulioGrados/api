@@ -137,7 +137,14 @@ const updateWinner = async (dealId, body, loggedUser) => {
     status,
     statusPayment
   })
-  
+
+  await createTimeline({
+    linked: updateDeal.client,
+    deal: updateDeal,
+    assigned: updateDeal.assessor,
+    type: 'Deal',
+    name: `[Trato Ganado]`
+  })
   const treasurer = await userDB.detail({query: { roles: 'Tesorero' }})
   emitDeal(updateDeal)
   emitAccounting(updateDeal, treasurer)
