@@ -22,4 +22,10 @@ router
   .put(Api.updateVoucher)
   .delete(Api.deleteVoucher)
 
+router
+  .route('/vouchers/admin/:id')
+  .get(Api.detailAdminVoucher)
+  // .put(Api.updateVoucher)
+  // .delete(Api.deleteVoucher)
+
 module.exports = router

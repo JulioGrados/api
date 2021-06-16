@@ -2,6 +2,7 @@
 
 const { voucherDB } = require('../db')
 const { saveFile } = require('utils/files/save')
+const { orderDB } = require('../../../db/lib')
 
 const listVouchers = async params => {
   const vouchers = await voucherDB.list(params)
@@ -36,6 +37,18 @@ const detailVoucher = async params => {
   return voucher
 }
 
+const detailAdminVoucher = async (params, voucherId) => {
+  const voucher = await voucherDB.detail(params)
+  const orders = await orderDB.list({ query: { 'voucher.ref': voucherId } })
+  const reset = orders.some(order => order.status !== 'Cancelada')
+
+  return {
+    ...voucher.toJSON(),
+    orders: orders ? orders : [],
+    reset: reset ? reset : false
+  }
+}
+
 const deleteVoucher = async (voucherId, loggedUser) => {
   const voucher = await voucherDB.remove(voucherId)
   return voucher
@@ -52,5 +65,6 @@ module.exports = {
   createVoucher,
   updateVoucher,
   detailVoucher,
+  detailAdminVoucher,
   deleteVoucher
 }

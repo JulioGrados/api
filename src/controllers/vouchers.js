@@ -54,6 +54,25 @@ const detailVoucher = async (req, res, next) => {
   }
 }
 
+const detailAdminVoucher = async (req, res, next) => {
+  const voucherId = req.params.id
+  const params = req.query
+  if (params.query) {
+    params.query._id = voucherId
+  } else {
+    params.query = {
+      _id: voucherId
+    }
+  }
+
+  try {
+    const voucher = await service.detailAdminVoucher(params, voucherId)
+    return res.status(200).json(voucher)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const getOneVoucher = async (req, res, next) => {
   const params = req.query
   try {
@@ -85,6 +104,7 @@ module.exports = {
   createVoucher,
   updateVoucher,
   detailVoucher,
+  detailAdminVoucher,
   getOneVoucher,
   deleteVoucher
 }
