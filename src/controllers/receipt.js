@@ -54,10 +54,39 @@ const detailReceipt = async (req, res, next) => {
   }
 }
 
+const detailAdminReceipt = async (req, res, next) => {
+  const receiptId = req.params.id
+  const params = req.query
+  if (params.query) {
+    params.query._id = receiptId
+  } else {
+    params.query = {
+      _id: receiptId
+    }
+  }
+
+  try {
+    const receipt = await service.detailAdminReceipt(params, receiptId)
+    return res.status(200).json(receipt)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const deleteReceipt = async (req, res, next) => {
   const receiptId = req.params.id
   try {
     const receipt = await service.deleteReceipt(receiptId, req.receipt)
+    return res.status(201).json(receipt)
+  } catch (error) {
+    next(error)
+  }
+}
+
+const deleteAdminReceipt = async (req, res, next) => {
+  const receiptId = req.params.id
+  try {
+    const receipt = await service.deleteAdminReceipt(receiptId, req.user)
     return res.status(201).json(receipt)
   } catch (error) {
     next(error)
@@ -75,5 +104,7 @@ module.exports = {
   createReceipt,
   updateReceipt,
   detailReceipt,
-  deleteReceipt
+  detailAdminReceipt,
+  deleteReceipt,
+  deleteAdminReceipt
 }

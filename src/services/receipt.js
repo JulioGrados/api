@@ -126,7 +126,38 @@ const detailReceipt = async params => {
   return receipt
 }
 
+const detailAdminReceipt = async (params, receiptId) => {
+  const receipt = await receiptDB.detail(params)
+  const orders = await orderDB.list({ query: { 'receipt.ref': receiptId } })
+
+  return {
+    ...receipt.toJSON(),
+    orders: orders ? orders : []
+  }
+}
+
 const deleteReceipt = async (receiptId, loggedUser) => {
+  const receipt = await receiptDB.remove(receiptId)
+  return receipt
+}
+
+const deleteAdminReceipt = async receiptId => {
+  try {
+    const orders = await orderDB.list({ query: { 'receipt.ref': receiptId } })
+    const result = await Promise.all(
+      orders.map(async order => {
+        const orderRes = await orderDB.update(order._id, {
+          receipt: undefined,
+          status: 'Pagada'
+        })
+        return orderRes
+      })
+    )
+    console.log('result', result)
+  } catch (error) {
+    throw error
+  }
+
   const receipt = await receiptDB.remove(receiptId)
   return receipt
 }
@@ -142,5 +173,7 @@ module.exports = {
   createReceipt,
   updateReceipt,
   detailReceipt,
-  deleteReceipt
+  detailAdminReceipt,
+  deleteReceipt,
+  deleteAdminReceipt
 }
