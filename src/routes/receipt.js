@@ -18,4 +18,10 @@ router
   .put(Api.updateReceipt)
   .delete(Api.deleteReceipt)
 
+router
+  .route('/receipts/admin/:id')
+  .get(Api.detailAdminReceipt)
+  // .put(Api.updateAdminReceipt)
+  .delete(Api.deleteAdminReceipt)
+
 module.exports = router
