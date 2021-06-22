@@ -24,4 +24,8 @@ router
   // .put(Api.updateAdminReceipt)
   .delete(Api.deleteAdminReceipt)
 
+router
+  .route('/receipts/facture')
+  .post(Api.createFacture)
+
 module.exports = router
