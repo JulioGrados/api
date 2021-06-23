@@ -1,0 +1,68 @@
+'use strict'
+
+const { timelineDB } = require('../db')
+const { getSocket } = require('../lib/io')
+
+const listTimelines = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('TIMELINE')
+  console.log('--------------------------------------------------------')
+  const timelines = await timelineDB.list(params)
+  return timelines
+}
+
+const createTimeline = async ({ linked, assigned, ...body }) => {
+  // console.log('assigned', assigned)
+  if (linked) {
+    body.linked = {
+      names: linked.names,
+      ref: linked._id || linked.ref
+    }
+  }
+  console.log('assigned', assigned)
+  if (assigned) {
+    body.assigned = {
+      username: assigned.username,
+      ref: assigned._id ? assigned._id : assigned.ref ? assigned.ref._id ? assigned.ref._id  : assigned.ref : assigned.ref
+    }
+  }
+  // console.log('body timeline', body)
+  try {
+    const timeline = await timelineDB.create(body)
+    emitTimeline(timeline)
+    return timeline
+  } catch (error) {
+    console.log('error timeline', body, error)
+  }
+}
+
+const detailTimeline = async params => {
+  const timeline = await timelineDB.detail(params)
+  return timeline
+}
+
+const countDocuments = async params => {
+  const count = await timelineDB.count(params)
+  return count
+}
+
+/* functions */
+
+const emitTimeline = timeline => {
+  console.log('timeline emitTimeline', timeline)
+  try {
+    if (timeline.assigned) {
+      const io = getSocket()
+      io.to(timeline.assigned.ref).emit('timeline', timeline)
+    }
+  } catch (error) {
+    console.log('error sockets', timeline, error)
+  }
+}
+
+module.exports = {
+  countDocuments,
+  listTimelines,
+  createTimeline,
+  detailTimeline
+}

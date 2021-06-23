@@ -19,8 +19,9 @@ const createReceipt = async (req, res, next) => {
 }
 
 const createFacture = async (req, res, next) => {
+  const receiptId = req.params.id
   try {
-    const receipt = await service.createFacture(req.body, req.receipt)
+    const receipt = await service.createFacture(receiptId, req.body)
     return res.status(201).json(receipt)
   } catch (error) {
     next(error)
