@@ -16,6 +16,8 @@ const createCompany = async (body, file, loggedUser) => {
     const route = await saveFile(file, '/companies')
     body.image = route
   }
+  const count = await companyDB.count({})
+  body.increase = (count ? count : 0) + 1
   const company = await companyDB.create(body)
   return company
 }
