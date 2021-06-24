@@ -18,6 +18,15 @@ const createReceipt = async (req, res, next) => {
   }
 }
 
+const sendFacture = async (req, res, next) => {
+  try {
+    const receipt = await service.sendFacture(req.body, req.user)
+    return res.status(201).json(receipt)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const createFacture = async (req, res, next) => {
   const receiptId = req.params.id
   try {
@@ -113,6 +122,7 @@ module.exports = {
   listReceipts,
   createReceipt,
   createFacture,
+  sendFacture,
   updateReceipt,
   detailReceipt,
   detailAdminReceipt,

@@ -25,6 +25,10 @@ router
   .delete(Api.deleteAdminReceipt)
 
 router
+  .route('/receipts/facture')
+  .post(Api.sendFacture)
+
+router
   .route('/receipts/facture/:id')
   .put(Api.createFacture)
 
