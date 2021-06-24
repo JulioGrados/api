@@ -6,6 +6,9 @@ const CustomError = require('custom-error-instance')
 const { payloadTicket, setFacture, payloadFacture } = require('utils/functions/receipt')
 const { filePdf } = require('utils/functions/file')
 const { companyDB } = require('../../../db/lib')
+const { sendEmailOnly } = require('utils/lib/sendgrid')
+const { getBase64 } = require('utils/functions/base64')
+const { MEDIA_PATH } = require('utils/files/path')
 
 const listReceipts = async params => {
   const receipts = await receiptDB.list(params)
@@ -55,6 +58,71 @@ const createReceipt = async (body, files, loggedUser) => {
   }
 }
 
+const sendFacture = async (body) => {
+  try {
+    const attachment = await getBase64(MEDIA_PATH + body.file)
+    const email = await sendEmailReceipt({
+      to: body.isBill ? body.send : body.email,
+      firstName: body.isBill ? body.businessName: body.firstName,
+      type: body.isBill ? 'Factura' : 'Boleta',
+      code: body.code,
+      from: 'cursos@eai.edu.pe',
+      fromname: 'Escuela Americana de Innovación',
+      text: 'Comprobante de Pago',
+      pdf: attachment
+    })
+    return {
+      success: true
+    }
+  } catch (error) {
+    throw error
+  }
+  
+}
+
+const sendEmailReceipt = async (body) => {
+  const msg = {
+    to: body.to,
+    from: body.from,
+    subject: `Haz recibido una ${body.type} Electrónica Nro. ${body.code} de Escuela Americana de Innovación S.A.C.`,
+    text: body.text,
+    fromname: body.froname,
+    html: `
+      Saludos ${body.firstName}
+      <br><br>
+      Se adjunta ${body.type} de Venta Eectrónica Nro. ${body.code}.
+      <br>
+      Recuerde que para cualquier consulta administrativa puedes escribirnos a cursos@eai.edu.pe donde será un gusto atender sus consultas.
+      <br><br>
+      Gracias.
+      <br><br>
+      --
+      <br>
+      Atte.
+      <br>
+      Área Comercial
+      <br>
+      Escuela Americana de Innovación
+      <br>
+      Teléfono: (01)4800022
+      <br>
+      WhatsApp: https://wa.me/5114800022
+      <br>
+      Calle Las Camelias 877, Oficina 302 - San Isidro - Lima
+    `,
+    attachments: [
+      {
+        filename: `comprobante.pdf`,
+        content: body.pdf,
+        type: 'application/pdf',
+        disposition: 'attachment'
+      }
+    ]
+  }
+  const send = await sendEmailOnly(msg)
+  return send
+}
+
 const getItems = async orders => {
   return await Promise.all(
     orders.map(async order => {
@@ -91,7 +159,7 @@ const createFacture = async (receiptId, body) => {
           receipt: body,
           items: items,
           company: company,
-          count: count ? count + 5 : 5
+          count: count ? count + 9 : 9
         })
         // console.log('ticket', ticket)
         const create = await setFacture(ticket)
@@ -103,9 +171,21 @@ const createFacture = async (receiptId, body) => {
           ruc: company.ruc,
           businessName: company.businessName,
           address: company.address,
+          send: body.send,
           code: ticket.nro_document,
           serie: 'FA01',
           sequential: ticket.sequential
+        })
+        console.log('body.send', body.send)
+        const email = await sendEmailReceipt({
+          to: body.send,
+          firstName: company.businessName,
+          type: 'Factura',
+          code: ticket.nro_document,
+          from: 'cursos@eai.edu.pe',
+          fromname: 'Escuela Americana de Innovación',
+          text: 'Comprobante de Pago',
+          pdf: create.data.pdf_base64
         })
         const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
         const bdReceipt = await receiptDB.detail({
@@ -145,9 +225,20 @@ const createFacture = async (receiptId, body) => {
           lastName: lastName,
           names: firstName + ' ' + lastName,
           dni: dni,
+          email: body.email,
           code: ticket.nro_document,
           serie: 'BA01',
           sequential: ticket.sequential
+        })
+        const email = await sendEmailReceipt({
+          to: body.email,
+          firstName: firstName,
+          type: 'Boleta',
+          code: ticket.nro_document,
+          from: 'cursos@eai.edu.pe',
+          fromname: 'Escuela Americana de Innovación',
+          text: 'Comprobante de Pago',
+          pdf: create.data.pdf_base64
         })
         const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
         const bdReceipt = await receiptDB.detail({
@@ -292,6 +383,7 @@ module.exports = {
   listReceipts,
   createReceipt,
   createFacture,
+  sendFacture,
   updateReceipt,
   detailReceipt,
   detailAdminReceipt,

@@ -79,7 +79,7 @@ const createEmailEnrol = async (body) => {
     fromname: body.fromname,
     attachments: [
       {
-        filename: `constancia.pdf`,
+        filename: body.constance ? 'constancia.pdf' : 'certificado.pdf',
         content: body.pdf,
         type: 'application/pdf',
         disposition: 'attachment'
