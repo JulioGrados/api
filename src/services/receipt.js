@@ -151,110 +151,119 @@ const getItems = async orders => {
 const createFacture = async (receiptId, body) => {
   if (body.orders && body.orders.length) {
     if (body.isBill) {
-      try {
-        const count = await receiptDB.count({ query: { isFacture: true } })
-        const company = await companyDB.detail({ query: { ruc: body.ruc } })
-        const items = await getItems(body.orders)
-        const ticket = payloadFacture({
-          receipt: body,
-          items: items,
-          company: company,
-          count: count ? count + 9 : 9
-        })
-        // console.log('ticket', ticket)
-        const create = await setFacture(ticket)
-        const fileroot = await filePdf(create.data.pdf_base64, create.data.voucher_id)
-        const receipt = await receiptDB.update(receiptId, {
-          status: 'Finalizada',
-          isFacture: true,
-          file: fileroot,
-          ruc: company.ruc,
-          businessName: company.businessName,
-          address: company.address,
-          send: body.send,
-          code: ticket.nro_document,
-          serie: 'FA01',
-          sequential: ticket.sequential
-        })
-        console.log('body.send', body.send)
-        const email = await sendEmailReceipt({
-          to: body.send,
-          firstName: company.businessName,
-          type: 'Factura',
-          code: ticket.nro_document,
-          from: 'cursos@eai.edu.pe',
-          fromname: 'Escuela Americana de Innovación',
-          text: 'Comprobante de Pago',
-          pdf: create.data.pdf_base64
-        })
-        const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
-        const bdReceipt = await receiptDB.detail({
-          query: { _id: receipt._id },
-          populate: { path: 'orders' }
-        })
-        return bdReceipt
-      } catch (error) {
-        const data = error.data
-
-        if (data) {
-          const InvalidError = CustomError('CastError', { message: data.error, code: 'EINVLD' }, CustomError.factory.expectReceive)
-          throw new InvalidError()
-        } else {
-          throw error 
+      if (body.send) {
+        try {
+          const count = await receiptDB.count({ query: { isFacture: true } })
+          const company = await companyDB.detail({ query: { ruc: body.ruc } })
+          const items = await getItems(body.orders)
+          const ticket = payloadFacture({
+            receipt: body,
+            items: items,
+            company: company,
+            count: count ? count + 9 : 9
+          })
+          // console.log('ticket', ticket)
+          const create = await setFacture(ticket)
+          const fileroot = await filePdf(create.data.pdf_base64, create.data.voucher_id)
+          const receipt = await receiptDB.update(receiptId, {
+            status: 'Finalizada',
+            isFacture: true,
+            file: fileroot,
+            ruc: company.ruc,
+            businessName: company.businessName,
+            address: company.address,
+            send: body.send,
+            code: ticket.nro_document,
+            serie: 'FA01',
+            sequential: ticket.sequential
+          })
+          console.log('body.send', body.send)
+          const email = await sendEmailReceipt({
+            to: body.send,
+            firstName: company.businessName,
+            type: 'Factura',
+            code: ticket.nro_document,
+            from: 'cursos@eai.edu.pe',
+            fromname: 'Escuela Americana de Innovación',
+            text: 'Comprobante de Pago',
+            pdf: create.data.pdf_base64
+          })
+          const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
+          const bdReceipt = await receiptDB.detail({
+            query: { _id: receipt._id },
+            populate: { path: 'orders' }
+          })
+          return bdReceipt
+        } catch (error) {
+          const data = error.data
+          if (data) {
+            const InvalidError = CustomError('CastError', { message: data.error, code: 'EINVLD' }, CustomError.factory.expectReceive)
+            throw new InvalidError()
+          } else {
+            throw error 
+          }
         }
+      } else {
+        const InvalidError = CustomError('CastError', { message: 'La factura no tiene un email asociado.', code: 'EINVLD' }, CustomError.factory.expectReceive)
+        throw new InvalidError()
       }
     } else {
-      try {
-        const count = await receiptDB.count({ query: { isTicket: true }})
-        const { firstName, lastName, dni } = body 
-        const items = await getItems(body.orders)
-        const ticket = payloadTicket({
-          receipt: body,
-          items: items,
-          user: { firstName: firstName, lastName: lastName, dni: dni },
-          count: count ? count + 24 : 24
-        })
-        // console.log('ticket', ticket)
-        const create = await setFacture(ticket)
-        const fileroot = await filePdf(create.data.pdf_base64, create.data.voucher_id)
-        const receipt = await receiptDB.update(receiptId, {
-          status: 'Finalizada',
-          isTicket: true,
-          file: fileroot,
-          firstName: firstName,
-          lastName: lastName,
-          names: firstName + ' ' + lastName,
-          dni: dni,
-          email: body.email,
-          code: ticket.nro_document,
-          serie: 'BA01',
-          sequential: ticket.sequential
-        })
-        const email = await sendEmailReceipt({
-          to: body.email,
-          firstName: firstName,
-          type: 'Boleta',
-          code: ticket.nro_document,
-          from: 'cursos@eai.edu.pe',
-          fromname: 'Escuela Americana de Innovación',
-          text: 'Comprobante de Pago',
-          pdf: create.data.pdf_base64
-        })
-        const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
-        const bdReceipt = await receiptDB.detail({
-          query: { _id: receipt._id },
-          populate: { path: 'orders' }
-        })
-        return bdReceipt
-      } catch (error) {
-        const data = error.data
+      if (body.email) {
+        try {
+          const count = await receiptDB.count({ query: { isTicket: true }})
+          const { firstName, lastName, dni } = body 
+          const items = await getItems(body.orders)
+          const ticket = payloadTicket({
+            receipt: body,
+            items: items,
+            user: { firstName: firstName, lastName: lastName, dni: dni },
+            count: count ? count + 24 : 24
+          })
+          // console.log('ticket', ticket)
+          const create = await setFacture(ticket)
+          const fileroot = await filePdf(create.data.pdf_base64, create.data.voucher_id)
+          const receipt = await receiptDB.update(receiptId, {
+            status: 'Finalizada',
+            isTicket: true,
+            file: fileroot,
+            firstName: firstName,
+            lastName: lastName,
+            names: firstName + ' ' + lastName,
+            dni: dni,
+            email: body.email,
+            code: ticket.nro_document,
+            serie: 'BA01',
+            sequential: ticket.sequential
+          })
+          const email = await sendEmailReceipt({
+            to: body.email,
+            firstName: firstName,
+            type: 'Boleta',
+            code: ticket.nro_document,
+            from: 'cursos@eai.edu.pe',
+            fromname: 'Escuela Americana de Innovación',
+            text: 'Comprobante de Pago',
+            pdf: create.data.pdf_base64
+          })
+          const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
+          const bdReceipt = await receiptDB.detail({
+            query: { _id: receipt._id },
+            populate: { path: 'orders' }
+          })
+          return bdReceipt
+        } catch (error) {
+          const data = error.data
 
-        if (data) {
-          const InvalidError = CustomError('CastError', { message: data.error, code: 'EINVLD' }, CustomError.factory.expectReceive)
-          throw new InvalidError()
-        } else {
-          throw error 
+          if (data) {
+            const InvalidError = CustomError('CastError', { message: data.error, code: 'EINVLD' }, CustomError.factory.expectReceive)
+            throw new InvalidError()
+          } else {
+            throw error 
+          }
         }
+      } else {
+        const InvalidError = CustomError('CastError', { message: 'La boleta no tiene un email asociado.', code: 'EINVLD' }, CustomError.factory.expectReceive)
+        throw new InvalidError()
       }
     }
   } else {
@@ -332,6 +341,28 @@ const updateReceipt = async (receiptId, body, files, loggedUser) => {
   }
 }
 
+const updateAdminReceipt = async (receiptId, body, loggedUser) => {
+  try {
+    const orders = await orderDB.list({ query: { 'receipt.ref': receiptId } })
+    const result = await Promise.all(
+      orders.map(async order => {
+        const orderRes = await orderDB.update(order._id, {
+          receipt: undefined,
+          status: 'Pagada'
+        })
+        return orderRes
+      })
+    )
+    const receipt = await receiptDB.update(receiptId, {
+      status: 'Anulada'
+    })
+    console.log('receipt', receipt)
+    return receipt
+  } catch (error) {
+    throw error
+  }
+}
+
 const detailReceipt = async params => {
   const receipt = await receiptDB.detail(params)
   return receipt
@@ -387,6 +418,7 @@ module.exports = {
   updateReceipt,
   detailReceipt,
   detailAdminReceipt,
+  updateAdminReceipt,
   deleteReceipt,
   deleteAdminReceipt
 }

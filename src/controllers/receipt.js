@@ -54,6 +54,20 @@ const updateReceipt = async (req, res, next) => {
   }
 }
 
+const updateAdminReceipt = async (req, res, next) => {
+  const receiptId = req.params.id
+  try {
+    const receipt = await service.updateAdminReceipt(
+      receiptId,
+      req.body,
+      req.user
+    )
+    return res.status(200).json(receipt)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const detailReceipt = async (req, res, next) => {
   const receiptId = req.params.id
   const params = req.query
@@ -126,6 +140,7 @@ module.exports = {
   updateReceipt,
   detailReceipt,
   detailAdminReceipt,
+  updateAdminReceipt,
   deleteReceipt,
   deleteAdminReceipt
 }
