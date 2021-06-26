@@ -21,7 +21,7 @@ router
 router
   .route('/receipts/admin/:id')
   .get(Api.detailAdminReceipt)
-  // .put(Api.updateAdminReceipt)
+  .put(Api.updateAdminReceipt)
   .delete(Api.deleteAdminReceipt)
 
 router
