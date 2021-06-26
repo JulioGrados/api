@@ -928,6 +928,15 @@ const timelineProgress = (updateDeal, deal, assigned) => {
       })
     }
   }
+  if (updateDeal.statusPayment === 'Pago' && deal.status === 'Ganado') {
+    createTimeline({
+      linked: updateDeal.client,
+      deal: updateDeal,
+      assigned: updateDeal.assessor,
+      type: 'Deal',
+      name: `[Trato Completado]`
+    })
+  }
 }
 
 const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) => {
