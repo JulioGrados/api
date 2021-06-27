@@ -13,9 +13,18 @@ router
   .post(Api.createCertificate)
 
 router
+  .route('/certificates/admin')
+  .post(Api.createAdminCertificate)
+
+router
   .route('/certificates/:id')
   .get(Api.detailCertificate)
   .put(Api.updateCertificate)
   .delete(Api.deleteCertificate)
+
+router
+  .route('/certificates/admin/:id')
+  .put(Api.updateAdminCertificate)
+
 
 module.exports = router

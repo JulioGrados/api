@@ -1,10 +1,34 @@
 'use strict'
 
 const { certificateDB } = require('../db')
+const { saveFile, saveCustom } = require('utils/files/save')
 
 const listCertificates = async params => {
   const certificates = await certificateDB.list(params)
   return certificates
+}
+
+const createAdminCertificate = async (body, files, loggedUser) => {
+  if (files) {
+    for (const label in files) {
+      const route = await saveFile(files[label], '/certificates')
+      body[label] = route
+    }
+  }
+  const certficate = await certificateDB.create(body)
+  return certficate
+}
+
+const updateAdminCertificate = async (certficateId, body, files, loggedUser) => {
+  if (files) {
+    for (const label in files) {
+      const certi = await certificateDB.detail({ query: { _id: certficateId }, populate: ['linked.ref', 'course.ref'] })
+      const route = await saveCustom(files[label], '/certificates', certi.course.ref.shortName, certi.linked.ref.names, certi.shortCode)
+      body[label] = route
+    }
+  }
+  const certficate = await certificateDB.update(certficateId, body)
+  return certficate
 }
 
 const createCertificate = async (body, loggedUser) => {
@@ -36,6 +60,8 @@ module.exports = {
   countDocuments,
   listCertificates,
   createCertificate,
+  createAdminCertificate,
+  updateAdminCertificate,
   updateCertificate,
   detailCertificate,
   deleteCertificate
