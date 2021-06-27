@@ -7,6 +7,30 @@ const listCertificates = async (req, res) => {
   return res.status(200).json(certificates)
 }
 
+const createAdminCertificate = async (req, res, next) => {
+  const body = JSON.parse(req.body.data)
+  const files = req.files
+  try {
+    const certificate = await service.createAdminCertificate(body, files, req.user)
+    return res.status(201).json(certificate)
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateAdminCertificate = async (req, res, next) => {
+  const certificateId = req.params.id
+  const body = JSON.parse(req.body.data)
+  const files = req.files
+  try {
+    const certificate = await service.updateAdminCertificate(certificateId, body, files, req.user)
+    return res.status(200).json(certificate)
+  } catch (error) {
+    next(error)
+  }
+}
+
+
 const createCertificate = async (req, res, next) => {
   try {
     const certificate = await service.createCertificate(req.body, req.user)
@@ -90,6 +114,8 @@ module.exports = {
   countDocuments,
   listCertificates,
   createCertificate,
+  createAdminCertificate,
+  updateAdminCertificate,
   updateCertificate,
   detailCertificate,
   detailCertificateOpen,
