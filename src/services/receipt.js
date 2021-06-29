@@ -126,17 +126,17 @@ const sendEmailReceipt = async (body) => {
 const getItems = async orders => {
   return await Promise.all(
     orders.map(async order => {
-      const tax = order.amount * 0.18
-      const price = parseFloat((order.amount - tax).toFixed(2))
+      const tax = order.amount / 1.18
+      const igv = parseFloat((order.amount - tax).toFixed(2))
       const course = await courseDB.detail({ query: { _id: order.course.ref } })
       
       return {
         quantity: parseFloat('1.00'),
-        price: price,
-        price_tax: parseFloat(order.amount.toFixed(2)),
+        price: parseFloat((order.amount).toFixed(2)),
+        price_tax: parseFloat((order.amount - igv).toFixed(2)),
         unit: 'ZZ',
-        tax_total_item: parseFloat(tax.toFixed(2)),
-        tax_unit_item: parseFloat(tax.toFixed(2)),
+        tax_total_item: parseFloat(igv.toFixed(2)),
+        tax_unit_item: parseFloat(igv.toFixed(2)),
         type_igv: '10',
         description: course.name,
         detail: order.amount.toString(),
@@ -162,7 +162,7 @@ const createFacture = async (receiptId, body) => {
             company: company,
             count: count ? count + 9 : 9
           })
-          // console.log('ticket', ticket)
+          console.log('ticket', ticket)
           const create = await setFacture(ticket)
           const fileroot = await filePdf(create.data.pdf_base64, create.data.voucher_id)
           const receipt = await receiptDB.update(receiptId, {
@@ -177,7 +177,7 @@ const createFacture = async (receiptId, body) => {
             serie: 'FA01',
             sequential: ticket.sequential
           })
-          console.log('body.send', body.send)
+          
           const email = await sendEmailReceipt({
             to: body.send,
             firstName: company.businessName,
@@ -217,7 +217,7 @@ const createFacture = async (receiptId, body) => {
             receipt: body,
             items: items,
             user: { firstName: firstName, lastName: lastName, dni: dni },
-            count: count ? count + 24 : 24
+            count: count ? count + 26 : 26
           })
           // console.log('ticket', ticket)
           const create = await setFacture(ticket)

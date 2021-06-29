@@ -8,6 +8,7 @@ const { downloadFile } = require('utils/files/save')
 const { compareOnlySimilarity } = require('utils/functions/text')
 const { sqlConsult } = require('utils/functions/sql')
 const { calculateProm } = require('utils/functions/enrol')
+const { saveCustom } = require('utils/files/save')
 const { createUser } = require('./user')
 const {
   userDB,
@@ -27,6 +28,41 @@ const { emitDeal, incProspects, addInitialStatus } = require('./deal')
 const { createFindQuery } = require('utils/functions/user')
 const { createTimeline } = require('./timeline')
 const config = require('config')
+
+
+const migrateAdminCertificates = async (files, body) => {
+  const result = await Promise.all(
+    files.map(async (file, index) => {
+      const name = file.name
+      const code = name.substring(name.length - 12, name.length - 4)
+      const certificate = await certificateDB.detail({query: {shortCode: code}, populate: ['linked.ref', 'course.ref']})
+      if (certificate) {
+        try {
+          const route = await saveCustom(file, '/certificates', certificate.course.ref.shortName, certificate.linked.ref.names, certificate.shortCode)
+          const updateCertficate = await certificateDB.update(certificate._id, {
+            file: route
+          })
+          return {
+            ...updateCertficate.toJSON(),
+            success: true
+          }
+        } catch (error) {
+          return {
+            success: false,
+            code: code
+          }
+        }
+      } else {
+        return {
+          success: false,
+          code: code
+        }
+      }
+    })
+  )
+  return result
+}
+
 
 const validate = (body) => {
   const { mobile, dni, email } = body
@@ -1311,6 +1347,7 @@ module.exports = {
   migrateUsersMoodle,
   migrateEnrollMoodle,
   migrateEvaluationsMoodle,
+  migrateAdminCertificates,
   migrateQuizMoodle,
   migrateTaskMoodle,
   migrateCertificates

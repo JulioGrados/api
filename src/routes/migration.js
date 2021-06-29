@@ -24,4 +24,8 @@ router
   .route('/migrations/certificates/moodle')
   .post(isAdmin, Api.migrateCertificates)
 
+router
+  .route('/migrations/admin/certificates')
+  .post(Api.migrateAdminCertificates)
+
 module.exports = router
