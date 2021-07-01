@@ -5,7 +5,7 @@ const moment = require('moment-timezone')
 const CustomError = require('custom-error-instance')
 const { generateHash } = require('utils/functions/auth')
 
-const { dealDB, userDB, progressDB, callDB } = require('../db')
+const { dealDB, userDB, progressDB, callDB, emailDB, saleDB, timelineDB, whastsappDB } = require('../db')
 
 const courseFunc = require('utils/functions/course')
 const { payloadToData } = require('utils/functions/user')
@@ -18,6 +18,7 @@ const { getSocket } = require('../lib/io')
 const { createNewUser, createEnrolUser, searchUser } = require('./moodle')
 
 let randomize = require('randomatic')
+const { receiptDB } = require('db/lib')
 
 const listDeals = async params => {
   console.log('--------------------------------------------------------')
@@ -68,6 +69,163 @@ const createDeal = async (body, loggedUser) => {
   }
 
   return deal
+}
+
+const mixDeal = async (body, loggedUser) => {
+  try {
+    const dealP = await dealDB.detail({ query: { _id: body.primary } })
+    const dealS = await dealDB.detail({ query: { _id: body.secundary } })
+    // console.log('dealP', dealP)
+    // console.log('dealS', dealS)
+    if (dealP.client && dealS.client) {
+      const userP = await userDB.detail({ query: { _id: dealP.client } })
+      const userS = await userDB.detail({ query: { _id: dealS.client } })
+      // console.log('userP', userP)
+      // console.log('userS', userS)
+      if (!userP.names && userS.names) {
+        userP.names = userS.names
+      }
+
+      if (!userP.email && userS.email) {
+        userP.email = userS.email
+      }
+
+      if (!userP.mobile && userS.mobile) {
+        userP.mobile = userS.mobile
+      }
+
+      if (!userP.mobileCode && userS.mobileCode) {
+        userP.mobileCode = userS.mobileCode
+      }
+
+      if (!userP.firstName && userS.firstName) {
+        userP.firstName = userS.firstName
+      }
+
+      if (!userP.lastName && userS.lastName) {
+        userP.lastName = userS.lastName
+      }
+
+      if (!userP.dni && userS.dni) {
+        userP.dni = userS.dni
+      }
+
+      if (!userP.country && userS.country) {
+        userP.country = userS.country
+      }
+
+      if (userP.extras) {
+        if (userS.mobile && userS.mobile !== userP.mobile) {
+          userP.extras.push({
+            type: 'mobile',
+            value: userS.mobile,
+            code: userS.mobileCode,
+            use: 'Otro'
+          })
+        }
+
+        if (userS.email && userS.email !== userP.email) {
+          userP.extras.push({
+            type: 'email',
+            value: userS.email,
+            use: 'Otro'
+          })
+        }
+      } else {
+        userP.extras = []
+        if (userS.mobile && userS.mobile !== userP.mobile) {
+          userP.extras.push({
+            type: 'mobile',
+            value: userS.mobile,
+            code: userS.mobileCode,
+            use: 'Otro'
+          })
+        }
+
+        if (userS.email && userS.email !== userP.email) {
+          userP.extras.push({
+            type: 'email',
+            value: userS.email,
+            use: 'Otro'
+          })
+        }
+      }
+
+      const calls = await callDB.list({ query: { deal: dealS._id } }) 
+      const emails = await emailDB.list({ query: { deal: dealS._id } }) 
+      const sales = await saleDB.list({ query: { deal: dealS._id } }) 
+      const timelines = await timelineDB.list({ query: { deal: dealS._id } }) 
+      const whatsapps = await whastsappDB.list({ query: { deal: dealS._id } })
+      const receipts = await receiptDB.list({ query: { deal: dealS._id } })
+      
+      const resultCalls = await Promise.all(
+        calls.map(async call => {
+          const callRes = await callDB.update(call._id, {
+            deal: dealP._id
+          })
+          return callRes
+        })
+      )
+
+      const resultEmails = await Promise.all(
+        emails.map(async email => {
+          const emailRes = await emailDB.update(email._id, {
+            deal: dealP._id
+          })
+          return emailRes
+        })
+      )
+
+      const resultSales = await Promise.all(
+        sales.map(async sale => {
+          const saleRes = await saleDB.update(sale._id, {
+            deal: dealP._id
+          })
+          return saleRes
+        })
+      )
+
+      const resultTimeline = await Promise.all(
+        timelines.map(async timeline => {
+          const timelineRes = await timelineDB.update(timeline._id, {
+            deal: dealP._id
+          })
+          return timelineRes
+        })
+      )
+
+      const resultWhastsapp = await Promise.all(
+        whatsapps.map(async whastsapp => {
+          const whastsappRes = await whastsappDB.update(whastsapp._id, {
+            deal: dealP._id
+          })
+          return whastsappRes
+        })
+      )
+
+      const resultReceipts = await Promise.all(
+        receipts.map(async receipt => {
+          const receiptRes = await receiptDB.update(receipt._id, {
+            deal: dealP._id
+          })
+          return receiptRes
+        })
+      )
+
+      await userDB.remove(userS._id)
+      await userDB.update(userP._id, {
+        ...userP.toJSON()
+      })
+      await dealDB.remove(dealS._id)
+      const dealUpdate = await dealDB.detail({query : {_id: dealP._id}, populate: ['client']})
+      return dealUpdate
+    } else {
+      const InvalidError = CustomError('InvalidError', { message: 'Uno de los dos tratos no tiene cliente', code: 'EINVLD' }, CustomError.factory.expectReceive)
+      throw new InvalidError()
+    }
+  } catch (error) {
+    throw error
+  }
 }
 
 const updateDealOne = async (dealId, body, loggedUser) => {
@@ -1093,6 +1251,7 @@ module.exports = {
   assessorDeals,
   searchDeals,
   createDeal,
+  mixDeal,
   updateDeal,
   updateWinner,
   updateDealOne,
