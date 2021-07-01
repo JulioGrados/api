@@ -34,9 +34,18 @@ const searchDeals = async (req, res, next) => {
   }
 }
 
-const createDeal = async (req, res) => {
+const createDeal = async (req, res, next) => {
   try {
     const deal = await service.createDeal(req.body, req.user)
+    return res.status(201).json(deal)
+  } catch (error) {
+    next(error)
+  }
+}
+
+const mixDeal = async (req, res, next) => {
+  try {
+    const deal = await service.mixDeal(req.body, req.user)
     return res.status(201).json(deal)
   } catch (error) {
     next(error)
@@ -144,6 +153,7 @@ module.exports = {
   assessorDeals,
   searchDeals,
   createDeal,
+  mixDeal,
   updateDeal,
   updateDealOne,
   updateDealCreate,

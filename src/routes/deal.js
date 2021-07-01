@@ -39,4 +39,8 @@ router
   .route('/deals/winner/:id')
   .put(Api.updateWinner)
 
+router
+  .route('/deals/mix')
+  .post(Api.mixDeal)
+
 module.exports = router
