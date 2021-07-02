@@ -43,4 +43,8 @@ router
   .route('/deals/mix')
   .post(Api.mixDeal)
 
+router
+  .route('/deals/change')
+  .post(Api.changeDeal)
+
 module.exports = router

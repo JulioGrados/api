@@ -249,6 +249,25 @@ const updateDeal = async (dealId, body, loggedUser) => {
   return updateDeal
 }
 
+const changeDeal = async (body, loggedUser) => {
+  try {
+    const deal = await dealDB.detail({ query: { _id: body.deal } })
+    const user = await userDB.detail({ query: { _id: body.user } })
+    let students = deal.students
+    students[0].student = {
+      ...user.toJSON(),
+      ref: user._id
+    }
+    const updateDeal = await dealDB.update(deal._id, {
+      client: user._id,
+      students: students
+    })
+    return updateDeal
+  } catch (error) {
+    throw error
+  }
+}
+
 const updateDealCreate = async (dealId, body, loggedUser) => {
   // console.log('dealId', dealId)
   // console.log('body', body)
@@ -1252,6 +1271,7 @@ module.exports = {
   searchDeals,
   createDeal,
   mixDeal,
+  changeDeal,
   updateDeal,
   updateWinner,
   updateDealOne,
