@@ -125,23 +125,26 @@ const sendEmailReceipt = async (body) => {
 
 const getItems = async orders => {
   return await Promise.all(
-    orders.map(async order => {
+    orders.map(async (order, index) => {
       const tax = order.amount / 1.18
-      const igv = parseFloat((order.amount - tax).toFixed(2))
+      const igv = parseFloat((order.amount - tax).toFixed(4))
       const course = await courseDB.detail({ query: { _id: order.course.ref } })
       
       return {
-        quantity: parseFloat('1.00'),
-        price: parseFloat((order.amount).toFixed(2)),
-        price_tax: parseFloat((order.amount - igv).toFixed(2)),
+        quantity: parseFloat('1.0000'),
+        price: parseFloat((order.amount - igv).toFixed(4)),
+        price_tax: parseFloat((order.amount).toFixed(4)),
         unit: 'ZZ',
+        unit_pdf: 'UND',
+        sunat_tax_code: '10',
         tax_total_item: parseFloat(igv.toFixed(2)),
-        tax_unit_item: parseFloat(igv.toFixed(2)),
+        tax_unit_item: parseFloat(igv.toFixed(4)),
         type_igv: '10',
+        igv_percentage: '18.0000',
         description: course.name,
         detail: order.amount.toString(),
         system_id: course.moodleId,
-        correlative: '1',
+        correlative: (index + 1).toString(),
         type: '2002'
       }
     })
@@ -160,7 +163,7 @@ const createFacture = async (receiptId, body) => {
             receipt: body,
             items: items,
             company: company,
-            count: count ? count + 9 : 9
+            count: count ? count + 1 : 1
           })
           console.log('ticket', ticket)
           const create = await setFacture(ticket)
@@ -217,9 +220,9 @@ const createFacture = async (receiptId, body) => {
             receipt: body,
             items: items,
             user: { firstName: firstName, lastName: lastName, dni: dni },
-            count: count ? count + 26 : 26
+            count: count ? count + 1 : 1
           })
-          // console.log('ticket', ticket)
+          console.log('ticket', ticket)
           const create = await setFacture(ticket)
           const fileroot = await filePdf(create.data.pdf_base64, create.data.voucher_id)
           const receipt = await receiptDB.update(receiptId, {
