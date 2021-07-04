@@ -11,6 +11,14 @@ const listOrders = async params => {
   return orders
 }
 
+const assessorOrders = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('ORDERS ASSESSOR')
+  console.log('--------------------------------------------------------')
+  const orders = await orderDB.assessor(params)
+  return orders
+}
+
 const findVoucher = async (voucher) => {
   try {
     const dbVoucher = await voucherDB.detail({ query: { code: voucher.code } })
@@ -88,6 +96,7 @@ const countDocuments = async params => {
 module.exports = {
   countDocuments,
   listOrders,
+  assessorOrders,
   createOrder,
   updateOrder,
   detailOrder,
