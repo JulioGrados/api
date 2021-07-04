@@ -264,6 +264,16 @@ const searchUser = async ({ username, email }) => {
   return { user: undefined }
 }
 
+const searchUsername = async ({ username }) => {
+  const user = await getUsersForField('username', username)
+  return user
+}
+
+const searchEmail = async ({ email }) => {
+  const user = await getUsersForField('email', email)
+  return user
+}
+
 const createNewUser = async user => {
   const dataUser = {
     email: user.email,
@@ -2545,6 +2555,8 @@ module.exports = {
   getUsersForField,
   getCourseForUser,
   searchUser,
+  searchUsername,
+  searchEmail,
   gradeNewCertificate,
   modulesCourse,
   testimoniesCourse

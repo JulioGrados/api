@@ -13,6 +13,10 @@ router
   .post(Api.createOrder)
 
 router
+  .route('/orders/crm')
+  .get(Api.assessorOrders)
+
+router
   .route('/orders/:id')
   .get(Api.detailOrder)
   .put(Api.updateOrder)
