@@ -68,7 +68,7 @@ const sendFacture = async (body) => {
       from: 'cursos@eai.edu.pe',
       fromname: 'Escuela Americana de Innovación',
       preheader: 'Comprobante de Pago',
-      content: `Haz recibido una ${body.isBill ? 'Factura' : 'Boleta'} Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`
+      content: `Haz recibido una ${body.isBill ? 'Factura' : 'Boleta'} Electrónica Nro. ${body.code} de Escuela Americana de Innovación S.A.C.`
     })
     const email = await sendEmailReceipt({
       to: body.isBill ? body.send : body.email,
