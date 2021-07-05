@@ -9,7 +9,7 @@ const { companyDB } = require('../../../db/lib')
 const { sendEmailOnly } = require('utils/lib/sendgrid')
 const { getBase64 } = require('utils/functions/base64')
 const { MEDIA_PATH } = require('utils/files/path')
-const { createEmail } = require('./email')
+const { createEmailLinked } = require('./email')
 
 const listReceipts = async params => {
   const receipts = await receiptDB.list(params)
@@ -62,7 +62,7 @@ const createReceipt = async (body, files, loggedUser) => {
 const sendFacture = async (body) => {
   try {
     const attachment = await getBase64(MEDIA_PATH + body.file)
-    const sendEmail = await createEmail({
+    const sendEmail = await createEmailLinked({
       deal: body.deal,
       assigned: body.assigned,
       from: 'cursos@eai.edu.pe',
@@ -201,7 +201,7 @@ const createFacture = async (receiptId, body) => {
             pdf: create.data.pdf_base64
           })
 
-          const sendEmail = await createEmail({
+          const sendEmail = await createEmailLinked({
             deal: receipt.deal,
             assigned: receipt.assigned,
             from: 'cursos@eai.edu.pe',
@@ -258,7 +258,7 @@ const createFacture = async (receiptId, body) => {
             sequential: ticket.sequential
           })
 
-          const sendEmail = await createEmail({
+          const sendEmail = await createEmailLinked({
             deal: receipt.deal,
             assigned: receipt.assigned,
             from: 'cursos@eai.edu.pe',

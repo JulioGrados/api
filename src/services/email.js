@@ -52,8 +52,18 @@ const createEmailEmit = async (body, loggedUser) => {
 }
 
 const createEmail = async (body, loggedUser) => {
-  console.log('body', body)
   const dataEmail = prepareEmail(body)
+  const email = await emailDB.create(dataEmail)
+  if (email.template && email.template.ref) {
+    sendEmailSengrid(email)
+  }else {
+    emitEmail(email)
+  }
+  return email
+}
+
+const createEmailLinked = async (body, loggedUser) => {
+  const dataEmail = prepareEmailLinked(body)
   const email = await emailDB.create(dataEmail)
   if (email.template && email.template.ref) {
     sendEmailSengrid(email)
@@ -98,6 +108,28 @@ const prepareEmail = ({ template, ...data }) => {
       names: linked.names,
       ref: linked._id
     },
+    assigned: {
+      username: assigned.username,
+      ref: assigned._id ? assigned._id : assigned.ref ? assigned.ref._id : assigned.ref
+    },
+    template: template && {
+      name: template.name,
+      ref: template._id
+    }
+  }
+  // console.log('dataEmail', dataEmail)
+  return dataEmail
+}
+
+const prepareEmailLinked = ({ template, ...data }) => {
+  const { assigned } = template || data
+  // console.log('template', template)
+  // console.log('data', data)
+  // console.log('linked', linked)
+  // console.log('linked names', linked.names)
+  // console.log('assigned', assigned)
+  const dataEmail = {
+    ...data,
     assigned: {
       username: assigned.username,
       ref: assigned._id ? assigned._id : assigned.ref ? assigned.ref._id : assigned.ref
@@ -192,6 +224,7 @@ module.exports = {
   countDocuments,
   listEmails,
   createEmail,
+  createEmailLinked,
   updateEmail,
   detailEmail,
   deleteEmail,
