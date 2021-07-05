@@ -3,8 +3,8 @@ const CustomError = require('custom-error-instance')
 
 const { emailDB, dealDB } = require('../db')
 const { sendEmail, sendCrm } = require('utils/lib/sendgrid')
-const { getSocket } = require('../lib/io')
 const { createTimeline } = require('./timeline')
+const { getSocket } = require('../lib/io')
 
 const listEmails = async params => {
   console.log('--------------------------------------------------------')
@@ -63,13 +63,14 @@ const createEmail = async (body, loggedUser) => {
 }
 
 const createEmailLinked = async (body, loggedUser) => {
-  const dataEmail = prepareEmailLinked(body)
-  const email = await emailDB.create(dataEmail)
-  if (email.template && email.template.ref) {
-    sendEmailSengrid(email)
-  }else {
-    emitEmail(email)
-  }
+  console.log('body', body)
+  const email = await emailDB.create(body)
+  await createTimeline({
+    deal: body.deal,
+    assigned: body.assigned,
+    type: 'Email',
+    name: `Se envió email`
+  })
   return email
 }
 
