@@ -237,7 +237,8 @@ const getUsersForField = async (name, value) => {
   const values = [value] // ['Halanoca29@hotmail.com']
 
   // Las variables enviadas a la función deben ser field con el atributo y values con un array que contenga el valor del atributo
-
+  console.log('field', field)
+  console.log('values', values)
   const userMoodle = await actionMoodle('GET', userField, {
     field,
     values
@@ -275,6 +276,7 @@ const searchEmail = async ({ email }) => {
 }
 
 const createNewUser = async user => {
+
   const dataUser = {
     email: user.email,
     firstname: user.firstName,
@@ -282,11 +284,11 @@ const createNewUser = async user => {
     username: user.username,
     password: user.password
   }
-  
+  console.log('dataUser', dataUser)
   const userMoodle = await actionMoodle('POST', createUser, {
     users: [dataUser]
   })
-  
+  console.log('userMoodle', userMoodle)
   if (userMoodle && userMoodle.length) {
     await userDB.update(user._id, { moodleId: userMoodle[0].id })
   } else {

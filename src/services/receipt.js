@@ -9,6 +9,7 @@ const { companyDB } = require('../../../db/lib')
 const { sendEmailOnly } = require('utils/lib/sendgrid')
 const { getBase64 } = require('utils/functions/base64')
 const { MEDIA_PATH } = require('utils/files/path')
+const { createEmail } = require('./email')
 
 const listReceipts = async params => {
   const receipts = await receiptDB.list(params)
@@ -61,6 +62,14 @@ const createReceipt = async (body, files, loggedUser) => {
 const sendFacture = async (body) => {
   try {
     const attachment = await getBase64(MEDIA_PATH + body.file)
+    const sendEmail = await createEmail({
+      deal: body.deal,
+      assigned: body.assigned,
+      from: 'cursos@eai.edu.pe',
+      fromname: 'Escuela Americana de Innovación',
+      preheader: 'Comprobante de Pago',
+      content: `Haz recibido una ${body.isBill ? 'Factura' : 'Boleta'} Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`
+    })
     const email = await sendEmailReceipt({
       to: body.isBill ? body.send : body.email,
       firstName: body.isBill ? body.businessName: body.firstName,
@@ -120,7 +129,7 @@ const sendEmailReceipt = async (body) => {
     ]
   }
   const send = await sendEmailOnly(msg)
-  return send
+  return msg
 }
 
 const getItems = async orders => {
@@ -191,6 +200,16 @@ const createFacture = async (receiptId, body) => {
             text: 'Comprobante de Pago',
             pdf: create.data.pdf_base64
           })
+
+          const sendEmail = await createEmail({
+            deal: receipt.deal,
+            assigned: receipt.assigned,
+            from: 'cursos@eai.edu.pe',
+            fromname: 'Escuela Americana de Innovación',
+            preheader: 'Comprobante de Pago',
+            content: `Haz recibido una Factura Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`
+          })
+
           const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
           const bdReceipt = await receiptDB.detail({
             query: { _id: receipt._id },
@@ -238,6 +257,16 @@ const createFacture = async (receiptId, body) => {
             serie: 'BA01',
             sequential: ticket.sequential
           })
+
+          const sendEmail = await createEmail({
+            deal: receipt.deal,
+            assigned: receipt.assigned,
+            from: 'cursos@eai.edu.pe',
+            fromname: 'Escuela Americana de Innovación',
+            preheader: 'Comprobante de Pago',
+            content: `Haz recibido una Boleta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`
+          })
+
           const email = await sendEmailReceipt({
             to: body.email,
             firstName: firstName,
@@ -248,6 +277,7 @@ const createFacture = async (receiptId, body) => {
             text: 'Comprobante de Pago',
             pdf: create.data.pdf_base64
           })
+
           const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
           const bdReceipt = await receiptDB.detail({
             query: { _id: receipt._id },

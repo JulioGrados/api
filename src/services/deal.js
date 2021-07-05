@@ -1170,10 +1170,10 @@ const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) =>
     user.password = code
     await createTimeline({
       ...timeline,
-      name: '[Cuenta] se creÃ³ la cuenta en Moodle [User] ' + dataUser.username
+      name: '[Cuenta] se creó la cuenta en Moodle [User] ' + dataUser.username
     })
     
-    await sendEmailAccess(user.toJSON(), logged)
+    await sendEmailAccess(user.toJSON(), deal.toJSON(), logged)
   }
   // console.log('registro de cursos')
   try {
@@ -1200,149 +1200,124 @@ const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) =>
   }
 }
 
-// const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) => {
-//   const deal = await dealDB.detail({
-//     query: { _id: dealId },
-//     populate: { path: 'client' }
-//   })
-//   // console.log('student && student.ref && student.ref._id', student)
-//   let user = await userDB.detail({
-//     query: { _id: student && student.ref && student.ref._id }
-//   })
-//   const timeline = {
-//     linked: {
-//       ...user.toJSON(),
-//       ref: user._id
-//     },
-//     assigned: {
-//       username: loggedUser.username,
-//       ref: loggedUser._id
-//     },
-//     deal: deal,
-//     type: 'Curso'
-//   }
+const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logged) => {
+  const deal = await dealDB.detail({
+    query: { _id: dealId },
+    populate: { path: 'client' }
+  })
+  console.log('deal', deal)
+  // console.log('student && student.ref && student.ref._id', student)
+  let user = await userDB.detail({
+    query: { _id: student && student.ref && student.ref._id }
+  })
+  const timeline = {
+    linked: {
+      ...user.toJSON(),
+      ref: user._id
+    },
+    assigned: {
+      username: loggedUser.username,
+      ref: loggedUser._id
+    },
+    deal: deal,
+    type: 'Curso'
+  }
 
-//   console.log('timeline', timeline)
-//   const code = randomize('0', 8)
-//   let userMoodle
-//   if (!user.moodleId) {
-//     // console.log('registrar usuario moodle')
-//     const existUsername = await searchUsername({
-//       username: user.username
-//     })
+  // console.log('timeline', timeline)
+  const code = randomize('0', 8)
+  
+  if (!user.moodleId) {
+    // console.log('registrar usuario moodle')
+    const existUsername = await searchUsername({
+      username: user.username
+    })
+    // console.log('existUsername', existUsername)
+    const existEmail = await searchEmail({
+      email: user.email
+    })
+    // console.log('existEmail', existEmail)
+    if (existUsername && existEmail) {
+      if (existUsername.id === existEmail.id) {
+        const dataUser = {
+          moodleId: existEmail.id
+        }
+        user = await userDB.update(user._id, dataUser)
+        user.password = code
 
-//     const existEmail = await searchEmail({
-//       username: user.username
-//     })
-    
-//     if (existUsername && existEmail) {
-//       if (existUsername.id === existEmail.id) {
-//         const dataUser = {
-//           moodleId: existEmail.id
-//         }
-//         user = await userDB.update(user._id, dataUser)
-//         user.password = code
+        await createTimeline({
+          ...timeline,
+          name: '[Cuenta] la cuenta existente en Moodle [Username] ' + user.username
+        })
+        await sendEmailAccessExist(user.toJSON(), deal.toJSON(), logged)
+      } else {
+        const InvalidError = CustomError('InvalidError', { message: 'El username, ya existe en moodle.', code: 'EINVLD' }, CustomError.factory.expectReceive)
+        throw new InvalidError()
+      }
+    } else {
+      if (!existUsername && existEmail) {
+        const dataUser = {
+          username: existEmail.username,
+          moodleId: existEmail.id
+        }
+        user = await userDB.update(user._id, dataUser)
+        await createTimeline({
+          ...timeline,
+          name: '[Cuenta] la cuenta existente en Moodle [Username] ' + user.username
+        })
+        await sendEmailAccessExist(user.toJSON(), deal.toJSON(), logged)
+      } else if (existUsername && !existEmail) {
+        const InvalidError = CustomError('InvalidError', { message: 'El username, ya existe en moodle.', code: 'EINVLD' }, CustomError.factory.expectReceive)
+        throw new InvalidError()
+      } else {
+        // console.log('entro aquí')
+        const moodleUser = await createNewUser({
+          ...user.toJSON(),
+          username: student.username,
+          password: code
+        })
+        // console.log('moodleUser', moodleUser)
+        const dataUser = {
+          username: student.username || undefined,
+          password: student.password ? generateHash(code) : undefined,
+          moodleId: moodleUser.id
+        }
+        user = await userDB.update(user._id, dataUser)
+        user.password = code
 
-//         await createTimeline({
-//           ...timeline,
-//           name: '[Cuenta] la cuenta existente en Moodle [User] ' + dataUser.username
-//         })
-//         // await sendEmailAccess(user.toJSON(), logged)
-//       } else {
-//         const InvalidError = CustomError('InvalidError', { message: 'El username, ya existe en moodle.', code: 'EINVLD' }, CustomError.factory.expectReceive)
-//         throw new InvalidError()
-//       }
-//     } else {
-//       if (!existUsername && existEmail) {
-//         const dataUser = {
-//           username: existEmail.username,
-//           moodleId: existEmail.id
-//         }
-//         user = await userDB.update(user._id, dataUser)
-//         await createTimeline({
-//           ...timeline,
-//           name: '[Cuenta] la cuenta existente en Moodle [User] ' + dataUser.username
-//         })
-//         await sendEmailAccess(user.toJSON(), logged)
-//       } else if (existUsername && !existEmail) {
-//         const InvalidError = CustomError('InvalidError', { message: 'El username, ya existe en moodle.', code: 'EINVLD' }, CustomError.factory.expectReceive)
-//         throw new InvalidError()
-//       } else {
-//         const moodleUser = await createNewUser({
-//           ...user.toJSON(),
-//           username: student.username,
-//           password: code
-//         })
+        await createTimeline({
+          ...timeline,
+          name: '[Cuenta] se creó la cuenta en Moodle [Username] ' + user.username
+        })
+        await sendEmailAccess(user.toJSON(), deal.toJSON(), logged)
+      }
+    } 
+  }
+  // console.log('registro de cursos')
+  try {
+    const coursesEnrol = await Promise.all(
+      courses.map(async course => {
+        user.password = code
+        await createEnrolUser({ course, user })
+        await createTimeline({
+          ...timeline,
+          name: `[Matricula] ${course.name} [User] ${user.username}`
+        })
+        return course
+      })
+    )
+    return coursesEnrol
+  } catch (error) {
+    console.log('error', error)
+    if (error.status) {
+      throw error
+    } else {
+      const InvalidError = CustomError('CastError', { message: 'Ocurrio un error al matricular un curso en Moodle', code: 'EINVLD' }, CustomError.factory.expectReceive)
+      throw new InvalidError()
+    }
+  }
+}
 
-//         const dataUser = {
-//           username: student.username || undefined,
-//           password: student.password ? generateHash(code) : undefined,
-//           moodleId: moodleUser.id
-//         }
-//         user = await userDB.update(user._id, dataUser)
-//         user.password = code
-
-//         await createTimeline({
-//           ...timeline,
-//           name: '[Cuenta] se creó la cuenta en Moodle [User] ' + dataUser.username
-//         })
-//         await sendEmailAccess(user.toJSON(), logged)
-//       }
-//     }
-//     // if (exist && exist.user) {
-//     //   const err = {
-//     //     status: 402,
-//     //     message: `Ya existe un usuario con el mismo ${exist.type}`
-//     //   }
-//     //   throw err
-//     // }
-    
-//     // const moodleUser = await createNewUser({
-//     //   ...user.toJSON(),
-//     //   username: student.username,
-//     //   password: code
-//     // })
-    
-//     // const dataUser = {
-//     //   username: student.username || undefined,
-//     //   password: student.password ? generateHash(code) : undefined,
-//     //   moodleId: moodleUser.id
-//     // }
-//     // user = await userDB.update(user._id, dataUser)
-//     // user.password = code
-//     // await createTimeline({
-//     //   ...timeline,
-//     //   name: '[Cuenta] se creó la cuenta en Moodle [User] ' + dataUser.username
-//     // })
-    
-//     // await sendEmailAccess(user.toJSON(), logged)
-//   }
-//   // console.log('registro de cursos')
-//   // try {
-//   //   const coursesEnrol = await Promise.all(
-//   //     courses.map(async course => {
-//   //       user.password = code
-//   //       await createEnrolUser({ course, user })
-//   //       await createTimeline({
-//   //         ...timeline,
-//   //         name: `[Matricula] ${course.name} [User] ${user.username}`
-//   //       })
-//   //       return course
-//   //     })
-//   //   )
-//   //   return coursesEnrol
-//   // } catch (error) {
-//   //   console.log('error', error)
-//   //   if (error.status) {
-//   //     throw error
-//   //   } else {
-//   //     const InvalidError = CustomError('CastError', { message: 'Ocurrio un error al matricular un curso en Moodle', code: 'EINVLD' }, CustomError.factory.expectReceive)
-//   //     throw new InvalidError()
-//   //   }
-//   // }
-// }
-
-const sendEmailAccess = async (user, logged) => {
+const sendEmailAccess = async (user, deal, logged) => {
   const linked = payloadToData(user)
   const assigned = payloadToData(logged)
   const to = user.email
@@ -1360,8 +1335,63 @@ const sendEmailAccess = async (user, logged) => {
   console.log('substitutions', substitutions)
   try {
     const email = await createEmail({
-      linked,
-      assigned,
+      linked: {
+        ...linked,
+        ref: linked
+      },
+      assigned: {
+        ...assigned,
+        ref: assigned
+      },
+      deal: deal,
+      from,
+      fromname,
+      preheader,
+      content
+    })
+    await sendMailTemplate({
+      to,
+      from,
+      fromname,
+      substitutions,
+      templateId: templateId,
+      args: {
+        emailId: email._id
+      }
+    })
+  } catch (error) {
+    console.log('error create email', error)
+  }
+}
+
+const sendEmailAccessExist = async (user, deal, logged) => {
+  const linked = payloadToData(user)
+  const assigned = payloadToData(logged)
+  const to = user.email
+  const fromname = 'Escuela Americana de Innovación'
+  const from = 'cursos@eai.edu.pe'
+  const templateId = 'd-aab0311dac2c438fafe536e73e9b36bf'
+  const preheader = 'Accesos a Moodle'
+  const content =
+    'Se envio la información de accesos a la cuneta de moodle con la plantilla pre definida en sengrid.'
+  const substitutions = {
+    username: linked.username,
+    password: user.password,
+    name: linked.names
+  }
+  console.log('substitutions', substitutions)
+  try {
+    console.log('existe')
+    const email = await createEmail({
+      linked: {
+        ...linked,
+        ref: linked
+      },
+      assigned: {
+        ...assigned,
+        ref: assigned
+      },
+      deal: deal,
       from,
       fromname,
       preheader,
@@ -1386,8 +1416,9 @@ const enrolStudents = async ({ students, dealId, loggedUser }, logged) => {
   try {
     const users = await Promise.all(
       students.map(async item => {
-        const student = item.student
-        const user = await userDB.update(student.ref._id, {
+        const student = item.student && item.student.ref ? item.student.ref : item.student
+        const id = student && student.ref ? student.ref._id : student._id
+        const user = await userDB.update(id, {
           username: student.username,
           firstName: student.firstName,
           lastName: student.lastName,
@@ -1401,7 +1432,7 @@ const enrolStudents = async ({ students, dealId, loggedUser }, logged) => {
 
     const enrols = await Promise.all(
       students.map(async item => {
-        const courses = await addCoursesMoodle(
+        const courses = await addCoursesMoodleUpdate(
           item.student,
           item.courses,
           dealId,
@@ -1412,18 +1443,15 @@ const enrolStudents = async ({ students, dealId, loggedUser }, logged) => {
       })
     )
     
-    return users
+     const updatedDeal = await dealDB.update(dealId, {
+      isClosed: true,
+      endDate: new Date()
+    })
+    emitDeal(updatedDeal)
+    return { enrols, updatedDeal }
   } catch (error) {
     throw error
   }
-  
-
-  // const updatedDeal = await dealDB.update(dealId, {
-  //   isClosed: true,
-  //   endDate: new Date()
-  // })
-  // emitDeal(updatedDeal)
-  // return { enrols, updatedDeal }
 }
 
 module.exports = {

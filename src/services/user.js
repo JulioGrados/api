@@ -160,6 +160,7 @@ const createOrUpdateUser = async body => {
 const createStudent = async body => {
   let user
   try {
+    console.log('body', body)
     const params = createFindQuery(body)
     const lead = await userDB.detail(params)
 

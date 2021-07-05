@@ -52,6 +52,7 @@ const createEmailEmit = async (body, loggedUser) => {
 }
 
 const createEmail = async (body, loggedUser) => {
+  console.log('body', body)
   const dataEmail = prepareEmail(body)
   const email = await emailDB.create(dataEmail)
   if (email.template && email.template.ref) {
