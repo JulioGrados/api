@@ -265,6 +265,11 @@ const searchUser = async ({ username, email }) => {
   return { user: undefined }
 }
 
+const searchID = async ({ id }) => {
+  const user = await getUsersForField('id', id)
+  return user
+}
+
 const searchUsername = async ({ username }) => {
   const user = await getUsersForField('username', username)
   return user
@@ -2400,6 +2405,23 @@ const createEnrolUser = async ({ user, course }) => {
   await actionMoodle('POST', enrolCourse, {
     enrolments: [enroll]
   })
+  
+  try {
+    const enrol = await enrolDB.detail({ query: { 'linked.ref': user._id, 'course.ref': course._id } })
+    console.log('enrol', enrol)
+  } catch (error) {
+    const enrol = await enrolDB.create({
+      linked: {
+        ...user.toJSON(),
+        ref: user
+      },
+      course: {
+        ...course,
+        ref: course
+      }
+    })
+    console.log('enrol nuevo', enrol)
+  }
 
   return true
 }
@@ -2559,6 +2581,7 @@ module.exports = {
   searchUser,
   searchUsername,
   searchEmail,
+  searchID,
   gradeNewCertificate,
   modulesCourse,
   testimoniesCourse

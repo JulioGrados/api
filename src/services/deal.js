@@ -15,7 +15,7 @@ const { sendMailTemplate } = require('utils/lib/sendgrid')
 const { MEDIA_PATH } = require('utils/files/path')
 const { createEmail } = require('./email')
 const { getSocket } = require('../lib/io')
-const { createNewUser, createEnrolUser, searchUser, searchUsername, searchEmail } = require('./moodle')
+const { createNewUser, createEnrolUser, searchUser, searchUsername, searchEmail, searchID } = require('./moodle')
 
 let randomize = require('randomatic')
 const { receiptDB } = require('db/lib')
@@ -1291,6 +1291,17 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
         await sendEmailAccess(user.toJSON(), deal.toJSON(), logged)
       }
     } 
+  } else {
+    const existID = await searchID({
+      id: user.moodleId
+    })
+    if (existID) {
+      await createTimeline({
+        ...timeline,
+        name: '[Cuenta] la cuenta existente en Moodle [Username] ' + user.username
+      })
+      await sendEmailAccessExist(user.toJSON(), deal.toJSON(), logged)
+    }
   }
   // console.log('registro de cursos')
   try {
