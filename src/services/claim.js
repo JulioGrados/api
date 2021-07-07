@@ -2,6 +2,7 @@
 
 const { claimDB } = require('../db')
 const { sendEmail } = require('utils/lib/sendgrid')
+const { createEmailOnly } = require('./email')
 
 const listClaims = async params => {
   const claims = await claimDB.list(params)
@@ -16,8 +17,10 @@ const createClaim = async (body, loggedClaim) => {
     from: 'gerencia@eai.edu.pe',
     subject: `[${body.option}] - ${body.firstName} ${body.lastName}]`,
     html: `Nombres: ${body.firstName}<br>Apellidos: ${body.lastName}<br>Email: ${body.email}<br>DNI: ${body.dni}<br>Dirección: ${body.address}<br>Teléfono: ${body.mobile}<br>Detalle: ${body.detail}<br>Pedido: ${body.order}<br>`,
+    content: `Nombres: ${body.firstName}<br>Apellidos: ${body.lastName}<br>Email: ${body.email}<br>DNI: ${body.dni}<br>Dirección: ${body.address}<br>Teléfono: ${body.mobile}<br>Detalle: ${body.detail}<br>Pedido: ${body.order}<br>`,
     fromname: `Escuela Americana de Innovación`
   }
+  const email = await createEmailOnly(msg)
   const emailUser = await sendEmail(msg)
   msg.to = 'gerencia@eai.edu.pe'
   const emailGerencia = await sendEmail(msg)

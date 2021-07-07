@@ -63,6 +63,7 @@ const sendFacture = async (body) => {
   try {
     const attachment = await getBase64(MEDIA_PATH + body.file)
     const sendEmail = await createEmailLinked({
+      to: body.isBill ? body.send : body.email,
       deal: body.deal,
       assigned: body.assigned,
       from: 'cursos@eai.edu.pe',
@@ -202,6 +203,7 @@ const createFacture = async (receiptId, body) => {
           })
 
           const sendEmail = await createEmailLinked({
+            to: body.send,
             deal: receipt.deal,
             assigned: receipt.assigned,
             from: 'cursos@eai.edu.pe',
@@ -259,6 +261,7 @@ const createFacture = async (receiptId, body) => {
           })
 
           const sendEmail = await createEmailLinked({
+            to: body.email,
             deal: receipt.deal,
             assigned: receipt.assigned,
             from: 'cursos@eai.edu.pe',

@@ -76,6 +76,7 @@ const createEmailEnrol = async (body) => {
     subject: body.subject,
     text: body.text,
     html: body.html,
+    content: body.html,
     fromname: body.fromname,
     attachments: [
       {
@@ -86,6 +87,7 @@ const createEmailEnrol = async (body) => {
       }
     ]
   }
+  const email = await createEmailOnly(msg)
   const enrol = await sendEmail(msg)
   return enrol
 }
