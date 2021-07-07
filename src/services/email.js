@@ -31,23 +31,8 @@ const emitDeal = deal => {
   }
 }
 
-const createEmailEmit = async (body, loggedUser) => {
-  const dataEmail = prepareEmail(body)
-  // const deal = await dealDB.detail({
-  //   query: { _id: dataEmail.deal },
-  //   populate: [
-  //     'students.student.ref',
-  //     'students.courses.ref',
-  //     'client'
-  //     // 'assessor.ref'
-  //   ]
-  // })
-  // emitDeal(deal)
+const createEmailOnly = async (body, loggedUser) => {
   const email = await emailDB.create(dataEmail)
-  await sendEmailSengrid(email)
-  if (email) {
-    emitEmail(email)
-  }
   return email
 }
 
@@ -63,7 +48,6 @@ const createEmail = async (body, loggedUser) => {
 }
 
 const createEmailLinked = async (body, loggedUser) => {
-  console.log('body', body)
   const email = await emailDB.create(body)
   await createTimeline({
     deal: body.deal,
@@ -225,6 +209,7 @@ module.exports = {
   countDocuments,
   listEmails,
   createEmail,
+  createEmailOnly,
   createEmailLinked,
   updateEmail,
   detailEmail,

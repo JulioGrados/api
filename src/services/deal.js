@@ -925,6 +925,7 @@ const sendEmailCourse = async (lead, deal, dataCourse, social = false) => {
   try {
     const email = await createEmail({
       linked,
+      to,
       assigned,
       from,
       fromname,
@@ -1356,6 +1357,7 @@ const sendEmailAccess = async (user, deal, logged) => {
       },
       deal: deal,
       from,
+      to,
       fromname,
       preheader,
       content
@@ -1404,6 +1406,7 @@ const sendEmailAccessExist = async (user, deal, logged) => {
       },
       deal: deal,
       from,
+      to,
       fromname,
       preheader,
       content

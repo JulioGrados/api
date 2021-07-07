@@ -2,16 +2,18 @@
 
 const { sendDB } = require('../db')
 const { sendSimple } = require('utils/lib/sendgrid')
+const { createEmailOnly } = require('./email')
 
 const createEmaiSend = async (body) => {
-  console.log('body', body)
   const msg = {
     to: body.to,
     from: 'cursos@eai.edu.pe',
     fromname: 'Escuela Americana de Innovación',
     subject: body.subject,
-    html: body.content
+    html: body.content,
+    content: body.content
   }
+  const email = await createEmailOnly(msg)
   const send = await sendSimple(msg)
   return send
 }
