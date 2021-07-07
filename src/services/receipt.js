@@ -191,17 +191,6 @@ const createFacture = async (receiptId, body) => {
             serie: 'FA01',
             sequential: ticket.sequential
           })
-          
-          const email = await sendEmailReceipt({
-            to: body.send,
-            firstName: company.businessName,
-            type: 'Factura',
-            code: ticket.nro_document,
-            from: 'cursos@eai.edu.pe',
-            fromname: 'Escuela Americana de Innovación',
-            text: 'Comprobante de Pago',
-            pdf: create.data.pdf_base64
-          })
 
           const sendEmail = await createEmailLinked({
             to: body.send,
@@ -212,6 +201,17 @@ const createFacture = async (receiptId, body) => {
             preheader: 'Comprobante de Pago',
             subject: `Haz recibido una Factura Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
             content: `Haz recibido una Factura Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`
+          })
+          
+          const email = await sendEmailReceipt({
+            to: body.send,
+            firstName: company.businessName,
+            type: 'Factura',
+            code: ticket.nro_document,
+            from: 'cursos@eai.edu.pe',
+            fromname: 'Escuela Americana de Innovación',
+            text: 'Comprobante de Pago',
+            pdf: create.data.pdf_base64
           })
 
           const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
