@@ -453,6 +453,14 @@ const countDocuments = async params => {
   return count
 }
 
+const emitEnrol = enrol => {
+  console.log('enrol.asigned', enrol.assigned)
+  if (enrol.assigned) {
+    const io = getSocket()
+    io.to(enrol.assigned.ref).emit('enrol', enrol)
+  }
+}
+
 module.exports = {
   countDocuments,
   listEnrols,
@@ -463,5 +471,6 @@ module.exports = {
   updateEnrol,
   updateMoodle,
   detailEnrol,
+  emitEnrol,
   deleteEnrol
 }
