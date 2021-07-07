@@ -68,6 +68,7 @@ const sendFacture = async (body) => {
       assigned: body.assigned,
       from: 'cursos@eai.edu.pe',
       fromname: 'Escuela Americana de Innovación',
+      subject: `Haz recibido una ${body.isBill ? 'Factura' : 'Boleta'} Electrónica Nro. ${body.code} de Escuela Americana de Innovación S.A.C.`,
       preheader: 'Comprobante de Pago',
       content: `Haz recibido una ${body.isBill ? 'Factura' : 'Boleta'} Electrónica Nro. ${body.code} de Escuela Americana de Innovación S.A.C.`
     })
@@ -209,6 +210,7 @@ const createFacture = async (receiptId, body) => {
             from: 'cursos@eai.edu.pe',
             fromname: 'Escuela Americana de Innovación',
             preheader: 'Comprobante de Pago',
+            subject: `Haz recibido una Factura Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
             content: `Haz recibido una Factura Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`
           })
 
@@ -267,6 +269,7 @@ const createFacture = async (receiptId, body) => {
             from: 'cursos@eai.edu.pe',
             fromname: 'Escuela Americana de Innovación',
             preheader: 'Comprobante de Pago',
+            subject: `Haz recibido una Boleta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
             content: `Haz recibido una Boleta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`
           })
 

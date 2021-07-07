@@ -11,7 +11,7 @@ const {
   enrolDB
 } = require('../db')
 
-
+const { getSocket } = require('../lib/io')
 const { calculateProm, calculatePromBoth } = require('utils/functions/enrol')
 const { sendEmail } = require('utils/lib/sendgrid')
 
@@ -459,7 +459,7 @@ const emitEnrol = enrol => {
   console.log('enrol.asigned', enrol.assigned)
   if (enrol.assigned) {
     const io = getSocket()
-    io.to(enrol.assigned.ref).emit('enrol', enrol)
+    io.to(enrol.assigned._id).emit('enrol', enrol)
   }
 }
 

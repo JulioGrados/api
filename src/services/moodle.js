@@ -2379,7 +2379,7 @@ const findMoodleCourse = async course => {
   return courseEnroll
 }
 
-const createEnrolUser = async ({ user, course }) => {
+const createEnrolUser = async ({ user, course, deal }) => {
   let courseId
   if (course.ref && course.ref.moodleId) {
     courseId = course.ref.moodleId
@@ -2421,8 +2421,16 @@ const createEnrolUser = async ({ user, course }) => {
         ref: course
       }
     })
-    const enrolSearch = enrolDB.detail({ query: { _id: enrol._id }, populate: ['linked.ref', 'course.ref'] })
-    enrolSearch.assigned = deal && deal.assigned
+    const enrolDetail = await enrolDB.detail({ query: { _id: enrol._id }, populate: ['linked.ref', 'course.ref'] })
+    const tesorero = await userDB.detail({
+      query: {
+        roles: 'Tesorero'
+      }
+    })
+    const enrolSearch = {
+      ...enrolDetail.toJSON(),
+      assigned: {...tesorero.toJSON()}
+    }
     emitEnrol(enrolSearch)
     console.log('enrol nuevo', enrol)
   }
