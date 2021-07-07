@@ -1180,7 +1180,7 @@ const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) =>
     const coursesEnrol = await Promise.all(
       courses.map(async course => {
         user.password = code
-        await createEnrolUser({ course, user })
+        await createEnrolUser({ course, user, deal })
         await createTimeline({
           ...timeline,
           name: `[Matricula] ${course.name} [User] ${user.username}`
@@ -1308,7 +1308,7 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
     const coursesEnrol = await Promise.all(
       courses.map(async course => {
         user.password = code
-        await createEnrolUser({ course, user })
+        await createEnrolUser({ course, user, deal })
         await createTimeline({
           ...timeline,
           name: `[Matricula] ${course.name} [User] ${user.username}`

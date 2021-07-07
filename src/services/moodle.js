@@ -201,6 +201,7 @@ const {
   feedbackListCourse
 } = require('config').moodle.functions
 const enrol = require('db/models/enrol')
+const { emitEnrol } = require('./enrol')
 
 const actionMoodle = (method, wsfunction, args = {}) => {
   return init.then(function (client) {
@@ -2420,6 +2421,9 @@ const createEnrolUser = async ({ user, course }) => {
         ref: course
       }
     })
+    const enrolSearch = enrolDB.detail({ query: { _id: enrol._id }, populate: ['linked.ref', 'course.ref'] })
+    enrolSearch.assigned = deal && deal.assigned
+    emitEnrol(enrolSearch)
     console.log('enrol nuevo', enrol)
   }
 
