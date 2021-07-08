@@ -11,6 +11,8 @@ const {
   enrolDB
 } = require('../db')
 
+const { createEmailOnly } = require('./email')
+
 const { getSocket } = require('../lib/io')
 const { calculateProm, calculatePromBoth } = require('utils/functions/enrol')
 const { sendEmail } = require('utils/lib/sendgrid')
@@ -74,6 +76,7 @@ const createEmailEnrol = async (body) => {
     cc: body.cc,
     from: 'docente@eai.edu.pe',
     subject: body.subject,
+    preheader: body.subject,
     text: body.text,
     html: body.html,
     content: body.html,
@@ -87,7 +90,18 @@ const createEmailEnrol = async (body) => {
       }
     ]
   }
-  const email = await createEmailOnly(msg)
+  const save = {
+    to: body.to,
+    cc: body.cc,
+    from: 'docente@eai.edu.pe',
+    subject: body.subject,
+    preheader: body.subject,
+    text: body.text,
+    html: body.html,
+    content: body.html,
+    fromname: body.fromname
+  }
+  await createEmailOnly(save)
   const enrol = await sendEmail(msg)
   return enrol
 }

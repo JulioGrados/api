@@ -32,7 +32,7 @@ const emitDeal = deal => {
 }
 
 const createEmailOnly = async (body, loggedUser) => {
-  const email = await emailDB.create(dataEmail)
+  const email = await emailDB.create(body)
   return email
 }
 
