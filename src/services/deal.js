@@ -16,9 +16,12 @@ const { MEDIA_PATH } = require('utils/files/path')
 const { createEmail } = require('./email')
 const { getSocket } = require('../lib/io')
 const { createNewUser, createEnrolUser, searchUser, searchUsername, searchEmail, searchID } = require('./moodle')
+const { templateCertificate } = require('utils/emails/certificate')
 
 let randomize = require('randomatic')
 const { receiptDB } = require('db/lib')
+const { templateAccess } = require('utils/emails/access')
+const { templateAccessClient } = require('utils/emails/accessClient')
 
 const listDeals = async params => {
   console.log('--------------------------------------------------------')
@@ -931,11 +934,21 @@ const sendEmailCourse = async (lead, deal, dataCourse, social = false) => {
       from,
       fromname,
       preheader,
-      content,
-      attachment,
+      content: templateCertificate(substitutions),
+      attachments: [
+        {
+          filename: filename,
+          url: MEDIA_PATH + course.brochure
+        },
+        {
+          filename: 'Catálogo de cursos.pdf',
+          url: 'https://media.eai.edu.pe/brochure/cursos.pdf'
+        }
+      ],
       filename,
       deal: deal._id
     })
+    console.log('email', email)
     sendMailTemplate({
       to,
       from,
@@ -1343,7 +1356,7 @@ const sendEmailAccess = async (user, deal, logged) => {
   const substitutions = {
     username: linked.username,
     password: user.password,
-    name: linked.names
+    nombre: linked.names
   }
   console.log('substitutions', substitutions)
   try {
@@ -1362,7 +1375,7 @@ const sendEmailAccess = async (user, deal, logged) => {
       to,
       fromname,
       preheader,
-      content
+      content: templateAccess(substitutions)
     })
     await sendMailTemplate({
       to,
@@ -1392,7 +1405,7 @@ const sendEmailAccessExist = async (user, deal, logged) => {
   const substitutions = {
     username: linked.username,
     password: user.password,
-    name: linked.names
+    nombre: linked.names
   }
   console.log('substitutions', substitutions)
   try {
@@ -1412,7 +1425,7 @@ const sendEmailAccessExist = async (user, deal, logged) => {
       to,
       fromname,
       preheader,
-      content
+      content: templateAccessClient(substitutions)
     })
     await sendMailTemplate({
       to,
