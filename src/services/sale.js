@@ -15,6 +15,15 @@ const listSales = async params => {
   return sales
 }
 
+const assessorSales = async params => {
+  console.log('--------------------------------------------------------')
+  console.log('SALES ASSESSOR')
+  console.log('--------------------------------------------------------')
+  const sales = await saleDB.list(params)
+  console.log('sales', sales)
+  return sales
+}
+
 const createSale = async (body, loggedUser) => {
   body.orders = existOrders(body.orders)
   body.orders = prepareOrders(body)
@@ -403,6 +412,7 @@ const changeStatusUser = async sale => {
 module.exports = {
   countDocuments,
   listSales,
+  assessorSales,
   createSale,
   updateSale,
   updateSaleOne,
