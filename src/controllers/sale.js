@@ -1,5 +1,6 @@
 'use strict'
 
+const { orderDB } = require('db/lib')
 const service = require('../services/sale')
 
 const listSales = async (req, res) => {
@@ -10,7 +11,32 @@ const listSales = async (req, res) => {
 const createSales = async (req, res, next) => {
   try {
     const sale = await service.createSale(req.body, req.user)
-    return res.status(201).json(sale)
+    const ordersNew = await Promise.all(sale.orders.map(async order => {
+      const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref']})
+      return { ...orderNew.toJSON() }
+    }))
+    return res.status(201).json({
+      ...sale.toJSON(),
+      orders: ordersNew})
+  } catch (error) {
+    next(error)
+  }
+}
+
+const assessorSales = async (req, res, next) => {
+  try {
+    const sales = await service.assessorSales(req.query)
+    const salesNew = await Promise.all(sales.map(async sale => {
+      const ordersPopulate = await Promise.all(sale.orders.map(async order => {
+        const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref']})
+        return { ...orderNew.toJSON() }
+      }))
+      return {
+        ...sale.toJSON(),
+        orders: ordersPopulate
+      }
+    }))
+    return res.status(200).json(salesNew)
   } catch (error) {
     next(error)
   }
@@ -32,7 +58,13 @@ const updateSale = async (req, res, next) => {
   const saleId = req.params.id
   try {
     const sale = await service.updateSale(saleId, req.body, req.user)
-    return res.status(200).json(sale)
+    const ordersNew = await Promise.all(sale.orders.map(async order => {
+      const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref']})
+      return { ...orderNew.toJSON() }
+    }))
+    return res.status(201).json({
+      ...sale.toJSON(),
+      orders: ordersNew})
   } catch (error) {
     next(error)
   }
@@ -75,6 +107,7 @@ const countDocuments = async (req, res) => {
 module.exports = {
   countDocuments,
   listSales,
+  assessorSales,
   createSales,
   updateSale,
   updateSaleOne,
