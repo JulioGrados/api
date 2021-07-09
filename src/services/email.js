@@ -2,9 +2,10 @@
 const CustomError = require('custom-error-instance')
 
 const { emailDB, dealDB } = require('../db')
-const { sendEmail, sendCrm } = require('utils/lib/sendgrid')
+const { sendEmail, sendCrm, sendEmailOnly } = require('utils/lib/sendgrid')
 const { createTimeline } = require('./timeline')
 const { getSocket } = require('../lib/io')
+const { getBase64 } = require('utils/functions/base64')
 
 const listEmails = async params => {
   console.log('--------------------------------------------------------')
@@ -44,6 +45,35 @@ const createEmail = async (body, loggedUser) => {
   }else {
     emitEmail(email)
   }
+  return email
+}
+
+const resendEmail = async (body, loggedUser) => {
+  if (body._id) {
+    delete body._id
+    delete body.date
+    delete body.updatedAt
+    delete body.createdAt
+    delete body.success
+    delete body.status
+  }
+  const email = await emailDB.create(body)
+  if (body.attachments && body.attachments.length) {
+    const attachments = await Promise.all(
+      body.attachments.map(async (attachment) => {
+        const base64 = await getBase64(attachment.url)
+        return {
+          filename: attachment.filename,
+          content: base64,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }
+      })
+    )
+    body.attachments = attachments
+  }
+  body.html = body.content
+  await sendEmailOnly(body)
   return email
 }
 
@@ -209,6 +239,7 @@ module.exports = {
   countDocuments,
   listEmails,
   createEmail,
+  resendEmail,
   createEmailOnly,
   createEmailLinked,
   updateEmail,
