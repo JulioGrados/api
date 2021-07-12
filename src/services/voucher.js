@@ -3,6 +3,7 @@
 const { voucherDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 const { orderDB } = require('../../../db/lib')
+const { getSocket } = require('../lib/io')
 
 const listVouchers = async params => {
   const vouchers = await voucherDB.list(params)
@@ -83,6 +84,17 @@ const countDocuments = async params => {
   return count
 }
 
+const emitVoucher = (voucher, user) => {
+  try {
+    if (user && user._id) {
+      const io = getSocket()
+      io.to(user._id).emit('voucher', voucher)
+    }
+  } catch (error) {
+    console.log('error sockets', voucher, error)
+  }
+}
+
 module.exports = {
   countDocuments,
   listVouchers,
@@ -91,5 +103,6 @@ module.exports = {
   updateAdminVoucher,
   detailVoucher,
   detailAdminVoucher,
+  emitVoucher,
   deleteVoucher
 }
