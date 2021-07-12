@@ -46,17 +46,13 @@ const updateSale = async (saleId, body) => {
   }
 }
 
-const updateSaleOne = async (saleId, body, files, loggedUser) => {
+const updateSaleOne = async (saleId, body, loggedUser) => {
   if (body.status === 'Pendiente' || body.status === 'Pagando' || body.status === 'Finalizada') {
-    const copyOrders = JSON.parse(JSON.stringify(body.orders))
-    body.orders = await prepareOrdersOne(body, files)
-    // console.log('body.orders', body.orders)
-    body.status = getStatusSale(body)
-    console.log('body', body)
-    const sale = await saleDB.updateOne(saleId, body)
-    sale.orders = await editVoucher(sale.orders, copyOrders)
-    // changeStatusUser(sale, body.detail)
-    // console.log('sale', sale)
+    body.orders = existOrders(body.orders)
+    body.orders = await prepareOrders(body)
+    body.status = getStatusSale(body.orders, body.amount)
+    const sale = await saleDB.updateAdmin(saleId, body)
+    console.log('sale', sale)
     return sale
   } else {
     const InvalidError = CustomError('CastError', { message: 'La venta ya no se puede editar.', code: 'EINVLD' }, CustomError.factory.expectReceive);
