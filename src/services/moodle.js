@@ -324,64 +324,35 @@ const createNewUser = async user => {
 }
 
 const createUserCertificate = async usersMoodle => {
-  const users = await userDB.list({})
+  // const users = await userDB.list({})
   const userNew = usersMoodle.map(async element => {
-    // console.log(element)
-    const user = users.find(
-      item =>
-        parseInt(item.moodleId) === parseInt(element.id) ||
-        item.email === element.email ||
-        item.username === element.username
-    )
-
-    const data = {
-      moodleId: element.id,
-      username: element.username,
-      firstName: element.firstname,
-      lastName: element.lastname,
-      names: element.firstname + ' ' + element.lastname,
-      email: element.email,
-      country: element.country === 'PE' ? 'Perú' : '',
-      city: element.city,
-      role: undefined,
-      roles: ['Estudiante']
-      // shippings: []
-    }
-
-    if (user) {
-      try {
-        const updateUser = await userDB.update(user._id, {
-          moodleId: element.id,
-          email: user.email ? user.email : element.email,
-          username: user.username ? user.username : element.username,
-          roles: [...user.roles, 'Estudiante']
-          // shippings: []
-        })
-        console.log('Se actualizó usuario:')
-        return updateUser
-      } catch (error) {
-        console.log('error al editar usuario')
-        throw {
-          type: 'Actualizar usuario',
-          message: `No actualizó el usuario ${user.names}`,
-          metadata: user,
-          error: error
-        }
+    console.log(element)
+    try {
+      const user = await userDB.detail({ query: { $or: [{ moodleId: element.id }, { email: element.email }, { username: element.username }] } })
+      const updateUser = await userDB.update(user._id, {
+        moodleId: element.id,
+        email: user.email ? user.email : element.email,
+        username: user.username ? user.username : element.username,
+        roles: [...user.roles, 'Estudiante']
+        // shippings: []
+      })
+      return updateUser
+    } catch (error) {
+      const data = {
+        moodleId: element.id,
+        username: element.username,
+        firstName: element.firstname,
+        lastName: element.lastname,
+        names: element.firstname + ' ' + element.lastname,
+        email: element.email,
+        country: element.country === 'PE' ? 'Perú' : '',
+        city: element.city,
+        role: undefined,
+        roles: ['Estudiante']
+        // shippings: []
       }
-    } else {
-      try {
-        const user = await userDB.create(data)
-        console.log('Se creo usuario:')
-        return user
-      } catch (error) {
-        console.log('error al crear usuario')
-        throw {
-          type: 'Crear usuario',
-          message: `No creó el usuario ${data.names}`,
-          metadata: data,
-          error: error
-        }
-      }
+      const user = await userDB.create(data)
+      return user
     }
   })
   // const usersCreate = await Promise.all(userNew)
@@ -659,15 +630,34 @@ const createTaskCourse = async (tasks, course) => {
 }
 
 const enrolCron = async (grades) => {
-  const users = await userDB.list({})
-  const enrols = await enrolDB.list({})
-  const courses = await courseDB.list({})
+  // const users = await userDB.list({})
+  // const enrols = await enrolDB.list({})
+  // const courses = await courseDB.list({})
   console.log('grades mando', grades)
   const enrolsNew = grades.map(async grade => {
-    const course = courses.find(item =>  item.moodleId === grade.courseid )
-    const user = users.find(item =>  item.moodleId === grade.userid )
-    const enrol = enrols.find(item => parseInt(item.linked.moodleId) === parseInt(grade.userid) && parseInt(item.course.moodleId) === parseInt(grade.courseid))
-    console.log('course', course.moodleId)
+    let course
+    try {
+      course = await courseDB.detail({ query: { moodleId: grade.courseid } })
+    } catch (error) {
+      console.log('error', error)
+    }
+
+    let user
+    try {
+      user = await userDB.detail({ query: { moodleId: grade.userid } })
+    } catch (error) {
+      console.log('error', error)
+    }
+
+    let enrol
+    try {
+      if (user && course) {
+        enrol = await enrolDB.detail({query: { 'linked.ref': user._id.toString(), 'course.ref': course._id.toString() }})
+      }
+    } catch (error) {
+      console.log('error', error)
+    }
+
     if (course && course.typeOfEvaluation === 'exams') {
       let examsBD
       try {
@@ -1390,25 +1380,29 @@ const createEnrolCourse = async (grades, course) => {
 }
 
 const certificateCron = async (arr) => {
-  const enrols = await enrolDB.list({})
-  const certificates = await certificateDB.list({populate: ['linked.ref']})
-  const courses = await courseDB.list({})
+  // const enrols = await enrolDB.list({})
+  // const certificates = await certificateDB.list({populate: ['linked.ref']})
+  // const courses = await courseDB.list({})
   const certificateNew = arr.map(async enrol => {
-    const course = courses.find( item => item.moodleId === enrol.course.moodleId )
-    const certificate =
-      enrol.linked &&
-      enrol.linked.ref &&
-      certificates.find(item => {
-        if (
-          enrol.course && enrol.course.ref &&
-          item.course && item.course.ref &&
-          item.linked &&
-          item.linked.ref &&
-          item.linked.ref.email === enrol.linked.email && item.course.ref.toString() === enrol.course.ref.toString()
-        ) {
-          return item
-        }
-      })
+    // console.log('enrol', enrol)
+    let course
+    try {
+      if (enrol.course && enrol.course.ref) {
+        course = await courseDB.detail({query: {_id: enrol.course.ref.toString()}})
+      }
+    } catch (error) {
+      console.log('error', error)
+    }
+
+    let certificate
+    try {
+      if (enrol.course && enrol.course.ref && enrol.linked && enrol.linked.ref) {
+        certificate = await certificateDB.detail({query: {'linked.ref': enrol.linked.ref.toString(), 'course.ref': enrol.course.ref.toString()}})
+      }
+    } catch (error) {
+      console.log('error', error)
+    }
+    
     if (certificate) {
       try {
         const certi = await enrolDB.update(enrol._id, {
