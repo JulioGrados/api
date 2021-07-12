@@ -2,6 +2,7 @@
 
 const CustomError = require('custom-error-instance')
 const { orderDB, voucherDB } = require('../db')
+const { emitVoucher } = require('./voucher')
 
 const listOrders = async params => {
   console.log('--------------------------------------------------------')
@@ -42,6 +43,7 @@ const getResidueVoucher = (voucherAmount, orderAmount) => {
 }
 
 const createOrder = async (body, loggedUser) => {
+  // console.log('loggedUser',loggedUser)
   const { voucher } = body
   const dbVoucher = voucher && await findVoucher(voucher)
   if (voucher && dbVoucher) {
@@ -52,7 +54,7 @@ const createOrder = async (body, loggedUser) => {
       residue,
       isUsed
     })
-
+    emitVoucher(updateVoucher, loggedUser)
     body.voucher.ref = updateVoucher
     body.status = 'Pagada' 
   }
@@ -61,6 +63,7 @@ const createOrder = async (body, loggedUser) => {
 }
 
 const updateOrder = async (orderId, body, loggedUser) => {
+  // console.log('loggedUser',loggedUser)
   const { voucher } = body
   const dbVoucher = voucher && await findVoucher(voucher)
   if (voucher && dbVoucher) {
@@ -71,6 +74,7 @@ const updateOrder = async (orderId, body, loggedUser) => {
       residue,
       isUsed
     })
+    emitVoucher(updateVoucher, loggedUser)
     body.voucher.ref = updateVoucher
     body.status = 'Pagada' 
   }

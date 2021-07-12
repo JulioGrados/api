@@ -192,6 +192,7 @@ const {
   createUser,
   userField,
   coursesUser,
+  // unenrolUsers,
   gradeUser,
   enrolGetCourse,
   quizGetCourse,
@@ -218,6 +219,24 @@ const actionMoodle = (method, wsfunction, args = {}) => {
         throw err
       })
   })
+}
+
+const createTest = async (body, loggedUser) => {
+  console.log('entro')
+  // const contents = await actionMoodle('POST', unenrolUsers, {
+  //   users: [{
+  //     id: 14050,
+  //     suspended: 1
+  //   }]
+  //     // JSON.stringify([{
+  //     //   'roleid': 30323,
+  //     //   'suspend': 1
+  //     // }])
+    
+  //   // '[user_enrolments[0][roleid]={30323}&user_enrolments[0][userid]={14048}&user_enrolments[0][courseid]={57}&user_enrolments[0][suspend]={1}]'
+  // })
+  // console.log('contents', contents)
+  // return contents
 }
 
 const getCourseForUser = async userId => {
@@ -2577,6 +2596,7 @@ const testimoniesCourse = async ({ courseId }) => {
 
 module.exports = {
   createNewUser,
+  createTest,
   createUserCertificate,
   createShippingEnrol,
   gradesCron,
