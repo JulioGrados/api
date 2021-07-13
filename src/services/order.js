@@ -82,6 +82,12 @@ const updateOrder = async (orderId, body, loggedUser) => {
   return order
 }
 
+const updateOrderAdmin = async (orderId, body, loggedUser) => {
+  // console.log('loggedUser',loggedUser)
+  const order = await orderDB.update(orderId, body)
+  return order
+}
+
 const detailOrder = async params => {
   const order = await orderDB.detail(params)
   return order
@@ -103,6 +109,7 @@ module.exports = {
   assessorOrders,
   createOrder,
   updateOrder,
+  updateOrderAdmin,
   detailOrder,
   deleteOrder
 }

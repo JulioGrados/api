@@ -22,4 +22,8 @@ router
   .put(Api.updateOrder)
   .delete(Api.deleteOrder)
 
+router
+  .route('/orders/admin/:id')
+  .put(Api.updateOrderAdmin)
+
 module.exports = router

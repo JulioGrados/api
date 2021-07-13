@@ -36,6 +36,16 @@ const updateOrder = async (req, res, next) => {
   }
 }
 
+const updateOrderAdmin = async (req, res, next) => {
+  const orderId = req.params.id
+  try {
+    const order = await service.updateOrderAdmin(orderId, req.body, req.user)
+    return res.status(200).json(order)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const detailOrder = async (req, res, next) => {
   const orderId = req.params.id
   const params = req.query
@@ -76,6 +86,7 @@ module.exports = {
   assessorOrders,
   createOrder,
   updateOrder,
+  updateOrderAdmin,
   detailOrder,
   deleteOrder
 }
