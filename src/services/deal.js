@@ -259,12 +259,13 @@ const changeDeal = async (body, loggedUser) => {
     let students = deal.students
     students[0].student = {
       ...user.toJSON(),
-      ref: user._id
+      ref: user
     }
     const updateDeal = await dealDB.update(deal._id, {
       client: user._id,
       students: students
     })
+    console.log('updateDeal', updateDeal)
     return updateDeal
   } catch (error) {
     throw error
