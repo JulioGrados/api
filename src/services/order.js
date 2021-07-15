@@ -68,7 +68,7 @@ const updateOrder = async (orderId, body, loggedUser) => {
   const dbVoucher = voucher && await findVoucher(voucher)
   if (voucher && dbVoucher) {
     const amount = body.amount
-    const residueBefore = voucher.residue
+    const residueBefore = dbVoucher.residue
     const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
     const updateVoucher = await voucherDB.update(voucher._id, {
       residue,

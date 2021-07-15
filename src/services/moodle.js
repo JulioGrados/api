@@ -199,7 +199,8 @@ const {
   assignGetCourse,
   moduleGetCourse,
   feedbackGetQuiz,
-  feedbackListCourse
+  feedbackListCourse,
+  // enrolMethods
 } = require('config').moodle.functions
 const enrol = require('db/models/enrol')
 const { emitEnrol } = require('./enrol')
@@ -223,20 +224,21 @@ const actionMoodle = (method, wsfunction, args = {}) => {
 
 const createTest = async (body, loggedUser) => {
   console.log('entro')
+  var obj = {};
+  obj.id = 5;
+  obj.userid = 14054;
+  obj.courseid = 57;
+  
   // const contents = await actionMoodle('POST', unenrolUsers, {
-  //   users: [{
-  //     id: 14050,
-  //     suspended: 1
-  //   }]
-  //     // JSON.stringify([{
-  //     //   'roleid': 30323,
-  //     //   'suspend': 1
-  //     // }])
+  //   formdata: 'id: [{100}], status: [{1}], userid: [{14053}], roleid: [{5}]'
     
   //   // '[user_enrolments[0][roleid]={30323}&user_enrolments[0][userid]={14048}&user_enrolments[0][courseid]={57}&user_enrolments[0][suspend]={1}]'
   // })
+  // const contents = await actionMoodle('GET', enrolMethods, {
+  //   courseid: 57
+  // })
   // console.log('contents', contents)
-  // return contents
+  return true
 }
 
 const getCourseForUser = async userId => {

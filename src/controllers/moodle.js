@@ -11,14 +11,14 @@ const createUser = async (req, res, next) => {
   }
 }
 
-// const createTest = async (req, res, next) => {
-//   try {
-//     const enrol = await services.createTest(req.body, req.user)
-//     return res.status(201).json(enrol)
-//   } catch (error) {
-//     next(error)
-//   }
-// }
+const createTest = async (req, res, next) => {
+  try {
+    const enrol = await services.createTest(req.body, req.user)
+    return res.status(201).json(enrol)
+  } catch (error) {
+    next(error)
+  }
+}
 
 const createCertificates = async (req, res, next) => {
   try {
@@ -109,7 +109,7 @@ const migrateShipping = async (req, res, next) => {
 
 module.exports = {
   createUser,
-  // createTest,
+  createTest,
   enrrollUser,
   migrateUsers,
   migrateGrades,
