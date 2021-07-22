@@ -1370,7 +1370,7 @@ const sendEmailAccess = async (user, deal, logged) => {
         ...assigned,
         ref: assigned
       },
-      subject: 'Bienvenido a Escuela Americana de Innovación.',
+      subject: 'Pasos para acceder a la plataforma de Escuela Americana de Innovación',
       deal: deal,
       from,
       to,
@@ -1421,7 +1421,7 @@ const sendEmailAccessExist = async (user, deal, logged) => {
         ref: assigned
       },
       deal: deal,
-      subject: 'Bienvenido a Escuela Americana de Innovación.',
+      subject: 'Bienvenido a Escuela Americana de Innovación',
       from,
       to,
       fromname,

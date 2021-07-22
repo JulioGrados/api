@@ -1,164 +1,3 @@
-
-
-// 'use strict'
-
-// const moodle_client = require('moodle-client')
-// const { wwwroot, token, service } = require('config').moodle
-// const { userDB, courseDB } = require('../db')
-
-// const init = moodle_client.init({
-//   wwwroot,
-//   token,
-//   service
-// })
-
-// const {
-//   getCourses,
-//   enrolCourse,
-//   createUser,
-//   userField,
-//   coursesUser,
-//   gradeUser,
-//   enrolGetCourse
-// } = require('config').moodle.functions
-
-// const actionMoodle = (method, wsfunction, args = {}) => {
-//   return init.then(function (client) {
-//     return client
-//       .call({
-//         wsfunction,
-//         method,
-//         args
-//       })
-//       .then(function (info) {
-//         return info
-//       })
-//       .catch(function (err) {
-//         throw err
-//       })
-//   })
-// }
-
-// const getCourseForUser = async userId => {
-//   try {
-//     const coursesForUser = await actionMoodle('GET', coursesUser, {
-//       userid: userId
-//     })
-
-//     return coursesForUser
-//   } catch (error) {
-//     console.log('error coursesUser', error)
-//     return []
-//   }
-// }
-
-// const getUsersForField = async (name, value) => {
-//   const field = name // 'email'
-//   const values = [value] // ['Halanoca29@hotmail.com']
-
-//   // Las variables enviadas a la función deben ser field con el atributo y values con un array que contenga el valor del atributo
-
-//   const userMoodle = await actionMoodle('GET', userField, {
-//     field,
-//     values
-//   })
-
-//   console.log('userMoodle', userMoodle)
-//   return userMoodle[0]
-// }
-
-// const searchUser = async ({ username, email }) => {
-//   let user
-//   if (username) {
-//     user = await getUsersForField('username', username)
-//     if (user) {
-//       return { type: 'username', user }
-//     }
-//   }
-//   if (email) {
-//     user = await getUsersForField('email', email)
-//     if (user) {
-//       return { type: 'email', user }
-//     }
-//   }
-//   return { user: undefined }
-// }
-
-// const createNewUser = async user => {
-//   const dataUser = {
-//     email: user.email,
-//     firstname: user.firstName,
-//     lastname: user.lastName,
-//     username: user.username,
-//     password: user.password
-//   }
-//   console.log('dataUser', dataUser)
-//   const userMoodle = await actionMoodle('POST', createUser, {
-//     users: [dataUser]
-//   })
-
-//   console.log('userMoodle', userMoodle[0])
-//   if (userMoodle && userMoodle.length) {
-//     await userDB.update(user._id, { moodleId: userMoodle[0].id })
-//   } else {
-//     const error = {
-//       status: 500,
-//       message: 'No se pudo crear el usuario de Moodle'
-//     }
-//     throw error
-//   }
-//   return userMoodle[0]
-// }
-
-// const gradeNewUser = async user => {
-//   const grade = {
-//     userid: 820,
-//     courseid: 3,
-//     groupid: 0
-//   }
-//   console.log('dataUser', grade)
-//   const userMoodle = await actionMoodle('POST', gradeUser, {
-//     userid: 820,
-//     courseid: 3
-//   })
-
-//   // const userMoodle = await actionMoodle('POST', enrolGetCourse, {
-//   //   courseid: 3
-//   // })
-
-//   console.log('userMoodle', userMoodle.usergrades[0].gradeitems)
-//   if (userMoodle && userMoodle.length) {
-//     // await userDB.update(user._id, { moodleId: userMoodle[0].id })
-//   } else {
-//     const error = {
-//       status: 500,
-//       message: 'No se pudo crear el usuario de Moodle'
-//     }
-//     throw error
-//   }
-//   return userMoodle[0]
-// }
-
-// const findMoodleCourse = async course => {
-//   const courses = await actionMoodle('GET', getCourses)
-//   const courseEnroll = courses.find(item => item.fullname === course.name)
-//   if (!courseEnroll) {
-//     const error = {
-//       status: 404,
-//       message: 'No se encontro el curso en Moodle'
-//     }
-//     throw error
-//   } else {
-//     const courseId = course.ref._id || course.ref || course._id
-//     await courseDB.update(courseId, {
-//       moodleId: courseEnroll.id
-//     })
-//   }
-
-//   return courseEnroll
-// }
-
-// const createEnrolUser = async ({ user, course }) =
 'use strict'
 const _ = require('lodash')
 const slug = require('slug')
@@ -220,25 +59,6 @@ const actionMoodle = (method, wsfunction, args = {}) => {
         throw err
       })
   })
-}
-
-const createTest = async (body, loggedUser) => {
-  console.log('entro')
-  var obj = {};
-  obj.id = 5;
-  obj.userid = 14054;
-  obj.courseid = 57;
-  
-  // const contents = await actionMoodle('POST', unenrolUsers, {
-  //   formdata: 'id: [{100}], status: [{1}], userid: [{14053}], roleid: [{5}]'
-    
-  //   // '[user_enrolments[0][roleid]={30323}&user_enrolments[0][userid]={14048}&user_enrolments[0][courseid]={57}&user_enrolments[0][suspend]={1}]'
-  // })
-  // const contents = await actionMoodle('GET', enrolMethods, {
-  //   courseid: 57
-  // })
-  // console.log('contents', contents)
-  return true
 }
 
 const getCourseForUser = async userId => {
@@ -2592,7 +2412,6 @@ const testimoniesCourse = async ({ courseId }) => {
 
 module.exports = {
   createNewUser,
-  createTest,
   createUserCertificate,
   createShippingEnrol,
   gradesCron,
@@ -2614,3 +2433,14 @@ module.exports = {
   modulesCourse,
   testimoniesCourse
 }
+
+// SELECT DISTINCT u.id AS userid, c.id AS courseid , ue.id AS enrolid, DATE_FORMAT(FROM_UNIXTIME(ue.timecreated-5*3600), '%e/%c/%Y') AS date FROM mdl_user uJOIN mdl_user_enrolments ue ON ue.userid = u.id
+// JOIN mdl_enrol e ON e.id = ue.enrolid
+// JOIN mdl_role_assignments ra ON ra.userid = u.id
+// JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50
+// JOIN mdl_course c ON c.id = ct.instanceid AND e.courseid = c.id
+// JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student'
+// WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0 AND ue.status = 0
+// AND DATE_FORMAT(FROM_UNIXTIME(ue.timecreated - 5 * 3600), '%e/%c/%Y') = DATE_FORMAT(NOW(), '%e/%c/%Y');
+
+// /usr/bin/mysql -u root --database manvicio_ertmdl --execute="SELECT json_arrayagg(json_object( 'user', u.id, 'course', c.id, 'enrol', ue.id)) AS '' FROM (mdl_user u JOIN mdl_user_enrolments ue ON ue.userid = u.id JOIN mdl_enrol e ON e.id = ue.enrolid JOIN mdl_role_assignments ra ON ra.userid = u.id JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50 JOIN mdl_course c ON c.id = ct.instanceid AND e.courseid = c.id JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student') WHERE (e.status = 0 AND u.suspended = 0 AND u.deleted = 0 AND ue.status = 0 AND DATE_FORMAT(FROM_UNIXTIME(ue.timecreated-5*3600),'%e/%c/%Y')='20/7/2021');"
