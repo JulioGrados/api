@@ -12,7 +12,7 @@ const createSales = async (req, res, next) => {
   try {
     const sale = await service.createSale(req.body, req.user)
     const ordersNew = await Promise.all(sale.orders.map(async order => {
-      const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref']})
+      const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref', 'voucher.ref']})
       return { ...orderNew.toJSON() }
     }))
     return res.status(201).json({
@@ -28,7 +28,7 @@ const assessorSales = async (req, res, next) => {
     const sales = await service.assessorSales(req.query)
     const salesNew = await Promise.all(sales.map(async sale => {
       const ordersPopulate = await Promise.all(sale.orders.map(async order => {
-        const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref']})
+        const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref', 'voucher.ref']})
         return { ...orderNew.toJSON() }
       }))
       return {
@@ -59,7 +59,7 @@ const updateSale = async (req, res, next) => {
   try {
     const sale = await service.updateSale(saleId, req.body, req.user)
     const ordersNew = await Promise.all(sale.orders.map(async order => {
-      const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref']})
+      const orderNew = await orderDB.detail({query: {_id: order._id}, populate: ['student.ref', 'course.ref', 'voucher.ref']})
       return { ...orderNew.toJSON() }
     }))
     return res.status(201).json({
