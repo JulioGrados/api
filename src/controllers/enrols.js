@@ -21,6 +21,7 @@ const listRatings = async (req, res, next) => {
       info.dateStart = evaluations ? evaluations * (24 * 60 * 60 * 1000) : ''
       info.start = info.dateStart && info.end && new Date(Date.parse(info.end) - info.dateStart)
       info.linkedEmail = enrol && enrol.linked && enrol.linked.ref ? enrol.linked.ref.email : ''
+      info.linkedBeforeName = enrol && enrol.linked && enrol.linked.ref ? enrol.linked.ref.beforeName : ''
       info.linkedFirstName = enrol && enrol.linked && enrol.linked.ref ? enrol.linked.ref.firstName : ''
       info.linkedLastName = enrol && enrol.linked && enrol.linked.ref ? enrol.linked.ref.lastName : ''
       info.courseName = enrol && enrol.course && enrol.course.ref ? enrol.course.ref.name : ''
