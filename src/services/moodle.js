@@ -145,6 +145,46 @@ const createNewUser = async user => {
   return userMoodle[0]
 }
 
+const createEnrolID = async enrolsMoodle => {
+  const enrolID = enrolsMoodle.map(async element => {
+    console.log(element)
+    let user
+    try {
+      user = await userDB.detail({query: {moodleId: element.user}})
+    } catch (error) {
+      console.log('error user', error)
+    }
+
+    let course
+    try {
+      course = await courseDB.detail({query: {moodleId: element.course}})
+    } catch (error) {
+      console.log('error curso', error)
+    }
+
+    if (user && course) {
+      try {
+        const enrol = enrolDB.detail({ query: { 'linked.ref': user._id.toString(), 'course.ref': course._id.toString() } })
+        const enrolUpdate = enrolDB.update(enrol._id, {
+          moodleId: element.enrol
+        })
+        return enrolUpdate
+      } catch (error) {
+        console.log('error enrol', error)
+        throw 'No existe enrol'
+      }
+    } else {
+      throw 'No existe usuario o course, o ambos'
+    }
+  })
+  
+  const results = await Promise.all(enrolID.map(p => p.catch(e => e)))
+  const validEnrols = results.filter(result => !result.error)
+  const errorEnrols = results.filter(result => result.error)
+
+  return { validEnrols, errorEnrols }
+}
+
 const createUserCertificate = async usersMoodle => {
   // const users = await userDB.list({})
   const userNew = usersMoodle.map(async element => {
@@ -2339,6 +2379,7 @@ const testimoniesCourse = async ({ courseId }) => {
 }
 
 module.exports = {
+  createEnrolID,
   createNewUser,
   createUserCertificate,
   createShippingEnrol,
