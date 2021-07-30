@@ -5,6 +5,7 @@ const { readFile } = require('utils/files/read')
 const { getDelayCalls } = require('../services/call')
 
 const { createUserCertificate,
+        createEnrolID,
         gradesCron,
         enrolCron,
         certificateCron} = require('../services/moodle')
@@ -36,6 +37,15 @@ const certificate = new CronJob('0 40 5 * * *', async function() {
 }, null, true, 'America/Bogota');
 certificate.start();
 
+const enrol = new CronJob('0 30 20 * * *', async function() {
+  console.log('You will see this message every minuto');
+  const dir = path.resolve(__dirname, '../../backup/enrol.json')
+  const arr = await readFile(dir)
+  const enrols = await createEnrolID(arr)
+  console.log('enrols', enrols)
+}, null, true, 'America/Bogota');
+enrol.start();
+
 const address = new CronJob('0 10 6 * * *', async function() {
   console.log('You will see this message every minuto');
   const dir = path.resolve(__dirname, '../../backup/data.json')
@@ -47,6 +57,7 @@ address.start();
 
 module.exports = {
   job,
+  enrol,
   certificate,
   address
 }
