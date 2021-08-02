@@ -252,12 +252,12 @@ const createFacture = async (receiptId, body) => {
       if (body.email) {
         try {
           const count = await receiptDB.count({ query: { isTicket: true }})
-          const { firstName, lastName, dni } = body 
+          const { firstName, lastName, dni, document } = body 
           const items = await getItems(body.orders)
           const ticket = payloadTicket({
             receipt: body,
             items: items,
-            user: { firstName: firstName, lastName: lastName, dni: dni },
+            user: { firstName: firstName, lastName: lastName, dni: dni, document: document },
             count: count ? count + 2 : 2
           })
           console.log('ticket', ticket)
