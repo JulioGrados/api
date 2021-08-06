@@ -102,7 +102,7 @@ const sendEmailReceipt = async (body) => {
   const msg = {
     to: body.to,
     from: body.from,
-    subject: `${body.type} de venta Electrónica Nro. ${body.code} de Escuela Americana de Innovación S.A.C.`,
+    subject: `${body.type} de Venta Electrónica Nro. ${body.code} de Escuela Americana de Innovación S.A.C.`,
     text: body.text,
     preheader: body.preheader,
     fromname: body.froname,
@@ -207,7 +207,7 @@ const createFacture = async (receiptId, body) => {
             from: 'cursos@eai.edu.pe',
             fromname: 'Escuela Americana de Innovación',
             preheader: 'Comprobante de Pago',
-            subject: `Factura de venta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
+            subject: `Factura de Venta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
             content: templateReceipt(receipt),
             attachments: [
               {
@@ -284,7 +284,7 @@ const createFacture = async (receiptId, body) => {
             from: 'cursos@eai.edu.pe',
             fromname: 'Escuela Americana de Innovación',
             preheader: 'Comprobante de Pago',
-            subject: `Boleta de venta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
+            subject: `Boleta de Venta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
             content: templateReceipt(receipt),
             attachments: [
               {

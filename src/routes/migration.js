@@ -28,4 +28,8 @@ router
   .route('/migrations/admin/certificates')
   .post(Api.migrateAdminCertificates)
 
+router
+  .route('/migrations/admin/sales')
+  .post(Api.migrateAdminSales)
+
 module.exports = router

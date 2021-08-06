@@ -22,6 +22,17 @@ const migrateAdminCertificates = async (req, res, next) => {
   return res.status(200).json(certificates)
 }
 
+const migrateAdminSales = async (req, res, next) => {
+  console.log('req.files', req.files.file.data)
+  const data = await csv2json(req.files.file.data)
+  console.log('data', data)
+  // const files = Object.keys(req.files).map(key => {
+  //   return req.files[key]
+  // })
+  // const certificates = await service.migrateAdminCertificates(files, req.body)
+  return res.status(200).json({})
+}
+
 const migrateTeachers = async (req, res, next) => {
   const data = JSON.parse(req.files.data.data.toString())
   try {
@@ -127,6 +138,7 @@ module.exports = {
   migrateMoodleEnroll,
   migrateMoodleEvaluations,
   migrateAdminCertificates,
+  migrateAdminSales,
   migrateQuizMoodle,
   migrateTaskMoodle,
   migrateCertificates
