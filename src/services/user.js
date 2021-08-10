@@ -45,6 +45,18 @@ const updateUser = async (userId, body, file, loggedUser) => {
   }
 }
 
+const updateDniUser = async (userId, body, loggedUser) => {
+  delete body.dni
+  const user = await userDB.updateDni(userId, body)
+  return user
+}
+
+const updatePhotoUser = async (userId, body, loggedUser) => {
+  delete body.dni
+  const user = await userDB.updatePhoto(userId, body)
+  return user
+}
+
 const detailUser = async params => {
   const user = await userDB.detail(params)
   return user
@@ -315,6 +327,8 @@ module.exports = {
   listUsers,
   createUser,
   updateUser,
+  updateDniUser,
+  updatePhotoUser,
   detailUser,
   deleteUser,
   createOrUpdateUser,

@@ -19,4 +19,12 @@ router
   .put(Api.updateUser)
   .delete(isAdmin, Api.deleteUser)
 
+router
+  .route('/users/dni/:id')
+  .put(Api.updateDniUser)
+
+router
+  .route('/users/photo/:id')
+  .put(Api.updatePhotoUser)
+
 module.exports = router

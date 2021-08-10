@@ -31,6 +31,26 @@ const updateUser = async (req, res, next) => {
   }
 }
 
+const updateDniUser = async (req, res, next) => {
+  const userId = req.params.id
+  try {
+    const user = await service.updateDniUser(userId, req.body, req.user)
+    return res.status(200).json(user)
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updatePhotoUser = async (req, res, next) => {
+  const userId = req.params.id
+  try {
+    const user = await service.updatePhotoUser(userId, req.body, req.user)
+    return res.status(200).json(user)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const detailUser = async (req, res, next) => {
   const userId = req.params.id
   const params = req.query
@@ -152,6 +172,8 @@ module.exports = {
   createUser,
   createDealUser,
   updateUser,
+  updateDniUser,
+  updatePhotoUser,
   detailUser,
   deleteUser,
   listTeachers,
