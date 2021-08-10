@@ -23,14 +23,14 @@ const migrateAdminCertificates = async (req, res, next) => {
 }
 
 const migrateAdminSales = async (req, res, next) => {
-  console.log('req.files', req.files.file.data)
   const data = await csv2json(req.files.file.data)
   console.log('data', data)
-  // const files = Object.keys(req.files).map(key => {
-  //   return req.files[key]
-  // })
-  // const certificates = await service.migrateAdminCertificates(files, req.body)
-  return res.status(200).json({})
+  try {
+    const sales = await service.migrateAdminSales(data)
+    return res.status(200).json(sales)
+  } catch (error) {
+    next(error)
+  }
 }
 
 const migrateTeachers = async (req, res, next) => {

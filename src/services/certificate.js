@@ -27,8 +27,10 @@ const updateAdminCertificate = async (certficateId, body, files, loggedUser) => 
       body[label] = route
     }
   }
+  
   const certficate = await certificateDB.update(certficateId, body)
-  return certficate
+  const certificateDetail = await certificateDB.detail({ query: { _id: certficate._id }, populate: ['linked.ref', 'course.ref'] })
+  return certificateDetail
 }
 
 const createCertificate = async (body, loggedUser) => {

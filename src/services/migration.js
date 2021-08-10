@@ -244,6 +244,24 @@ const migrateTeachers = async data => {
   return users
 }
 
+const migrateAdminSales = async data => {
+  const assessors = await userDB.list({ query: { roles: 'Asesor' } })
+  
+  const promises = data.map(async item => {
+    try {
+      const user = await createOrUpdateUser({...item}, assessors)
+      return user
+    } catch (error) {
+      // error.teacher = data.username
+      console.log('error', error, {...item})
+      return error
+    }
+  })
+
+  const users = await Promise.all(promises)
+  return users
+}
+
 const migrateCategories = async data => {
   const categories = await Promise.all(
     data.map(async item => {
@@ -1348,6 +1366,7 @@ module.exports = {
   migrateEnrollMoodle,
   migrateEvaluationsMoodle,
   migrateAdminCertificates,
+  migrateAdminSales,
   migrateQuizMoodle,
   migrateTaskMoodle,
   migrateCertificates
