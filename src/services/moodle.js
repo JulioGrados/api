@@ -1278,64 +1278,30 @@ const certificateCron = async (arr) => {
 
 const createCertificatesCourse = async course => {
   const enrols = await enrolDB.list({
-    query: { 'course.moodleId': course.moodleId, isFinished: true },
-    populate: ['linked.ref']
-  })
-
-  const certificates = await certificateDB.list({
-    query: { 'course.ref': course._id },
-    populate: ['linked.ref']
+    query: { 'course.moodleId': course.moodleId, isFinished: true }
   })
 
   const enrolsCertificate = enrols.map(async enrol => {
     // console.log('enrol', enrol.linked.ref.firstName)
-
-    const certificate =
-      enrol.linked &&
-      enrol.linked.ref &&
-      certificates.find(item => {
-        if (
-          enrol.course && enrol.course.ref &&
-          item.course && item.course.ref &&
-          item.linked &&
-          item.linked.ref &&
-          item.linked.ref.email === enrol.linked.email && item.course.ref.toString() === enrol.course.ref.toString()
-        ) {
-          return item
-        }
+    try {
+      const certificate = await await certificateDB.detail({query: {'linked.ref': enrol.linked.ref.toString(), 'course.ref': enrol.course.ref.toString()}})
+      const certi = await enrolDB.update(enrol._id, {
+        certificate: {
+          ...certificate.toJSON(),
+          ref: certificate._id
+        },
+        isFinished: true
       })
 
-    if (certificate) {
-      try {
-        const certi = await enrolDB.update(enrol._id, {
-          certificate: {
-            ...certificate.toJSON(),
-            ref: certificate._id
-          },
-          isFinished: true
+      if (enrol.linked) {
+        await certificateDB.update(certificate._id, {
+          linked: enrol.linked,
+          score: enrol.score
         })
-
-        if (enrol.linked) {
-          await certificateDB.update(certificate._id, {
-            linked: enrol.linked,
-            score: enrol.score
-          })
-        }
-        console.log('Se actualizó enrol con certificado que existe:', certi)
-        return certi
-      } catch (error) {
-        console.log(
-          'Error al actualizar enrol con certificado que existe:',
-          error
-        )
-        throw {
-          type: 'Actualizar certificado',
-          message: `No actualizó el certificado ${certificate.code}`,
-          metadata: certificate,
-          error: error
-        }
       }
-    } else {
+      console.log('Se actualizó enrol con certificado que existe:', certi)
+      return certi
+    } catch (error) {
       const code = randomize('a0', 8)
       const data = {
         code: code,
@@ -1356,29 +1322,16 @@ const createCertificatesCourse = async course => {
         date: new Date()
       }
 
-      try {
-        const certi = await certificateDB.create(data)
+      const certi = await certificateDB.create(data)
 
-        await enrolDB.update(enrol._id, {
-          certificate: {
-            ...certi.toJSON(),
-            ref: certi._id
-          }
-        })
-        console.log('Se creó certificado y actualizó enrol:', certi)
-        return certi
-      } catch (error) {
-        console.log(
-          'Error al crear y actualizar enrol con nuevo certificado:',
-          certi
-        )
-        throw {
-          type: 'Crear certificado',
-          message: `No creó el certificado ${data.code}`,
-          metadata: data,
-          error: error
+      await enrolDB.update(enrol._id, {
+        certificate: {
+          ...certi.toJSON(),
+          ref: certi._id
         }
-      }
+      })
+      console.log('Se creó certificado y actualizó enrol:', certi)
+      return certi
     }
   })
 
