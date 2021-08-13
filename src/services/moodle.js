@@ -1278,7 +1278,7 @@ const certificateCron = async (arr) => {
 
 const createCertificatesCourse = async course => {
   const enrols = await enrolDB.list({
-    query: { 'course.moodleId': course.moodleId, isFinished: true }
+    query: { 'course.ref': course._id.toString(), isFinished: true }
   })
 
   const enrolsCertificate = enrols.map(async enrol => {
