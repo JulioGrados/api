@@ -25,7 +25,7 @@ const {
   dealDB
 } = require('../db')
 const { emitDeal, incProspects, addInitialStatus } = require('./deal')
-const { createFindQuery } = require('utils/functions/user')
+const { createFindQuery, createFindMigration } = require('utils/functions/user')
 const { createTimeline } = require('./timeline')
 const config = require('config')
 
@@ -94,6 +94,55 @@ const validate = (body) => {
   return body
 }
 
+const validateMobile = (body) => {
+  const { Celular1, Celular2 } = body
+  
+  if (Celular1) {
+    if (Celular1.substring(0, 2) === '51') {
+      body.Celular1 = Celular1.substring(2,Celular1.length)
+    }
+  }
+
+  if (Celular2) {
+    if (Celular2.substring(0, 2) === '51') {
+      body.Celular2 = Celular2.substring(2,Celular2.length)
+    }
+  }
+
+  return body
+}
+
+const propertyUser = (body, lead) => {
+  const { Username, Celular1, Nombres, Apellidos, DNI, Email1 } = body
+  const { username, mobile, firstName, lastName, dni, email } = lead
+  let user = {}
+  if (!username && Username) {
+    user.username = Username
+  }
+
+  if (!mobile && Celular1) {
+    user.mobile = Celular1
+  }
+
+  if (!firstName && Nombres) {
+    user.firstName = Nombres
+  }
+
+  if (!lastName && Apellidos) {
+    user.lastName = Apellidos
+  }
+
+  if (!dni && DNI) {
+    user.dni = DNI
+  }
+
+  if (!email && Email1) {
+    user.email = Email1
+  }
+
+  return user
+}
+
 const searchCourse = async (courseId) => {
   try {
     const course = await courseDB.detail({
@@ -115,7 +164,7 @@ const createOrUpdateUser = async (body, assessors) => {
     // console.log('params', params.query)
     const lead = await userDB.detail(params)
     // console.log('lead', lead)
-    let course = await searchCourse(body.courseId)
+    let course = await searchCourse(body.cursos)
     if (course) {
       body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
     }
@@ -211,6 +260,7 @@ const createOrUpdateDeal = async (user, body, assessors) => {
     if (deal.status === 'Abierto') {
       return deal
     } else if (deal.status === 'Perdido') {
+      //actualizar trato a ganado
       return deal
     } else if (deal.status === 'Ganado') {
       if (deal.statusPayment === 'Abierto') {
@@ -244,12 +294,67 @@ const migrateTeachers = async data => {
   return users
 }
 
+const createOrUpdateUserMigration = async (body) => {
+  let user
+  body = validateMobile(body)
+  try {
+    const params = createFindMigration(body)
+    // console.log('params', params.query)
+    const lead = await userDB.detail(params)
+    // console.log('lead', lead)
+    let course = await searchCourse(body.cursos)
+    if (course) {
+      body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
+    }
+    if (lead.roles && lead.roles.length) {
+      if (lead.roles.findIndex(role => role === 'Interesado') === -1) {
+        body.roles = ['Interesado', ...lead.roles]
+      }
+      if (lead.roles.findIndex(role => role === 'Estudiante') === -1) {
+        body.roles = ['Estudiante', ...lead.roles]
+      }
+    } else {
+      body.roles = ['Interesado']
+    }
+    
+    if (lead.dni === body.DNI) {
+      delete body.dni
+    }
+    // console.log('body', body)
+    user = propertyUser(body, lead.toJSON())
+    // user = await userDB.update(lead._id, { ...body })
+    console.log('user', user)
+    // await createOrUpdateDeal(user.toJSON(), body)
+  } catch (error) {
+    if (error.status === 404) {
+      // console.log('nuevo lead', body)
+      body.names = body.firstName + ' ' + body.lastName
+      body.roles = ['Interesado', 'Estudiante']
+      // user = await userDB.create(body)
+      
+      // courses en body
+      let course = await searchCourse(body.courseId)
+      if (course) {
+        body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
+      }
+      console.log('body  nuevo', body)
+      // createTimeline({
+      //   linked: user,
+      //   type: 'Cuenta',
+      //   name: 'Persona creada'
+      // })
+      // await createOrUpdateDeal(user.toJSON(), body)
+    } else {
+      throw error
+    }
+  }
+  return user
+}
+
 const migrateAdminSales = async data => {
-  const assessors = await userDB.list({ query: { roles: 'Asesor' } })
-  
   const promises = data.map(async item => {
     try {
-      const user = await createOrUpdateUser({...item}, assessors)
+      const user = await createOrUpdateUserMigration({...item})
       return user
     } catch (error) {
       // error.teacher = data.username

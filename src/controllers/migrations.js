@@ -24,7 +24,7 @@ const migrateAdminCertificates = async (req, res, next) => {
 
 const migrateAdminSales = async (req, res, next) => {
   const data = await csv2json(req.files.file.data)
-  console.log('data', data)
+  // console.log('data', data)
   try {
     const sales = await service.migrateAdminSales(data)
     return res.status(200).json(sales)
