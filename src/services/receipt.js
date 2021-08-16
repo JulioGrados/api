@@ -319,7 +319,7 @@ const createFacture = async (receiptId, body) => {
             const InvalidError = CustomError('CastError', { message: data.error, code: 'EINVLD' }, CustomError.factory.expectReceive)
             throw new InvalidError()
           } else {
-            throw error 
+            throw error
           }
         }
       } else {
