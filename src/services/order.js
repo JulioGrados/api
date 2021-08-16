@@ -84,7 +84,7 @@ const updateOrder = async (orderId, body, loggedUser) => {
 
 const updateOrderAdmin = async (orderId, body, loggedUser) => {
   // console.log('loggedUser',loggedUser)
-  const order = await orderDB.update(orderId, body)
+  const order = await orderDB.updateOne(orderId, body)
   return order
 }
 
