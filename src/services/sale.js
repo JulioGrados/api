@@ -1,7 +1,7 @@
 'use strict'
 
 const CustomError = require('custom-error-instance')
-const { saleDB, voucherDB, receiptDB, dealDB, progressDB, userDB } = require('../db')
+const { saleDB, voucherDB, receiptDB, dealDB, progressDB, userDB, orderDB } = require('../db')
 const { sumAmountOrders, existOrders } = require('utils/functions/sale')
 const { saveFile } = require('utils/files/save')
 const { emitDeal, emitAccounting } = require('./deal')
@@ -29,6 +29,12 @@ const createSale = async (body, loggedUser) => {
   body.orders = prepareOrders(body)
   body.status = getStatusSale(body.orders, body.amount)
   const sale = await saleDB.create(body)
+  body.orders.map(async item => {
+    const order = await orderDB.update(item._id, {
+      sale: sale._id
+    })
+    console.log('order', order)
+  })
   return sale
 }
 
@@ -36,9 +42,15 @@ const updateSale = async (saleId, body) => {
   console.log('entrooo 2')
   if (body.status === 'Pendiente' || body.status === 'Pagando' || body.status === 'Finalizada') {
     body.orders = existOrders(body.orders)
-    body.orders = await prepareOrders(body)
+    body.orders = prepareOrders(body)
     body.status = getStatusSale(body.orders, body.amount)
     const sale = await saleDB.update(saleId, body)
+    body.orders.map(async item => {
+      const order = await orderDB.update(item._id, {
+        sale: sale._id
+      })
+      console.log('order', order)
+    })
     return sale
   } else {
     const InvalidError = CustomError('CastError', { message: 'La venta ya no se puede editar.', code: 'EINVLD' }, CustomError.factory.expectReceive);
@@ -49,10 +61,16 @@ const updateSale = async (saleId, body) => {
 const updateSaleOne = async (saleId, body, loggedUser) => {
   if (body.status === 'Pendiente' || body.status === 'Pagando' || body.status === 'Finalizada') {
     body.orders = existOrders(body.orders)
-    body.orders = await prepareOrders(body)
+    body.orders = prepareOrders(body)
     body.status = getStatusSale(body.orders, body.amount)
     const sale = await saleDB.updateAdmin(saleId, body)
     console.log('sale', sale)
+    body.orders.map(async item => {
+      const order = await orderDB.update(item._id, {
+        sale: sale._id
+      })
+      console.log('order', order)
+    })
     return sale
   } else {
     const InvalidError = CustomError('CastError', { message: 'La venta ya no se puede editar.', code: 'EINVLD' }, CustomError.factory.expectReceive);
@@ -356,10 +374,15 @@ const findOrAddReceipt = async (receipt, files, assigned, linked) => {
 }
 
 const getStatusSale = (orders, amount) => {
+  let sum = 0
+  orders.forEach(item => {
+    if (item.status === 'Pagada' || item.status === 'Usada' || item.status === 'Cancelada') {
+      sum += parseFloat(item.amount)
+    }
+  })
   console.log('orders', orders)
   console.log('amount', amount)
-  const sum = sumAmountOrders(orders, 'Pagada')
-
+  console.log('sum', sum)
   if (sum === amount) {
     return 'Finalizada'
   } else if (sum === 0) {
