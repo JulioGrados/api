@@ -1284,7 +1284,7 @@ const createCertificatesCourse = async course => {
   const enrolsCertificate = enrols.map(async enrol => {
     // console.log('enrol', enrol.linked.ref.firstName)
     try {
-      const certificate = await await certificateDB.detail({query: {'linked.ref': enrol.linked.ref.toString(), 'course.ref': enrol.course.ref.toString()}})
+      const certificate = await certificateDB.detail({query: {'linked.ref': enrol.linked.ref.toString(), 'course.ref': enrol.course.ref.toString()}})
       const certi = await enrolDB.update(enrol._id, {
         certificate: {
           ...certificate.toJSON(),
