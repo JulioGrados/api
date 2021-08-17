@@ -48,15 +48,20 @@ const createOrder = async (body, loggedUser) => {
   const dbVoucher = voucher && await findVoucher(voucher)
   if (voucher && dbVoucher) {
     const amount = body.amount
-    const residueBefore = voucher.residue
-    const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
-    const updateVoucher = await voucherDB.update(voucher._id, {
-      residue,
-      isUsed
-    })
-    emitVoucher(updateVoucher, loggedUser)
-    body.voucher.ref = updateVoucher
-    body.status = 'Pagada' 
+    if (amount > 0) {
+      const residueBefore = dbVoucher.residue
+      const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
+      const updateVoucher = await voucherDB.update(dbVoucher._id, {
+        residue,
+        isUsed
+      })
+      emitVoucher(updateVoucher, loggedUser)
+      body.voucher.ref = updateVoucher
+      body.status = 'Pagada' 
+    } else {
+      const InvalidError = CustomError('CastError', { message: 'El monto de la orden debe ser mayor o igual a 0', code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()
+    }
   }
   const order = await orderDB.create(body)
   return order
@@ -68,15 +73,20 @@ const updateOrder = async (orderId, body, loggedUser) => {
   const dbVoucher = voucher && await findVoucher(voucher)
   if (voucher && dbVoucher) {
     const amount = body.amount
-    const residueBefore = dbVoucher.residue
-    const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
-    const updateVoucher = await voucherDB.update(voucher._id, {
-      residue,
-      isUsed
-    })
-    emitVoucher(updateVoucher, loggedUser)
-    body.voucher.ref = updateVoucher
-    body.status = 'Pagada' 
+    if (amount > 0) {
+      const residueBefore = dbVoucher.residue
+      const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
+      const updateVoucher = await voucherDB.update(dbVoucher._id, {
+        residue,
+        isUsed
+      })
+      emitVoucher(updateVoucher, loggedUser)
+      body.voucher.ref = updateVoucher
+      body.status = 'Pagada'
+    } else {
+      const InvalidError = CustomError('CastError', { message: 'El monto de la orden debe ser mayor o igual a 0', code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()
+    }
   }
   const order = await orderDB.update(orderId, body)
   return order
