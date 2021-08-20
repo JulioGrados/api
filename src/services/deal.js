@@ -1352,8 +1352,6 @@ const sendEmailAccess = async (user, deal, logged) => {
   const from = 'cursos@eai.edu.pe'
   const templateId = 'd-1283b20fdf3b411a861b30dac8082bd8'
   const preheader = 'Accesos a Moodle'
-  const content =
-    'Se envio la información de accesos a la cuneta de moodle con la plantilla pre definida en sengrid.'
   const substitutions = {
     username: linked.username,
     password: user.password,
@@ -1401,8 +1399,6 @@ const sendEmailAccessExist = async (user, deal, logged) => {
   const from = 'cursos@eai.edu.pe'
   const templateId = 'd-aab0311dac2c438fafe536e73e9b36bf'
   const preheader = 'Accesos a Moodle'
-  const content =
-    'Se envio la información de accesos a la cuneta de moodle con la plantilla pre definida en sengrid.'
   const substitutions = {
     username: linked.username,
     password: user.password,

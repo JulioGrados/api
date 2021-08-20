@@ -2,7 +2,7 @@
 
 const config = require('config')
 const CustomError = require('custom-error-instance')
-const { userDB, courseDB, dealDB } = require('../db')
+const { userDB, courseDB, dealDB, timetableDB } = require('../db')
 const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
@@ -43,6 +43,30 @@ const updateUser = async (userId, body, file, loggedUser) => {
     console.log('error', error)
     throw error
   }
+}
+
+const updateUserStage = async (userId, body, loggedUser) => {
+  const user = await userDB.update(userId, body)
+  if (user.stage) {
+    await timetableDB.create({
+      linked: {
+        username: user.username,
+        ref: user._id
+      },
+      type: 'Trabajo',
+      stage: 'Inicio'
+    })
+  } else {
+    await timetableDB.create({
+      linked: {
+        username: user.username,
+        ref: user._id
+      },
+      type: 'Fuera',
+      stage: 'Fin'
+    })
+  }
+  return user
 }
 
 const updateDniUser = async (userId, body, loggedUser) => {
@@ -327,6 +351,7 @@ module.exports = {
   listUsers,
   createUser,
   updateUser,
+  updateUserStage,
   updateDniUser,
   updatePhotoUser,
   detailUser,

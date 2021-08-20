@@ -31,6 +31,16 @@ const updateUser = async (req, res, next) => {
   }
 }
 
+const updateUserStage = async (req, res, next) => {
+  const userId = req.params.id
+  try {
+    const user = await service.updateUserStage(userId, req.body, req.user)
+    return res.status(200).json(user)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const updateDniUser = async (req, res, next) => {
   const userId = req.params.id
   try {
@@ -172,6 +182,7 @@ module.exports = {
   createUser,
   createDealUser,
   updateUser,
+  updateUserStage,
   updateDniUser,
   updatePhotoUser,
   detailUser,

@@ -16,7 +16,7 @@ const loginUser = async (username, password) => {
   }
 
   const select =
-    'username names email mobile firstName lastName roles password photo'
+    'username names email mobile firstName lastName roles password photo stage'
 
   let user = null
 
