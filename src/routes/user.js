@@ -27,4 +27,8 @@ router
   .route('/users/photo/:id')
   .put(Api.updatePhotoUser)
 
+router
+  .route('/users/stage/:id')
+  .put(Api.updateUserStage)
+
 module.exports = router
