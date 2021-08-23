@@ -195,6 +195,7 @@ const createFacture = async (receiptId, body) => {
             businessName: company.businessName,
             address: company.address,
             send: body.send,
+            voucher_id: create.data.voucher_id,
             code: ticket.nro_document,
             serie: 'FA01',
             sequential: ticket.sequential
@@ -274,6 +275,7 @@ const createFacture = async (receiptId, body) => {
             email: body.email,
             code: ticket.nro_document,
             serie: 'BA01',
+            voucher_id: create.data.voucher_id,
             sequential: ticket.sequential
           })
 
