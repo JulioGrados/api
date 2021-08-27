@@ -436,5 +436,7 @@ module.exports = {
   updateSale,
   updateSaleOne,
   detailSale,
-  deleteSale
+  deleteSale,
+  prepareOrders,
+  getStatusSale
 }

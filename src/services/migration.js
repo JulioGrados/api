@@ -28,6 +28,7 @@ const { emitDeal, incProspects, addInitialStatus } = require('./deal')
 const { createFindQuery, createFindMigration } = require('utils/functions/user')
 const { createTimeline } = require('./timeline')
 const config = require('config')
+const { orderDB, saleDB, voucherDB, receiptDB } = require('db/lib')
 
 
 const migrateAdminCertificates = async (files, body) => {
@@ -294,14 +295,391 @@ const migrateTeachers = async data => {
   return users
 }
 
+const createSaleMigration = async (user, assessor, deal, orders, amount, body) => {
+  const dateString = body.FechaPago1 // Oct 23
+  const dateParts = dateString.split("/")
+  const dateObject = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0])
+  const sale = await saleDB.create({
+    user: {
+      names: user.names ? user.names : '',
+      ref: user._id
+    },
+    assigned: {
+      username: assessor.username,
+      ref: assessor._id
+    },
+    amount: amount,
+    createdAt: dateObject,
+    dateOfSale: dateObject,
+    status: 'Finalizada',
+    deal: deal,
+    orders: orders
+  })
+
+  orders.map(async (item, index) => {
+    let receipt
+    if (index === 0) {
+      if (body.Serie1) {
+        receipt = await receiptDB.create({
+          code: body.Serie1 + '-' + body.Comprobante1,
+          serie: body.Serie1,
+          sequential: body.Comprobante1,
+          amount: item.amount,
+          deal: deal,
+          sale: sale,
+          assigned: {
+            username: assessor.username,
+            ref: assessor._id
+          },
+          orders: [item],
+          firstName: user.firstName,
+          lastName: user.lastName,
+          names: user.names ? user.names : '',
+          dni: user.dni ? user.dni : '',
+          email: user.email ? user.email : '',
+          date: item.chargeDate,
+          createdAt: item.chargeDate,
+          status: 'Finalizada',
+
+        })
+      }
+    }
+
+    if (index === 1) {
+      if (body.Serie2) {
+        receipt = await receiptDB.create({
+          code: body.Serie2 + '-' + body.Comprobante2,
+          serie: body.Serie2,
+          sequential: body.Comprobante2,
+          amount: item.amount,
+          deal: deal,
+          sale: sale,
+          assigned: {
+            username: assessor.username,
+            ref: assessor._id
+          },
+          orders: [item],
+          firstName: user.firstName,
+          lastName: user.lastName,
+          names: user.names ? user.names : '',
+          dni: user.dni ? user.dni : '',
+          email: user.email ? user.email : '',
+          date: item.chargeDate,
+          createdAt: item.chargeDate,
+          status: 'Finalizada',
+          
+        })
+      }
+    }
+
+    if (index === 2) {
+      if (body.Serie3) {
+        receipt = await receiptDB.create({
+          code: body.Serie3 + '-' + body.Comprobante3,
+          serie: body.Serie3,
+          sequential: body.Comprobante3,
+          amount: item.amount,
+          deal: deal,
+          sale: sale,
+          assigned: {
+            username: assessor.username,
+            ref: assessor._id
+          },
+          orders: [item],
+          firstName: user.firstName,
+          lastName: user.lastName,
+          names: user.names ? user.names : '',
+          dni: user.dni ? user.dni : '',
+          email: user.email ? user.email : '',
+          date: item.chargeDate,
+          createdAt: item.chargeDate,
+          status: 'Finalizada',
+          
+        })
+      }
+    }
+    console.log('receipt', receipt)
+    const order = await orderDB.update(item._id, {
+      sale: sale._id,
+      receipt: {
+        code: receipt ? receipt.code : undefined,
+        ref: receipt ? receipt._id : undefined
+      },
+      status: receipt ? 'Cancelada': 'Pagada'
+    })
+    console.log('order', order)
+  })
+  return sale
+}
+
+const createOrdersSale = async (user, course, body, assessor) => {
+  let orders = []
+  let amount = 0
+  const dateString = body.FechaPago1 // Oct 23
+  const dateParts = dateString.split("/")
+  const dateObject = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0])
+  if (body.Pago1) {
+    let voucher
+    const bank = searchBank(body.CuentaPago1)
+    if (body.Operacion1) {
+      voucher = await voucherDB.create({
+        code: body.CuentaPago1 + '-' + body.Operacion1,
+        amount: body.Pago1,
+        residue: 0,
+        isUsed: true,
+        date: dateObject,
+        createdAt: dateObject,
+        operationNumber: body.Operacion1,
+        assigned: {
+          username: assessor.username,
+          ref: assessor._id
+        },
+        bank: {
+          name: bank.name,
+          code: bank.code
+        },
+        image: '/static/img/logo_white.svg'
+      })
+    }
+    console.log('voucher', voucher)
+    const order = await orderDB.create({
+      assigned: {
+        username: assessor.username,
+        ref: assessor._id
+      },
+      quotaNumber: 1,
+      amount: body.Pago1,
+      chargeDate: dateObject,
+      createdAt: dateObject,
+      status: voucher ? 'Pagada':'Por Pagar',
+      student: {
+        names: user.names ? user.names : '',
+        email: user.email,
+        ref: user._id
+      },
+      course: {
+        name: course.name,
+        price: course.price,
+        ref: course._id
+      },
+      name: user.names ? user.names : '',
+      dni: user.dni ? user.dni : '',
+      voucher: {
+        code: voucher ? voucher.code : undefined,
+        bank: voucher ? voucher.bank : undefined,
+        ref: voucher ? voucher._id : undefined
+      }
+    })
+    amount = amount + order.amount
+    orders.push(order)
+  }
+
+  if (body.Pago2) {
+    let voucher
+    const bank = searchBank(body.CuentaPago2)
+    const dateString2 = body.FechaPago2 // Oct 23
+    const dateParts2 = dateString2.split("/")
+    const dateObject2 = new Date(+dateParts2[2], dateParts2[1] - 1, +dateParts2[0])
+    if (body.Operacion2) {
+      voucher = await voucherDB.create({
+        code: body.CuentaPago2 + '-' + body.Operacion2,
+        amount: body.Pago2,
+        residue: 0,
+        isUsed: true,
+        date: dateObject2,
+        createdAt: dateObject2,
+        operationNumber: body.Operacion2,
+        assigned: {
+          username: assessor.username,
+          ref: assessor._id
+        },
+        bank: {
+          name: bank.name,
+          code: bank.code
+        },
+        image: '/static/img/logo_white.svg'
+      })
+    }
+    console.log('voucher', voucher)
+    const order = await orderDB.create({
+      assigned: {
+        username: assessor.username,
+        ref: assessor._id
+      },
+      quotaNumber: 2,
+      amount: body.Pago2,
+      chargeDate: dateObject,
+      createdAt: dateObject,
+      status: voucher ? 'Pagada':'Por Pagar',
+      student: {
+        names: user.names ? user.names : '',
+        email: user.email,
+        ref: user._id
+      },
+      course: {
+        name: course.name,
+        price: course.price,
+        ref: course._id
+      },
+      name: user.names ? user.names : '',
+      dni: user.dni ? user.dni : '',
+      voucher: {
+        code: voucher ? voucher.code : undefined,
+        bank: voucher ? voucher.bank : undefined,
+        ref: voucher ? voucher._id : undefined
+      }
+    })
+    amount = amount + order.amount
+    orders.push(order)
+  }
+
+  if (body.Pago3) {
+    let voucher
+    const bank = searchBank(body.CuentaPago3)
+    const dateString3 = body.FechaPago3 // Oct 23
+    const dateParts3 = dateString3.split("/")
+    const dateObject3 = new Date(+dateParts3[2], dateParts3[1] - 1, +dateParts3[0])
+    if (body.Operacion3) {
+      voucher = await voucherDB.create({
+        code: body.CuentaPago3 + '-' + body.Operacion3,
+        amount: body.Pago2,
+        residue: 0,
+        isUsed: true,
+        date: dateObject3,
+        createdAt: dateObject3,
+        operationNumber: body.Operacion3,
+        assigned: {
+          username: assessor.username,
+          ref: assessor._id
+        },
+        bank: {
+          name: bank.name,
+          code: bank.code
+        },
+        image: '/static/img/logo_white.svg'
+      })
+    }
+    console.log('voucher', voucher)
+    const order = await orderDB.create({
+      assigned: {
+        username: assessor.username,
+        ref: assessor._id
+      },
+      quotaNumber: 1,
+      amount: body.Pago3,
+      chargeDate: dateObject,
+      createdAt: dateObject,
+      status: voucher ? 'Pagada':'Por Pagar',
+      student: {
+        names: user.names ? user.names : '',
+        email: user.email,
+        ref: user._id
+      },
+      course: {
+        name: course.name,
+        price: course.price,
+        ref: course._id
+      },
+      name: user.names ? user.names : '',
+      dni: user.dni ? user.dni : '',
+      voucher: {
+        code: voucher ? voucher.code : undefined,
+        bank: voucher ? voucher.bank : undefined,
+        ref: voucher ? voucher._id : undefined
+      }
+    })
+    amount = amount + order.amount
+    orders.push(order)
+  }
+  return {orders, amount}
+}
+
+const createNewDealSale = async (user, body, assessor) => {
+  console.log('createNewDealSale')
+  const progress = await progressDB.detail({ query: { key: 'won' } })
+  let progressPayment
+  if (progress) {
+    progressPayment = {
+      name: progress.name,
+      ref: progress._id
+    }
+  }
+
+  const deal = await dealDB.create({
+    assessor: {
+      username: assessor.username,
+      ref: assessor._id
+    },
+    progressPayment,
+    statusActivity: 'done',
+    status: 'Ganado',
+    statusPayment: 'Pago',
+    client: user,
+    students: [
+      {
+        student: {...user, ref: user},
+        courses: body.courses
+      }
+    ]
+  })
+  
+  await incProspects(dataDeal)
+  emitDeal(deal)
+  return deal
+}
+
+const createOrUpdateDealSale = async (user, body, assessor) => {
+  const deal = await findDealUser(user)
+  console.log('deal----', deal)
+  console.log('user----', user)
+  if (deal) {
+    if (deal.status === 'Abierto') {
+      return deal
+    } else if (deal.status === 'Perdido') {
+      //actualizar trato a ganado
+      const progress = await progressDB.detail({ query: { key: 'won' } })
+      let progressPayment
+      if (progress) {
+        progressPayment = {
+          name: progress.name,
+          ref: progress._id
+        }
+      }
+
+      const updateDeal = await dealDB.updateOne(deal._id, {
+        assessor: {
+          username: assessor.username,
+          ref: assessor._id
+        },
+        progressPayment,
+        statusActivity: 'done',
+        status: 'Ganado',
+        statusPayment: 'Pago'
+      })
+      return updateDeal
+    } else if (deal.status === 'Ganado') {
+      if (deal.statusPayment === 'Abierto') {
+        return deal
+      } else if (deal.statusPayment === 'Pago') {
+        return deal
+      }
+    }
+  } else {
+    const deal = await createNewDealSale(user, body, assessor)
+    return deal
+  }
+}
+
 const createOrUpdateUserMigration = async (body) => {
   let user
+  const assessor = await userDB.detail({ query: { username: body.Asignado } })
+  console.log('assessor', assessor)
   body = validateMobile(body)
   try {
     const params = createFindMigration(body)
-    // console.log('params', params.query)
+    console.log('params', params.query)
     const lead = await userDB.detail(params)
-    // console.log('lead', lead)
+    console.log('lead', lead)
     let course = await searchCourse(body.cursos)
     if (course) {
       body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
@@ -320,20 +698,37 @@ const createOrUpdateUserMigration = async (body) => {
     if (lead.dni === body.DNI) {
       delete body.dni
     }
-    // console.log('body', body)
+    console.log('body', body)
     user = propertyUser(body, lead.toJSON())
-    // user = await userDB.update(lead._id, { ...body })
+    user = await userDB.update(lead._id, { ...user })
     console.log('user', user)
-    // await createOrUpdateDeal(user.toJSON(), body)
+    const deal = await createOrUpdateDealSale(user.toJSON(), body, assessor.toJSON())
+    const { orders, amount } = await createOrdersSale(user.toJSON(), course.toJSON(), body, assessor.toJSON())
+    const sale = await createSaleMigration(user.toJSON(), assessor.toJSON(), deal.toJSON(), orders, amount, body)
+    console.log('user', user)
+    console.log('deal', deal)
+    console.log('orders', orders)
+    console.log('sale', sale)
+    return {user, deal}
   } catch (error) {
     if (error.status === 404) {
-      // console.log('nuevo lead', body)
-      body.names = body.firstName + ' ' + body.lastName
+      console.log('nuevo lead', body)
+      // body.names = body.firstName + ' ' + body.lastName
       body.roles = ['Interesado', 'Estudiante']
-      // user = await userDB.create(body)
+      user = await userDB.create({
+        username: body.Username,
+        names: body.Nombres + ' ' + body.Apellidos,
+        email: body.Email1,
+        mobile: body.Celular1 ? body.Celular1 : '',
+        firstName: body.Nombres,
+        lastName: body.Apellidos,
+        dni: body.DNI ? body.DNI : '',
+        city: body.Region ? body.Region : '',
+        roles: body.roles
+      })
       
       // courses en body
-      let course = await searchCourse(body.courseId)
+      let course = await searchCourse(body.cursos)
       if (course) {
         body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
       }
@@ -343,28 +738,40 @@ const createOrUpdateUserMigration = async (body) => {
       //   type: 'Cuenta',
       //   name: 'Persona creada'
       // })
-      // await createOrUpdateDeal(user.toJSON(), body)
+      const deal = await createOrUpdateDealSale(user.toJSON(), body, assessor.toJSON())
+      const {orders, amount} = await createOrdersSale(user.toJSON(), course.toJSON(), body, assessor.toJSON())
+      const sale = await createSaleMigration(user.toJSON(), assessor.toJSON(), deal.toJSON(), orders, amount, body)
+      console.log('user', user)
+      console.log('deal', deal)
+      console.log('orders', orders)
+      console.log('sale', sale)
+      return {user, deal}
     } else {
       throw error
     }
   }
-  return user
 }
 
 const migrateAdminSales = async data => {
-  const promises = data.map(async item => {
-    try {
-      const user = await createOrUpdateUserMigration({...item})
-      return user
-    } catch (error) {
-      // error.teacher = data.username
-      console.log('error', error, {...item})
-      return error
-    }
-  })
-
-  const users = await Promise.all(promises)
-  return users
+  const result = await Promise.all(
+    data.map(async item => {
+      try {
+        const {user, deal} = await createOrUpdateUserMigration({...item})
+        return {
+          code: deal._id,
+          success: true
+        }
+      } catch (error) {
+        // error.teacher = data.username
+        console.log('error', error)
+        return {
+          code: 'No',
+          success: false
+        }
+      }
+    })
+  )
+  return result
 }
 
 const migrateCategories = async data => {
@@ -1460,6 +1867,78 @@ const migrateCertificates = async dataCertificate => {
   // console.log('not', not)
 
   // return resp
+}
+
+const searchBank = (code) => {
+  const options = [
+    {
+      label: 'Pago Efectivo',
+      name: 'Pago Efectivo',
+      code: 'PEF'
+    },
+    {
+      label: 'Interbank',
+      name: 'Interbank',
+      code: 'INT'
+    },
+    {
+      label: 'Interbank Ahorros',
+      name: 'Interbank Ahorros',
+      code: 'ITA'
+    },
+    {
+      label: 'Yape',
+      name: 'Yape',
+      code: 'YAP'
+    },
+    {
+      label: 'Plin',
+      name: 'Plin',
+      code: 'PLI'
+    },
+    {
+      label: 'BCP',
+      name: 'BCP',
+      code: 'BCP'
+    },
+    {
+      label: 'BBVA',
+      name: 'BBVA',
+      code: 'BBVA'
+    },
+    {
+      label: 'Banco de la Nación',
+      name: 'Banco de la Nación',
+      code: 'BN'
+    },
+    {
+      label: 'Banco de la Nación Ahorros',
+      name: 'Banco de la Nación Ahorros',
+      code: 'BNA'
+    },
+    {
+      label: 'Scotiabank',
+      name: 'Scotiabank',
+      code: 'SCK'
+    },
+    {
+      label: 'Paypal',
+      name: 'Paypal',
+      code: 'PP'
+    },
+    {
+      label: 'Lukita',
+      name: 'Lukita',
+      code: 'LUK'
+    },
+    {
+      label: 'Pago Link',
+      name: 'Pago Link',
+      code: 'PAG'
+    }
+  ]
+  const bank = options.find(option => option.code === code)
+  return bank
 }
 
 module.exports = {
