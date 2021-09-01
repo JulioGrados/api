@@ -12,6 +12,7 @@ const createVoucher = async (req, res, next) => {
   const files = req.files
   try {
     const voucher = await service.createVoucher(body, files, req.user)
+    console.log('voucher', voucher)
     return res.status(201).json(voucher)
   } catch (error) {
     next(error)

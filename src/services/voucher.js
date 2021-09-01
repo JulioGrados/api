@@ -13,11 +13,20 @@ const listVouchers = async params => {
 const createVoucher = async (body, files, loggedUser) => {
   if (files) {
     for (const label in files) {
-      const route = await saveFile(files[label], '/vouchers')
-      body[label] = route
+      if (label === 'image') {
+        const route = await saveFile(files['image'], '/vouchers')
+        body[label] = route
+      } else {
+        const route = await saveFile(files[label], '/vouchers')
+        if (body['extras']) {
+          body['extras'] = [ ...body['extras'], route]
+        } else {
+          body['extras'] = [route]
+        }
+        console.log('body', body['extras'])
+      }
     }
   }
-
   const voucher = await voucherDB.create(body)
   return voucher
 }
