@@ -1067,6 +1067,20 @@ const changeStatus = async (dataDeal, deal, assigned, body) => {
         name: `[Trato Reasignado] ${body.reassignedReason}`
       })
     }
+
+    if (dataDeal.traslate) {
+      // dataDeal.isClosed = false
+      // dataDeal.statusActivity = 'todo'
+      // dataDeal.status = 'Abierto'
+      incProspects(deal)
+      createTimeline({
+        linked: deal.client,
+        deal,
+        assigned: body.previousAssessor,
+        type: 'Deal',
+        name: `[Trato Trasaladado] ${body.traslateReason ? body.traslateReason : ' '} por ${body.previousAssessor && body.previousAssessor.username}`
+      })
+    }
     return dataDeal
   } catch (error) {
     console.log(error)
