@@ -109,7 +109,7 @@ const sendEmailReceipt = async (body) => {
     html: `
       Saludos ${body.firstName}
       <br><br>
-      Se adjunta ${body.type} Eectrónica Nro. ${body.code}.
+      Se adjunta ${body.type} Electrónica Nro. ${body.code}.
       <br>
       Recuerde que para cualquier consulta administrativa puedes escribirnos a cursos@eai.edu.pe donde será un gusto atender sus consultas.
       <br><br>
