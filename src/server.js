@@ -62,13 +62,19 @@ server.use(
 const corsOpts = {
   origin: '*',
 
-  methods: ['GET', 'POST'],
+  methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
 
   allowedHeaders: ['Content-Type']
 }
 
 server.use(morgan('dev'))
-server.use(cors())
+server.use(cors({
+  origin: '*',
+
+  methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
+
+  allowedHeaders: ['Content-Type']
+}))
 
 routesOpen(server)
 server.use(authHandler)
@@ -114,92 +120,3 @@ server.use((error, request, response, next) => {
 })
 
 module.exports = server
-
-/*
-
-
-db.deals.aggregate(
-  [
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'client',
-        foreignField: '_id',
-        as: 'client'
-      }
-    },
-    {
-      $unwind: '$client'
-    },
-    { $match: { $and:[ {status: 'Abierto'}, {'assessor.ref': ObjectId("5f03afa571df9b0318797ae5")}] } },
-    {   
-      $project:{
-          students : 1,
-          startDate : 1,
-          progress : 1,
-          progressPayment : 1,
-          statusActivity : 1,
-          status : 1,
-          createdAt : 1,
-          assessor : 1,
-          client: { names: 1, firstName: 1, lastName: 1, email: 1, mobile: 1, dni: 1, country: 1, city: 1, extras: 1}
-      } 
-    }
-  ]
-)
-
-db.enrols.aggregate(
-  [
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'linked.ref',
-        foreignField: '_id',
-        as: 'linked.ref'
-      }
-    },
-    {
-      $unwind: '$linked.ref'
-    },
-    {
-      $lookup: {
-        from: 'courses',
-        localField: 'course.ref',
-        foreignField: '_id',
-        as: 'course.ref'
-      }
-    },
-    {
-      $unwind: '$course.ref'
-    },
-    {
-      $lookup: {
-        from: 'certificates',
-        localField: 'certificate.ref',
-        foreignField: '_id',
-        as: 'certificate.ref'
-      }
-    },
-    {
-      $unwind: '$certificate.ref'
-    },
-    { $match: { $and:[ {isFinished: true}] } },
-    {   
-      $project:{
-        linked : {
-          ref: { email: 1, firstName: 1, lastName: 1 }
-        },
-        course : {
-          ref: { name: 1, agreement: 1, numberEvaluation: 1, academicHours: 1 }
-        },
-        exams : 1,
-        tasks : 1,
-        certificate : {
-          ref: { shortCode: 1, score: 1, date: 1, createdAt: 1 }
-        }
-      } 
-    }
-  ]
-).count()
-client: { names: 1, firstName: 1, lastName: 1, email: 1, mobile: 1, dni: 1, country: 1, city: 1, extras: 1}
-*/
