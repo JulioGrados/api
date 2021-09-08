@@ -62,19 +62,13 @@ server.use(
 const corsOpts = {
   origin: '*',
 
-  methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
+  methods: ['GET', 'POST'],
 
   allowedHeaders: ['Content-Type']
 }
 
 server.use(morgan('dev'))
-server.use(cors({
-  origin: '*',
-
-  methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
-
-  allowedHeaders: ['Content-Type']
-}))
+server.use(cors())
 
 routesOpen(server)
 server.use(authHandler)
