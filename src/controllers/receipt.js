@@ -37,6 +37,21 @@ const createFacture = async (req, res, next) => {
   }
 }
 
+const onlyUpdateReceipt = async (req, res, next) => {
+  const receiptId = req.params.id
+  const body = req.body
+  try {
+    const receipt = await service.onlyUpdateReceipt(
+      receiptId,
+      body,
+      req.receipt
+    )
+    return res.status(200).json(receipt)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const updateReceipt = async (req, res, next) => {
   const receiptId = req.params.id
   const body = JSON.parse(req.body.data)
@@ -137,6 +152,7 @@ module.exports = {
   createReceipt,
   createFacture,
   sendFacture,
+  onlyUpdateReceipt,
   updateReceipt,
   detailReceipt,
   detailAdminReceipt,

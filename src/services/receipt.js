@@ -3,7 +3,7 @@
 const { receiptDB, orderDB, courseDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 const CustomError = require('custom-error-instance')
-const { payloadTicket, setFacture, payloadFacture } = require('utils/functions/receipt')
+const { payloadTicket, setFacture, unsubscribeReceipt, payloadFacture } = require('utils/functions/receipt')
 const { filePdf } = require('utils/functions/file')
 const { companyDB } = require('../../../db/lib')
 const { sendEmailOnly } = require('utils/lib/sendgrid')
@@ -405,7 +405,21 @@ const updateReceipt = async (receiptId, body, files, loggedUser) => {
 }
 
 const updateAdminReceipt = async (receiptId, body, loggedUser) => {
+  if (!body.voucher_id || !body.annular) {
+    const InvalidError = CustomError('CastError', { message: 'La anulación necesita de un voucher ID y asunto.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()  
+  }
+
+  if (body.unsubscribe) {
+    const InvalidError = CustomError('CastError', { message: 'La anulación ya ha sido realizada.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()  
+  }
+  
   try {
+    const unsubscribe = await unsubscribeReceipt({
+      voucher_id: body.voucher_id,
+      reason: body.annular
+    })
     const orders = await orderDB.list({ query: { 'receipt.ref': receiptId } })
     const result = await Promise.all(
       orders.map(async order => {
@@ -417,12 +431,18 @@ const updateAdminReceipt = async (receiptId, body, loggedUser) => {
       })
     )
     const receipt = await receiptDB.update(receiptId, {
-      status: 'Anulada'
+      status: 'Anulada',
+      unsubscribe: true,
+      annular: body.annular
     })
-    console.log('receipt', receipt)
     return receipt
   } catch (error) {
-    throw error
+    if (error && error.error) {
+      const InvalidError = CustomError('CastError', { message: error.error, code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()  
+    } else {
+      throw error
+    }
   }
 }
 
@@ -439,6 +459,11 @@ const detailAdminReceipt = async (params, receiptId) => {
     ...receipt.toJSON(),
     orders: orders ? orders : []
   }
+}
+
+const onlyUpdateReceipt = async (receiptId, body, loggedUser) => {
+  const receipt = await receiptDB.update(receiptId, body)
+  return receipt
 }
 
 const deleteReceipt = async (receiptId, loggedUser) => {
@@ -478,6 +503,7 @@ module.exports = {
   createReceipt,
   createFacture,
   sendFacture,
+  onlyUpdateReceipt,
   updateReceipt,
   detailReceipt,
   detailAdminReceipt,
