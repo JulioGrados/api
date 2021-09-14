@@ -154,17 +154,19 @@ const createEnrolID = async enrolsMoodle => {
     } catch (error) {
       console.log('error user', error)
     }
-
+    
     let course
     try {
       course = await courseDB.detail({query: {moodleId: element.course}})
     } catch (error) {
       console.log('error curso', error)
     }
-
+    
     if (user && course) {
       try {
-        const enrol = enrolDB.detail({ query: { 'linked.ref': user._id.toString(), 'course.ref': course._id.toString() } })
+        console.log(user._id.toString(), course._id.toString())
+        const enrol = await enrolDB.detail({ query: { 'linked.ref': user._id.toString(), 'course.ref': course._id.toString() } })
+        
         const enrolUpdate = enrolDB.update(enrol._id, {
           moodleId: element.enrol
         })
