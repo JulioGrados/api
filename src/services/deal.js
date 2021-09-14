@@ -1390,6 +1390,7 @@ const sendEmailAccess = async (user, deal, logged) => {
       preheader,
       content: templateAccess(substitutions)
     })
+    console.log('email nuevo', email)
     await sendMailTemplate({
       to,
       from,
@@ -1438,6 +1439,7 @@ const sendEmailAccessExist = async (user, deal, logged) => {
       preheader,
       content: templateAccessClient(substitutions)
     })
+    console.log('email', email)
     await sendMailTemplate({
       to,
       from,
@@ -1453,35 +1455,54 @@ const sendEmailAccessExist = async (user, deal, logged) => {
   }
 }
 
-const enrolStudents = async ({ students, dealId, loggedUser }, logged) => {
+const enrolStudents = async ({ item, dealId, loggedUser }, logged) => {
   try {
-    const users = await Promise.all(
-      students.map(async item => {
-        const student = item.student && item.student.ref ? item.student.ref : item.student
-        const id = student && student.ref ? student.ref._id : student._id
-        const user = await userDB.update(id, {
-          username: student.username,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          names: student.names,
-          email: student.email,
-          dni: student.dni
-        })
-        return user
-      })
-    )
+    // const users = await Promise.all(
+    //   students.map(async item => {
+    //     const student = item.student && item.student.ref ? item.student.ref : item.student
+    //     const id = student && student.ref ? student.ref._id : student._id
+    //     const user = await userDB.update(id, {
+    //       username: student.username,
+    //       firstName: student.firstName,
+    //       lastName: student.lastName,
+    //       names: student.names,
+    //       email: student.email,
+    //       dni: student.dni
+    //     })
+    //     return user
+    //   })
+    // )
+    console.log('item', item)
+    const student = item.student && item.student.ref ? item.student.ref : item.student
+    const id = student && student.ref ? student.ref._id : student._id
+    const user = await userDB.update(id, {
+      username: student.username,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      names: student.names,
+      email: student.email,
+      dni: student.dni
+    })
+    console.log('user', user)
+    // const enrols = await Promise.all(
+    //   students.map(async item => {
+    //     const courses = await addCoursesMoodleUpdate(
+    //       item.student,
+    //       item.courses,
+    //       dealId,
+    //       loggedUser,
+    //       logged
+    //     )
+    //     return courses
+    //   })
+    // )
 
-    const enrols = await Promise.all(
-      students.map(async item => {
-        const courses = await addCoursesMoodleUpdate(
-          item.student,
-          item.courses,
-          dealId,
-          loggedUser,
-          logged
-        )
-        return courses
-      })
+    const enrol = await addCoursesMoodleUpdate(
+      item.student,
+      item.courses,
+      dealId,
+      loggedUser,
+      logged
     )
     
      const updatedDeal = await dealDB.update(dealId, {
@@ -1489,7 +1510,7 @@ const enrolStudents = async ({ students, dealId, loggedUser }, logged) => {
       endDate: new Date()
     })
     emitDeal(updatedDeal)
-    return { enrols, updatedDeal }
+    return { enrol, updatedDeal }
   } catch (error) {
     throw error
   }
