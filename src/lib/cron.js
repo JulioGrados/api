@@ -37,7 +37,7 @@ const certificate = new CronJob('0 40 5 * * *', async function() {
 }, null, true, 'America/Bogota');
 certificate.start();
 
-const enrol = new CronJob('0 0 19 * * *', async function() {
+const enrol = new CronJob('0 49 21 * * *', async function() {
   console.log('You will see this message every minuto');
   const dir = path.resolve(__dirname, '../../backup/enrol.json')
   const arr = await readFile(dir)
