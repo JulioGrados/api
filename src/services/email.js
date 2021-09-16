@@ -17,6 +17,7 @@ const listEmails = async params => {
 
 const createSendEmail = async (body, loggedUser) => {
   const dataEmail = prepareEmail(body)
+  dataEmail.subject = body.subject ? body.subject : body.preheader
   const email = await emailDB.create(dataEmail)
   await sendEmailSengrid(email)
   if (email) {
@@ -158,11 +159,12 @@ const prepareEmailLinked = ({ template, ...data }) => {
   return dataEmail
 }
 
-const sendEmailSengrid = async ({ to, from, preheader, content, _id }) => {
+const sendEmailSengrid = async ({ to, from, subject, preheader, content, _id }) => {
   const userEmail = {
     to,
     from,
-    subject: preheader,
+    subject: subject ? subject : preheader,
+    preheader: preheader,
     html: content,
     args: {
       emailId: _id
