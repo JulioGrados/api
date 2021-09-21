@@ -78,6 +78,26 @@ const updateSaleOne = async (saleId, body, loggedUser) => {
   }
 }
 
+const updateSaleAdmin = async (saleId, body, loggedUser) => {
+  const sale = await saleDB.updateAdmin(saleId, {
+    annular: true
+  })
+  body.orders.map(async item => {
+    const order = await orderDB.update(item._id, {
+      annular: true
+    })
+    const voucher = order.voucher && order.voucher.ref
+    if (voucher) {
+      const voucherUpdate = await voucherDB.update(voucher._id, {
+        annular: true
+      })
+      console.log('voucherUpdate', voucherUpdate)
+    }
+    console.log('order', order)
+  })
+  return sale
+}
+
 const detailSale = async params => {
   const sale = await saleDB.detail(params)
   return sale
@@ -435,6 +455,7 @@ module.exports = {
   createSale,
   updateSale,
   updateSaleOne,
+  updateSaleAdmin,
   detailSale,
   deleteSale,
   prepareOrders,

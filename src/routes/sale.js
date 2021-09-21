@@ -21,6 +21,10 @@ router
   .put(Api.updateSaleOne)
 
 router
+  .route('/sales/reset/:id')
+  .put(Api.updateSaleAdmin) 
+
+router
   .route('/sales/:id')
   .get(Api.detailSale)
   .put(Api.updateSale)

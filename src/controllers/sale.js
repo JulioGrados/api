@@ -54,6 +54,18 @@ const updateSaleOne = async (req, res, next) => {
   }
 }
 
+const updateSaleAdmin = async (req, res, next) => {
+  const body = req.body.data ? JSON.parse(req.body.data) : req.body
+  const files = req.files
+  const saleId = req.params.id
+  try {
+    const sale = await service.updateSaleAdmin(saleId, req.body, files, req.user)
+    return res.status(200).json(sale)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const updateSale = async (req, res, next) => {
   const saleId = req.params.id
   try {
@@ -111,6 +123,7 @@ module.exports = {
   createSales,
   updateSale,
   updateSaleOne,
+  updateSaleAdmin,
   detailSale,
   deleteSale
 }
