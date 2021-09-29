@@ -1369,7 +1369,7 @@ const sendEmailAccess = async (user, deal, logged) => {
   const substitutions = {
     username: linked.username,
     password: user.password,
-    nombre: linked.names
+    nombre: linked.firstName
   }
   console.log('substitutions', substitutions)
   try {
@@ -1417,7 +1417,7 @@ const sendEmailAccessExist = async (user, deal, logged) => {
   const substitutions = {
     username: linked.username,
     password: user.password,
-    nombre: linked.names
+    nombre: linked.firstName
   }
   console.log('substitutions', substitutions)
   try {

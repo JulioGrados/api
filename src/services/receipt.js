@@ -71,6 +71,7 @@ const sendFacture = async (body) => {
       fromname: 'Escuela Americana de Innovación',
       subject: `Haz recibido una ${body.isBill ? 'Factura' : 'Boleta'} Electrónica Nro. ${body.code} de Escuela Americana de Innovación S.A.C.`,
       preheader: 'Comprobante de Pago',
+      type: body.isBill ? 'Factura' : 'Boleta',
       content: templateReceipt(body),
       attachments: [
         {
@@ -209,6 +210,7 @@ const createFacture = async (receiptId, body) => {
             fromname: 'Escuela Americana de Innovación',
             preheader: 'Comprobante de Pago',
             subject: `Factura Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
+            type: 'Factura',
             content: templateReceipt(receipt),
             attachments: [
               {
@@ -287,6 +289,7 @@ const createFacture = async (receiptId, body) => {
             fromname: 'Escuela Americana de Innovación',
             preheader: 'Comprobante de Pago',
             subject: `Boleta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
+            type: 'Boleta',
             content: templateReceipt(receipt),
             attachments: [
               {
