@@ -199,7 +199,8 @@ const createFacture = async (receiptId, body) => {
             voucher_id: create.data.voucher_id,
             code: ticket.nro_document,
             serie: 'FA01',
-            sequential: ticket.sequential
+            sequential: ticket.sequential,
+            dateEmit: new Date()
           })
 
           const sendEmail = await createEmailLinked({
@@ -278,7 +279,8 @@ const createFacture = async (receiptId, body) => {
             code: ticket.nro_document,
             serie: 'BA01',
             voucher_id: create.data.voucher_id,
-            sequential: ticket.sequential
+            sequential: ticket.sequential,
+            dateEmit: new Date()
           })
 
           const sendEmail = await createEmailLinked({
