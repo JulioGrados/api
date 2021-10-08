@@ -3,7 +3,7 @@
 const { receiptDB, orderDB, courseDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 const CustomError = require('custom-error-instance')
-const { payloadTicket, setFacture, unsubscribeReceipt, payloadFacture } = require('utils/functions/receipt')
+const { payloadTicket, setFacture, unsubscribeReceipt, payloadFacture, noteReceipt } = require('utils/functions/receipt')
 const { filePdf } = require('utils/functions/file')
 const { companyDB } = require('../../../db/lib')
 const { sendEmailOnly } = require('utils/lib/sendgrid')
@@ -177,13 +177,14 @@ const createFacture = async (receiptId, body) => {
       if (body.send) {
         try {
           const count = await receiptDB.count({ query: { isFacture: true } })
+          const note = await receiptDB.count({ query: { isNoteCreditFac: true }})
           const company = await companyDB.detail({ query: { ruc: body.ruc } })
           const items = await getItems(body.orders)
           const ticket = payloadFacture({
             receipt: body,
             items: items,
             company: company,
-            count: count ? count + 1 : 1
+            count: count ? (count + note) + 1 : 1
           })
           console.log('ticket', ticket)
           const create = await setFacture(ticket)
@@ -255,14 +256,15 @@ const createFacture = async (receiptId, body) => {
     } else {
       if (body.email) {
         try {
-          const count = await receiptDB.count({ query: { isTicket: true }})
+          const count = await receiptDB.count({ query: { isTicket: true } })
+          const note = await receiptDB.count({ query: { isNoteCreditTic: true }})
           const { firstName, lastName, dni, document } = body 
           const items = await getItems(body.orders)
           const ticket = payloadTicket({
             receipt: body,
             items: items,
             user: { firstName: firstName, lastName: lastName, dni: dni, document: document },
-            count: count ? count + 5 : 5
+            count: count ? (count + note) + 5 : 5
           })
           console.log('ticket', ticket)
           const create = await setFacture(ticket)
@@ -451,6 +453,75 @@ const updateAdminReceipt = async (receiptId, body, loggedUser) => {
   }
 }
 
+const noteAdminReceipt = async (receiptId, body, loggedUser) => {
+  if (!body.voucher_id || !body.annular) {
+    const InvalidError = CustomError('CastError', { message: 'La anulación necesita de un voucher ID y asunto.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()  
+  }
+
+  if (body.unsubscribe) {
+    const InvalidError = CustomError('CastError', { message: 'La anulación ya ha sido realizada.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()  
+  }
+
+  try {
+    const sum = body.isBill ? await receiptDB.count({ query: { isFacture: true } }) : await receiptDB.count({ query: { isTicket: true } })
+    const note = body.isBill ? await receiptDB.count({ query: { isNoteCreditFac: true } }) : await receiptDB.count({ query: { isNoteCreditTic: true } })
+    
+    const count = body.isBill ? (sum + note) + 1 : (sum + note) + 5
+    const part = ('00000000'.substring(0, '00000000'.length - count.toString().length))
+    const sequential = part + count.toString()
+    const obj = {
+      voucher_id_reference: body.voucher_id,
+      type_credit_note: '01',
+      nro_document: body.serie + '-' + sequential,
+      series: body.serie,
+      print_type: 'A4',
+      motive: body.annular
+    }
+    console.log('obj', obj)
+    const unsubscribe = await noteReceipt({
+      voucher_id_reference: body.voucher_id,
+      type_credit_note: '01',
+      nro_document: body.serie + '-' + sequential,
+      series: body.serie,
+      print_type: 'A4',
+      motive: body.annular
+    })
+    const fileroot = await filePdf(unsubscribe.data.pdf_base64, unsubscribe.data.voucher_id)
+    
+    const orders = await orderDB.list({ query: { 'receipt.ref': receiptId } })
+    const result = await Promise.all(
+      orders.map(async order => {
+        const orderRes = await orderDB.update(order._id, {
+          receipt: undefined,
+          status: 'Pagada'
+        })
+        return orderRes
+      })
+    )
+    const receipt = await receiptDB.update(receiptId, {
+      status: 'Anulada',
+      unsubscribe: true,
+      annular: body.annular,
+      voucher_id_note: unsubscribe.data.voucher_id,
+      fileNote: fileroot,
+      isNoteCreditFac: body.isBill ? true : false,
+      isNoteCreditTic: body.isBill ? false : true,
+      dateNote: new Date()
+    })
+    
+    return receipt
+  } catch (error) {
+    if (error && error.error) {
+      const InvalidError = CustomError('CastError', { message: error.error, code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()  
+    } else {
+      throw error
+    }
+  }
+}
+
 const detailReceipt = async params => {
   const receipt = await receiptDB.detail(params)
   return receipt
@@ -510,6 +581,7 @@ module.exports = {
   sendFacture,
   onlyUpdateReceipt,
   updateReceipt,
+  noteAdminReceipt,
   detailReceipt,
   detailAdminReceipt,
   updateAdminReceipt,

@@ -29,6 +29,10 @@ router
   .put(Api.onlyUpdateReceipt)
 
 router
+  .route('/receipts/note/:id')
+  .put(Api.noteAdminReceipt)
+
+router
   .route('/receipts/facture')
   .post(Api.sendFacture)
 
