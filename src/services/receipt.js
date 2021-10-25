@@ -63,6 +63,11 @@ const createReceipt = async (body, files, loggedUser) => {
 const sendFacture = async (body) => {
   try {
     const attachment = await getBase64(MEDIA_PATH + body.file)
+    const receiptData = {
+      ...body,
+      type: body.isBill ? 'Factura':'Boleta'
+    }
+    // console.log('receiptData', receiptData)
     const sendEmail = await createEmailLinked({
       to: body.isBill ? body.send : body.email,
       deal: body.deal,
@@ -72,7 +77,7 @@ const sendFacture = async (body) => {
       subject: `Haz recibido una ${body.isBill ? 'Factura' : 'Boleta'} Electrónica Nro. ${body.code} de Escuela Americana de Innovación S.A.C.`,
       preheader: 'Comprobante de Pago',
       type: body.isBill ? 'Factura' : 'Boleta',
-      content: templateReceipt(body),
+      content: templateReceipt(receiptData),
       attachments: [
         {
           filename: 'comprobante.pdf',
@@ -203,7 +208,11 @@ const createFacture = async (receiptId, body) => {
             sequential: ticket.sequential,
             dateEmit: new Date()
           })
-
+          const receiptData = {
+            ...receipt.toJSON(),
+            type: 'Factura'
+          }
+          // console.log('receiptData', receiptData)
           const sendEmail = await createEmailLinked({
             to: body.send,
             deal: receipt.deal,
@@ -213,7 +222,7 @@ const createFacture = async (receiptId, body) => {
             preheader: 'Comprobante de Pago',
             subject: `Factura Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
             type: 'Factura',
-            content: templateReceipt(receipt),
+            content: templateReceipt(receiptData),
             attachments: [
               {
                 filename: 'comprobante.pdf',
@@ -284,7 +293,11 @@ const createFacture = async (receiptId, body) => {
             sequential: ticket.sequential,
             dateEmit: new Date()
           })
-
+          const receiptData = {
+            ...receipt.toJSON(),
+            type: 'Boleta'
+          }
+          // console.log('receiptData', receiptData)
           const sendEmail = await createEmailLinked({
             to: body.email,
             deal: receipt.deal,
@@ -294,7 +307,7 @@ const createFacture = async (receiptId, body) => {
             preheader: 'Comprobante de Pago',
             subject: `Boleta Electrónica Nro. ${receipt.code} de Escuela Americana de Innovación S.A.C.`,
             type: 'Boleta',
-            content: templateReceipt(receipt),
+            content: templateReceipt(receiptData),
             attachments: [
               {
                 filename: 'comprobante.pdf',
