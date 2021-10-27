@@ -273,7 +273,7 @@ const createFacture = async (receiptId, body) => {
             receipt: body,
             items: items,
             user: { firstName: firstName, lastName: lastName, dni: dni, document: document },
-            count: count ? (count + note) + 5 : 5
+            count: count ? (count + note) + 6 : 6
           })
           console.log('ticket', ticket)
           const create = await setFacture(ticket)
