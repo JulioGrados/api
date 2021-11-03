@@ -1,5 +1,5 @@
 'use strict'
-
+const CustomError = require('custom-error-instance')
 const { voucherDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 const { orderDB } = require('../../../db/lib')
@@ -12,6 +12,31 @@ const listVouchers = async params => {
 
 const createVoucher = async (body, files, loggedUser) => {
   // console.log('body', body)
+  if (!body.methodName) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe método de pago.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
+  if (!body.money) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe moneda.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
+  if (!body.amount) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe precio.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
+  if (!body.operationNumber) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe código de operación.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
+  if (!body.bank) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe banco.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
   if (files) {
     for (const label in files) {
       if (label === 'image') {
@@ -33,6 +58,31 @@ const createVoucher = async (body, files, loggedUser) => {
 }
 
 const updateVoucher = async (voucherId, body, files, loggedUser) => {
+  if (!body.methodName) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe método de pago.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
+  if (!body.money) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe moneda.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
+  if (!body.amount) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe precio.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
+  if (!body.operationNumber) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe código de operación.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+
+  if (!body.bank) {
+    const InvalidError = CustomError('InvalidError', { message: 'No existe banco.', code: 'EINVLD' }, CustomError.factory.expectReceive);
+    throw new InvalidError()
+  }
+  
   if (files) {
     for (const label in files) {
       if (label === 'image') {
