@@ -17,42 +17,79 @@ const listReceipts = async params => {
   return receipts
 }
 
+const methodNameOrders = orders => {
+  const firstOrder = orders[0] && orders[0].voucher && orders[0].voucher.ref
+  let band = true
+  orders.forEach(element => {
+    const voucher = element.voucher && element.voucher.ref
+    if (firstOrder.methodName !== voucher.methodName) {
+      band = false
+    }
+  })
+  if (band) {
+    return {
+      success: true,
+      methodName: firstOrder.methodName
+    }
+  } else {
+    return {
+      success: false
+    }
+  }
+}
+
 const createReceipt = async (body, files, loggedUser) => {
   if (body.code) {
     if (body.orders && body.orders.length) {
-      if (files) {
-        for (const label in files) {
-          const route = await saveFile(files[label], '/receipts')
-          body[label] = route
+      //comprobar que tengan el mismo método de pago
+      const resp = methodNameOrders(body.orders)
+      if (resp.success) {
+        if (files) {
+          for (const label in files) {
+            const route = await saveFile(files[label], '/receipts')
+            body[label] = route
+          }
         }
+        body.methodName = resp.methodName
+        body.status = 'Finalizada'
+        const receipt = await receiptDB.create(body)
+        const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
+        const bdReceipt = await receiptDB.detail({
+          query: { _id: receipt._id },
+          populate: { path: 'orders' }
+        })
+        return bdReceipt
+      } else {
+        const InvalidError = CustomError('CastError', { message: 'Las ordenes están compuestas por voucher con distintos métodos de pago', code: 'EINVLD' }, CustomError.factory.expectReceive)
+        throw new InvalidError()
       }
-      body.status = 'Finalizada'
-      const receipt = await receiptDB.create(body)
-      const orders = await prepareOrders(body.orders, receipt, 'Cancelada')
-      const bdReceipt = await receiptDB.detail({
-        query: { _id: receipt._id },
-        populate: { path: 'orders' }
-      })
-      return bdReceipt
     } else {
       const InvalidError = CustomError('CastError', { message: 'No existe ordenes', code: 'EINVLD' }, CustomError.factory.expectReceive)
       throw new InvalidError()
     }
   } else {
     if (body.orders && body.orders.length) {
-      if (files) {
-        for (const label in files) {
-          const route = await saveFile(files[label], '/receipts')
-          body[label] = route
+      //comprobar que tengan el mismo método de pago
+      const resp = methodNameOrders(body.orders)
+      if (resp.success) {
+        if (files) {
+          for (const label in files) {
+            const route = await saveFile(files[label], '/receipts')
+            body[label] = route
+          }
         }
+        body.methodName = resp.methodName
+        const receipt = await receiptDB.create(body)
+        const orders = await prepareOrders(body.orders, receipt, 'Usada')
+        const bdReceipt = await receiptDB.detail({
+          query: { _id: receipt._id },
+          populate: { path: 'orders' }
+        })
+        return bdReceipt 
+      } else {
+        const InvalidError = CustomError('CastError', { message: 'Las ordenes están compuestas por voucher con distintos métodos de pago', code: 'EINVLD' }, CustomError.factory.expectReceive)
+        throw new InvalidError()
       }
-      const receipt = await receiptDB.create(body)
-      const orders = await prepareOrders(body.orders, receipt, 'Usada')
-      const bdReceipt = await receiptDB.detail({
-        query: { _id: receipt._id },
-        populate: { path: 'orders' }
-      })
-      return bdReceipt
     } else {
       const InvalidError = CustomError('CastError', { message: 'No existe ordenes', code: 'EINVLD' }, CustomError.factory.expectReceive)
       throw new InvalidError()
@@ -177,6 +214,7 @@ const getItems = async orders => {
 }
 
 const createFacture = async (receiptId, body) => {
+  // console.log('body', body)
   if (body.orders && body.orders.length) {
     if (body.isBill) {
       if (body.send) {

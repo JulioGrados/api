@@ -47,20 +47,25 @@ const createOrder = async (body, loggedUser) => {
   const { voucher } = body
   const dbVoucher = voucher && await findVoucher(voucher)
   if (voucher && dbVoucher) {
-    const amount = body.amount
-    if (amount > 0) {
-      const residueBefore = dbVoucher.residue
-      const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
-      const updateVoucher = await voucherDB.update(dbVoucher._id, {
-        residue,
-        isUsed
-      })
-      emitVoucher(updateVoucher, loggedUser)
-      body.voucher.ref = updateVoucher
-      body.status = 'Pagada' 
+    if (dbVoucher.money && body.money && dbVoucher.money.code === body.money.code) {
+      const amount = body.amount
+      if (amount > 0) {
+        const residueBefore = dbVoucher.residue
+        const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
+        const updateVoucher = await voucherDB.update(dbVoucher._id, {
+          residue,
+          isUsed
+        })
+        emitVoucher(updateVoucher, loggedUser)
+        body.voucher.ref = updateVoucher
+        body.status = 'Pagada' 
+      } else {
+        const InvalidError = CustomError('CastError', { message: 'El monto de la orden debe ser mayor o igual a 0', code: 'EINVLD' }, CustomError.factory.expectReceive);
+        throw new InvalidError()
+      } 
     } else {
-      const InvalidError = CustomError('CastError', { message: 'El monto de la orden debe ser mayor o igual a 0', code: 'EINVLD' }, CustomError.factory.expectReceive);
-      throw new InvalidError()
+      const InvalidError = CustomError('CastError', { message: 'El voucher con la orden no coinciden en el mismo tipo de moneda', code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()  
     }
   }
   const order = await orderDB.create(body)
@@ -72,20 +77,25 @@ const updateOrder = async (orderId, body, loggedUser) => {
   const { voucher } = body
   const dbVoucher = voucher && await findVoucher(voucher)
   if (voucher && dbVoucher) {
-    const amount = body.amount
-    if (amount > 0) {
-      const residueBefore = dbVoucher.residue
-      const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
-      const updateVoucher = await voucherDB.update(dbVoucher._id, {
-        residue,
-        isUsed
-      })
-      emitVoucher(updateVoucher, loggedUser)
-      body.voucher.ref = updateVoucher
-      body.status = 'Pagada'
+    if (dbVoucher.money && body.money && dbVoucher.money.code === body.money.code) {
+      const amount = body.amount
+      if (amount > 0) {
+        const residueBefore = dbVoucher.residue
+        const { residue, isUsed } = getResidueVoucher(residueBefore, amount)
+        const updateVoucher = await voucherDB.update(dbVoucher._id, {
+          residue,
+          isUsed
+        })
+        emitVoucher(updateVoucher, loggedUser)
+        body.voucher.ref = updateVoucher
+        body.status = 'Pagada'
+      } else {
+        const InvalidError = CustomError('CastError', { message: 'El monto de la orden debe ser mayor o igual a 0', code: 'EINVLD' }, CustomError.factory.expectReceive);
+        throw new InvalidError()
+      }
     } else {
-      const InvalidError = CustomError('CastError', { message: 'El monto de la orden debe ser mayor o igual a 0', code: 'EINVLD' }, CustomError.factory.expectReceive);
-      throw new InvalidError()
+      const InvalidError = CustomError('CastError', { message: 'El voucher con la orden no coinciden en el mismo tipo de moneda', code: 'EINVLD' }, CustomError.factory.expectReceive);
+      throw new InvalidError()  
     }
   }
   const order = await orderDB.update(orderId, body)

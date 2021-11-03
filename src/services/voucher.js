@@ -11,6 +11,7 @@ const listVouchers = async params => {
 }
 
 const createVoucher = async (body, files, loggedUser) => {
+  // console.log('body', body)
   if (files) {
     for (const label in files) {
       if (label === 'image') {

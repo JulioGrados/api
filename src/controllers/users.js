@@ -120,7 +120,7 @@ const searchCodeNumber = number => {
 
 const createOrUpdateUser = async (req, res, next) => {
   const body = req.body
-  
+  console.log('req.body', req.body)
   try {
     if (body.source && body.source === 'Facebook') {
       const number = body.phone && body.phone.charAt(0) === '+' ? body.phone.substring(1) : body.phone

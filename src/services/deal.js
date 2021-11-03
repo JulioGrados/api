@@ -22,6 +22,8 @@ let randomize = require('randomatic')
 const { receiptDB } = require('db/lib')
 const { templateAccess } = require('utils/emails/access')
 const { templateAccessClient } = require('utils/emails/accessClient')
+const currenciesData = require('utils/functions/currencies')
+const c = require('config')
 
 const listDeals = async params => {
   console.log('--------------------------------------------------------')
@@ -350,6 +352,7 @@ const countDocuments = async params => {
 const createOrUpdateDeal = async (user, body, lead = {}, update = false) => {
   const deal = await findDealUser(user)
   // console.log('deal', deal)
+  // console.log('body', body)
   if (deal) {
     if (deal.status === 'Abierto') {
       const updateDeal = await editExistDeal(deal.toJSON(), user, body)
@@ -388,14 +391,16 @@ const createOrUpdateDeal = async (user, body, lead = {}, update = false) => {
 
 const createDealUserOnly = async (user, body, lead = {}, update = false) => {
   const deal = await findDealUser(user)
-  // console.log('deal', deal)
+  console.log('deal create', deal)
   if (deal) {
     if (deal.status === 'Abierto') {
       // error ya existe
+      console.log('1')
       const InvalidError = CustomError('InvalidError', { message: 'Ya existe un trato abierto para el cliente.', code: 'EINVLD', deal: { ...deal.toJSON() } }, CustomError.factory.expectReceive);
       throw new InvalidError()
     } else if (deal.status === 'Perdido') {
       // actualizar
+      console.log('2')
       const updateDeal = await editExistDealOnly(deal.toJSON(), user, body)
       update && (
       createTimeline({
@@ -408,10 +413,12 @@ const createDealUserOnly = async (user, body, lead = {}, update = false) => {
       return updateDeal
     } else if (deal.status === 'Ganado') {
       if (deal.statusPayment === 'Abierto') {
+        console.log('3')
         const InvalidError = CustomError('InvalidError', { message: 'Ya existe un trato abierto para el cliente.', code: 'EINVLD', deal: { ...deal.toJSON() } }, CustomError.factory.expectReceive);
         throw new InvalidError()
       } else if(deal.statusPayment === 'Pago') {
         // actualizar
+        console.log('4')
         const updateDeal = await editExistDealOnly(deal.toJSON(), user, body)
         update && (
         createTimeline({
@@ -465,15 +472,16 @@ const createNewDeal = async (user, body) => {
   }
   dataDeal.assessor = assessorAssigned
 
-  console.log('dataDeal', dataDeal)
+  // console.log('dataDeal', dataDeal)
 
   const deal = await dealDB.create({
     ...dataDeal,
     client: user,
+    money: castMoneyDeal(body.currency),
     students: [
       {
         student: {...user, ref: user},
-        courses: body.courses
+        courses: castCoursePrice(body.courses, body.currency)
       }
     ]
   })
@@ -483,6 +491,25 @@ const createNewDeal = async (user, body) => {
   await incProspects(dataDeal)
   emitDeal(deal)
   return deal
+}
+
+const castCoursePrice = (courses, currency = 'PEN') => {
+  // console.log('courses', courses)
+  const converts = courses.map(course => {
+    console.log('course', course)
+    console.log('coins', course.coins)
+    console.log('currency', currency)
+    const price = course && course.coins && course.coins.find(item => item.code === currency)
+    return {
+      ...course,
+      price: price.price
+    }
+  })
+  return converts
+}
+
+const castMoneyDeal = (currency = 'PEN') => {
+  return currenciesData.find(item => item.code === currency)
 }
 
 const createNewDealOnly = async (user, body) => {
@@ -498,10 +525,11 @@ const createNewDealOnly = async (user, body) => {
     ...dataDeal,
     statusActivity: 'done',
     client: user,
+    money: castMoneyDeal(body.currency),
     students: [
       {
         student: {...user, ref: user},
-        courses: body.courses
+        courses: castCoursePrice(body.courses, body.currency)
       }
     ]
   })
@@ -530,10 +558,11 @@ const editExistDealOnly = async (deal, user, body) => {
   dataDeal = {
     ...dataDeal,
     client: user,
+    money: castMoneyDeal(body.currency),
     students: [
       {
         student: {...user, ref: user},
-        courses: prepareCoursesOnly(user, dataDeal, [], body.courses, body.source)
+        courses: prepareCoursesOnly(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
       }
     ]
   }
@@ -572,10 +601,11 @@ const editExistDealAgain = async (deal, user, body) => {
   dataDeal = {
     ...dataDeal,
     client: user,
+    money: castMoneyDeal(body.currency),
     students: [
       {
         student: {...user, ref: user},
-        courses: prepareCourses(user, dataDeal, [], body.courses, body.source)
+        courses: prepareCourses(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
       }
     ]
   }
@@ -593,34 +623,37 @@ const editExistDealAgain = async (deal, user, body) => {
 
 const editExistDeal = async (deal, user, body) => {
   const dataDeal = await addInitialStatusAgain(deal)
+  // console.log('dataDeal', dataDeal)
   if (!dataDeal.assessor) {
     dataDeal.assessor = await assignedAssessor(body.courses)
     incProspects(dataDeal)
   }
-  console.log('dataDeal', dataDeal)
-  // console.log('deal prepare', deal.students)
-  // console.log('body.courses', body.courses)
-  // console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
+  
   dataDeal.students[0]
-    ? (dataDeal.students[0].courses = prepareCourses(
+    ? dataDeal.students[0].courses = prepareCourses(
         user,
         dataDeal,
         dataDeal.students[0].courses,
-        body.courses,
+        castCoursePrice(body.courses, body.currency),
         body.source
-      ))
+      )
     : {
         ...dataDeal,
         client: user,
         students: [
           {
             student: {...user, ref: user},
-            courses: prepareCourses(user, dataDeal, [], body.courses, body.source)
+            courses: prepareCourses(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
           }
         ]
     }
+  
+  const infoDeal = {
+    ...dataDeal,
+    money: castMoneyDeal(body.currency)
+  }
   const updateDeal = await dealDB.update(deal._id, {
-    ...dataDeal
+    ...infoDeal
   })
   console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
   emitDeal(updateDeal)
