@@ -1,6 +1,6 @@
 'use strict'
 
-const { receiptDB, orderDB, courseDB } = require('../db')
+const { receiptDB, orderDB, courseDB, dealDB } = require('../db')
 const { saveFile } = require('utils/files/save')
 const CustomError = require('custom-error-instance')
 const { payloadTicket, setFacture, unsubscribeReceipt, payloadFacture, noteReceipt } = require('utils/functions/receipt')
@@ -11,6 +11,7 @@ const { getBase64 } = require('utils/functions/base64')
 const { MEDIA_PATH } = require('utils/files/path')
 const { createEmailLinked } = require('./email')
 const { templateReceipt } = require('utils/emails/receipt')
+const { payloadHelper, setEventFb } = require('utils/functions/pixel')
 
 const listReceipts = async params => {
   const receipts = await receiptDB.list(params)
@@ -213,7 +214,7 @@ const getItems = async orders => {
   )
 }
 
-const createFacture = async (receiptId, body) => {
+const createFacture = async (receiptId, body, request) => {
   // console.log('body', body)
   if (body.orders && body.orders.length) {
     if (body.isBill) {
@@ -246,10 +247,33 @@ const createFacture = async (receiptId, body) => {
             sequential: ticket.sequential,
             dateEmit: new Date()
           })
+
           const receiptData = {
             ...receipt.toJSON(),
             type: 'Factura'
           }
+
+          //deal emit a fb 
+          if (receipt.deal) {
+            const deal = await dealDB.detail({
+              query: { _id: receipt.deal.toString() },
+              populate: { path: 'client' }
+            })
+            const helper = await payloadHelper({
+              email: deal && deal.client ? (deal.client.email ? deal.client.email : null) : null,
+              mobile: deal && deal.client ? (deal.client.mobile ? deal.client.mobile : null) : null,
+              lastName: deal && deal.client ? (deal.client.lastName ? deal.client.lastName : null) : null,
+              firstName: deal && deal.client ? (deal.client.firstName ? deal.client.firstName : null) : null,
+              city: deal && deal.client ? (deal.client.city ? deal.client.city : null) : null,
+              country: deal && deal.client ? (deal.client.country ? deal.client.country: null) : null,
+              receipt: receipt,
+              request: request
+            })
+            console.log('helper', helper)
+            // const dataFb = await setEventFb(helper)
+            // console.log('dataFb', dataFb)
+          }
+
           // console.log('receiptData', receiptData)
           const sendEmail = await createEmailLinked({
             to: body.send,
@@ -335,6 +359,28 @@ const createFacture = async (receiptId, body) => {
             ...receipt.toJSON(),
             type: 'Boleta'
           }
+
+          //deal emit a fb 
+          if (receipt.deal) {
+            const deal = await dealDB.detail({
+              query: { _id: receipt.deal.toString() },
+              populate: { path: 'client' }
+            })
+            const helper = await payloadHelper({
+              email: deal && deal.client ? (deal.client.email ? deal.client.email : '') : '',
+              mobile: deal && deal.client ? (deal.client.mobile ? deal.client.mobile : '') : '',
+              lastName: deal && deal.client ? (deal.client.lastName ? deal.client.lastName : '') : '',
+              firstName: deal && deal.client ? (deal.client.firstName ? deal.client.firstName : '') : '',
+              city: deal && deal.client ? (deal.client.city ? deal.client.city : '') : '',
+              country: deal && deal.client ? (deal.client.country ? deal.client.country: '') : '',
+              receipt: receipt,
+              request: request
+            })
+            console.log('helper', helper)
+            // const dataFb = await setEventFb(helper)
+            // console.log('dataFb', dataFb)
+          }
+
           // console.log('receiptData', receiptData)
           const sendEmail = await createEmailLinked({
             to: body.email,
