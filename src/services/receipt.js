@@ -368,12 +368,12 @@ const createFacture = async (receiptId, body, request) => {
             })
             // console.log('deal', deal)
             const helper = await payloadHelper({
-              email: deal && deal.client ? (deal.client.email ? deal.client.email : '') : '',
-              mobile: deal && deal.client ? (deal.client.mobile ? deal.client.mobile : '') : '',
-              lastName: deal && deal.client ? (deal.client.lastName ? deal.client.lastName : '') : '',
-              firstName: deal && deal.client ? (deal.client.firstName ? deal.client.firstName : '') : '',
-              city: deal && deal.client ? (deal.client.city ? deal.client.city : '') : '',
-              country: deal && deal.client ? (deal.client.country ? deal.client.country: '') : '',
+              email: deal && deal.client ? (deal.client.email ? deal.client.email : null) : null,
+              mobile: deal && deal.client ? (deal.client.mobile ? deal.client.mobile : null) : null,
+              lastName: deal && deal.client ? (deal.client.lastName ? deal.client.lastName : null) : null,
+              firstName: deal && deal.client ? (deal.client.firstName ? deal.client.firstName : null) : null,
+              city: deal && deal.client ? (deal.client.city ? deal.client.city : null) : null,
+              country: deal && deal.client ? (deal.client.country ? deal.client.country: null) : null,
               receipt: receipt,
               request: request
             })
