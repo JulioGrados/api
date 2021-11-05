@@ -366,6 +366,7 @@ const createFacture = async (receiptId, body, request) => {
               query: { _id: receipt.deal.toString() },
               populate: { path: 'client' }
             })
+            // console.log('deal', deal)
             const helper = await payloadHelper({
               email: deal && deal.client ? (deal.client.email ? deal.client.email : '') : '',
               mobile: deal && deal.client ? (deal.client.mobile ? deal.client.mobile : '') : '',
