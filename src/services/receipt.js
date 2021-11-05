@@ -566,7 +566,7 @@ const noteAdminReceipt = async (receiptId, body, loggedUser) => {
     const sum = body.isBill ? await receiptDB.count({ query: { isFacture: true } }) : await receiptDB.count({ query: { isTicket: true } })
     const note = body.isBill ? await receiptDB.count({ query: { isNoteCreditFac: true } }) : await receiptDB.count({ query: { isNoteCreditTic: true } })
     
-    const count = body.isBill ? (sum + note) + 1 : (sum + note) + 5
+    const count = body.isBill ? (sum + note) + 1 : (sum + note) + 8
     const part = ('00000000'.substring(0, '00000000'.length - count.toString().length))
     const sequential = part + count.toString()
     const obj = {
