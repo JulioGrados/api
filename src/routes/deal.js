@@ -26,6 +26,10 @@ router
   .get(Api.searchDeals)
 
 router
+  .route('/deals/dash')
+  .get(Api.dashDeals)
+
+router
   .route('/deals/admin/:id')
   .put(Api.updateDealOne)
 

@@ -23,7 +23,7 @@ const { receiptDB } = require('db/lib')
 const { templateAccess } = require('utils/emails/access')
 const { templateAccessClient } = require('utils/emails/accessClient')
 const currenciesData = require('utils/functions/currencies')
-const c = require('config')
+
 
 const listDeals = async params => {
   console.log('--------------------------------------------------------')
@@ -35,6 +35,12 @@ const listDeals = async params => {
 
 const searchDeals = async params => {
   const deals = await dealDB.search(params)
+  return deals
+}
+
+const dashDeals = async params => {
+  console.log('params', params)
+  const deals = await dealDB.dash(params)
   return deals
 }
 
@@ -1555,6 +1561,7 @@ module.exports = {
   generalDeals,
   assessorDeals,
   searchDeals,
+  dashDeals,
   createDeal,
   mixDeal,
   changeDeal,
