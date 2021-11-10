@@ -21,6 +21,10 @@ router
   .post(Api.createSendEmail)
 
 router
+  .route('/emails/search')
+  .get(Api.searchEmails)
+
+router
   .route('/emails/:id')
   .get(Api.detailEmail)
   .put(Api.updateEmail)

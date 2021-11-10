@@ -49,6 +49,11 @@ const createEmail = async (body, loggedUser) => {
   return email
 }
 
+const searchEmails = async params => {
+  const emails = await emailDB.search(params)
+  return emails
+}
+
 const resendEmail = async (body, loggedUser) => {
   if (body._id) {
     delete body._id
@@ -242,6 +247,7 @@ module.exports = {
   listEmails,
   createEmail,
   resendEmail,
+  searchEmails,
   createEmailOnly,
   createEmailLinked,
   updateEmail,

@@ -25,6 +25,15 @@ const resendEmail = async (req, res, next) => {
   }
 }
 
+const searchEmails = async (req, res, next) => {
+  try {
+    const emails = await service.searchEmails(req.query)
+    return res.status(200).json(emails)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const createSendEmail = async (req, res, next) => {
   try {
     const email = await service.createSendEmail(req.body, req.email)
@@ -86,5 +95,6 @@ module.exports = {
   updateEmail,
   detailEmail,
   deleteEmail,
+  searchEmails,
   createSendEmail
 }
