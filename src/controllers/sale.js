@@ -23,6 +23,15 @@ const createSales = async (req, res, next) => {
   }
 }
 
+const resetSale = async (req, res, next) => {
+  try {
+    const sale = await service.resetSale(req.body, req.user)
+    return res.status(201).json(sale)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const assessorSales = async (req, res, next) => {
   try {
     const sales = await service.assessorSales(req.query)
@@ -121,6 +130,7 @@ module.exports = {
   listSales,
   assessorSales,
   createSales,
+  resetSale,
   updateSale,
   updateSaleOne,
   updateSaleAdmin,

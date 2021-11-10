@@ -38,6 +38,29 @@ const createSale = async (body, loggedUser) => {
   return sale
 }
 
+const resetSale = async (body, loggedUser) => {
+  try {
+    body.orders = existOrders(body.orders)
+    body.orders.map(async order => {
+      const voucher = order.voucher && order.voucher.ref
+      if (voucher) {
+        const voucherDetail = await voucherDB.detail({ query: { _id: voucher._id } })
+        const residue = voucherDetail.residue + order.amount
+
+        const voucherUpdate = await voucherDB.update(voucher._id, {
+          residue: residue
+        })
+        console.log(voucherUpdate)
+      }
+      const orderRemove = await orderDB.remove(order._id)
+      console.log(orderRemove)
+    })
+    return {success: true}
+  } catch (error) {
+    throw error
+  }
+}
+
 const updateSale = async (saleId, body) => {
   console.log('entrooo 2')
   if (body.status === 'Pendiente' || body.status === 'Pagando' || body.status === 'Finalizada') {
@@ -453,6 +476,7 @@ module.exports = {
   listSales,
   assessorSales,
   createSale,
+  resetSale,
   updateSale,
   updateSaleOne,
   updateSaleAdmin,
