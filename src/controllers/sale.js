@@ -23,6 +23,15 @@ const createSales = async (req, res, next) => {
   }
 }
 
+const searchSales = async (req, res, next) => {
+  try {
+    const sales = await service.searchSales(req.query)
+    return res.status(200).json(sales)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const resetSale = async (req, res, next) => {
   try {
     const sale = await service.resetSale(req.body, req.user)
@@ -128,6 +137,7 @@ const countDocuments = async (req, res) => {
 module.exports = {
   countDocuments,
   listSales,
+  searchSales,
   assessorSales,
   createSales,
   resetSale,

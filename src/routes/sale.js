@@ -13,6 +13,10 @@ router
   .post(Api.createSales)
 
 router
+  .route('/sales/search')
+  .get(Api.searchSales)
+
+router
   .route('/sales/reset')
   .post(Api.resetSale)
 
