@@ -335,7 +335,7 @@ const createFacture = async (receiptId, body, request) => {
             receipt: body,
             items: items,
             user: { firstName: firstName, lastName: lastName, dni: dni, document: document },
-            count: count ? (count + note) + 12 : 12
+            count: count ? (count + note) + 13 : 13
           })
           console.log('ticket', ticket)
           const create = await setFacture(ticket)
@@ -566,7 +566,7 @@ const noteAdminReceipt = async (receiptId, body, loggedUser) => {
     const sum = body.isBill ? await receiptDB.count({ query: { isFacture: true } }) : await receiptDB.count({ query: { isTicket: true } })
     const note = body.isBill ? await receiptDB.count({ query: { isNoteCreditFac: true } }) : await receiptDB.count({ query: { isNoteCreditTic: true } })
     
-    const count = body.isBill ? (sum + note) + 1 : (sum + note) + 12
+    const count = body.isBill ? (sum + note) + 1 : (sum + note) + 13
     const part = ('00000000'.substring(0, '00000000'.length - count.toString().length))
     const sequential = part + count.toString()
     const obj = {
