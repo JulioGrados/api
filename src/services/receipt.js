@@ -221,14 +221,14 @@ const createFacture = async (receiptId, body, request) => {
       if (body.send) {
         try {
           const count = await receiptDB.count({ query: { isFacture: true } })
-          const note = await receiptDB.count({ query: { isNoteCreditFac: true }})
+          // const note = await receiptDB.count({ query: { isNoteCreditFac: true }})
           const company = await companyDB.detail({ query: { ruc: body.ruc } })
           const items = await getItems(body.orders)
           const ticket = payloadFacture({
             receipt: body,
             items: items,
             company: company,
-            count: count ? (count + note) + 1 : 1
+            count: count ? count + 1 : 1
           })
           console.log('ticket', ticket)
           const create = await setFacture(ticket)
@@ -328,14 +328,14 @@ const createFacture = async (receiptId, body, request) => {
       if (body.email) {
         try {
           const count = await receiptDB.count({ query: { isTicket: true } })
-          const note = await receiptDB.count({ query: { isNoteCreditTic: true }})
+          // const note = await receiptDB.count({ query: { isNoteCreditTic: true }})
           const { firstName, lastName, dni, document } = body 
           const items = await getItems(body.orders)
           const ticket = payloadTicket({
             receipt: body,
             items: items,
             user: { firstName: firstName, lastName: lastName, dni: dni, document: document },
-            count: count ? (count + note) + 14 : 14
+            count: count ? count + 18 : 18
           })
           console.log('ticket', ticket)
           const create = await setFacture(ticket)
@@ -563,17 +563,19 @@ const noteAdminReceipt = async (receiptId, body, loggedUser) => {
   }
 
   try {
-    const sum = body.isBill ? await receiptDB.count({ query: { isFacture: true } }) : await receiptDB.count({ query: { isTicket: true } })
+    // const sum = body.isBill ? await receiptDB.count({ query: { isFacture: true } }) : await receiptDB.count({ query: { isTicket: true } })
     const note = body.isBill ? await receiptDB.count({ query: { isNoteCreditFac: true } }) : await receiptDB.count({ query: { isNoteCreditTic: true } })
-    
-    const count = body.isBill ? (sum + note) + 1 : (sum + note) + 14
-    const part = ('00000000'.substring(0, '00000000'.length - count.toString().length))
+    console.log('note', note)
+    const count = note + 1
+    console.log('count', count)
+    const serie = body.isBill ? 'FCA1' : 'BCA1'
+    const part = ('000000000'.substring(0, '00000000'.length - count.toString().length))
     const sequential = part + count.toString()
     const obj = {
       voucher_id_reference: body.voucher_id,
       type_credit_note: '01',
-      nro_document: body.serie + '-' + sequential,
-      series: body.serie,
+      nro_document: serie + '-' + sequential,
+      series: serie,
       print_type: 'A4',
       motive: body.annular
     }
@@ -581,8 +583,8 @@ const noteAdminReceipt = async (receiptId, body, loggedUser) => {
     const unsubscribe = await noteReceipt({
       voucher_id_reference: body.voucher_id,
       type_credit_note: '01',
-      nro_document: body.serie + '-' + sequential,
-      series: body.serie,
+      nro_document: serie + '-' + sequential,
+      series: serie,
       print_type: 'A4',
       motive: body.annular
     })
@@ -600,6 +602,7 @@ const noteAdminReceipt = async (receiptId, body, loggedUser) => {
     )
     const receipt = await receiptDB.update(receiptId, {
       status: 'Anulada',
+      noteCode: serie + '-' + sequential,
       unsubscribe: true,
       annular: body.annular,
       voucher_id_note: unsubscribe.data.voucher_id,
