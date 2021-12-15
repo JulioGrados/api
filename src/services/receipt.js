@@ -335,7 +335,7 @@ const createFacture = async (receiptId, body, request) => {
             receipt: body,
             items: items,
             user: { firstName: firstName, lastName: lastName, dni: dni, document: document },
-            count: count ? count + 18 : 18
+            count: count ? count + 19 : 19
           })
           console.log('ticket', ticket)
           const create = await setFacture(ticket)
@@ -611,7 +611,6 @@ const noteAdminReceipt = async (receiptId, body, loggedUser) => {
       isNoteCreditTic: body.isBill ? false : true,
       dateNote: new Date()
     })
-    
     return receipt
   } catch (error) {
     if (error && error.error) {
