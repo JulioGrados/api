@@ -1809,6 +1809,7 @@ const chaptersModuleCourse = async modules => {
   
   let chaptersModules = []
   modules.forEach(item => {
+    console.log('item chapter', item)
     const chaptersModule = item.modules && item.modules.filter(
       item =>
         item.modname === 'label' &&
@@ -2102,7 +2103,7 @@ const modulesCourse = async ({ courseId }) => {
   const modulesFilter = feedBackModule.filter(
     item => item.name !== 'General' && item.visible === 1
   )
-  
+  console.log('modulesFilter', modulesFilter)
   const respChapters = await chaptersModuleCourse(modulesFilter)
   
   if (respChapters.errorChapters.length > 0) {

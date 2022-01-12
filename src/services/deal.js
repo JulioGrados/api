@@ -407,7 +407,7 @@ const createDealUserOnly = async (user, body, lead = {}, update = false) => {
     } else if (deal.status === 'Perdido') {
       // actualizar
       console.log('2')
-      const updateDeal = await editExistDealOnly(deal.toJSON(), user, body)
+      const updateDeal = await editExistDealAgain(deal.toJSON(), user, body)
       update && (
       createTimeline({
         linked: user,
@@ -1239,7 +1239,7 @@ const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) =>
     user.password = code
     await createTimeline({
       ...timeline,
-      name: '[Cuenta] se creó la cuenta en Moodle [User] ' + dataUser.username
+      name: '[Cuenta] se creó la cuenta en Moodle'
     })
     
     await sendEmailAccess(user.toJSON(), deal.toJSON(), logged)
@@ -1252,7 +1252,7 @@ const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) =>
         await createEnrolUser({ course, user, deal })
         await createTimeline({
           ...timeline,
-          name: `[Matricula] ${course.name} [User] ${user.username}`
+          name: `[Matricula] ${course.name}`
         })
         return course
       })
@@ -1315,7 +1315,7 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
 
         await createTimeline({
           ...timeline,
-          name: '[Cuenta] la cuenta existente en Moodle [Username] ' + user.username
+          name: '[Cuenta] la cuenta existente en Moodle'
         })
         await sendEmailAccessExist(user.toJSON(), deal.toJSON(), logged)
       } else {
@@ -1331,7 +1331,7 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
         user = await userDB.update(user._id, dataUser)
         await createTimeline({
           ...timeline,
-          name: '[Cuenta] la cuenta existente en Moodle [Username] ' + user.username
+          name: '[Cuenta] la cuenta existente en Moodle'
         })
         await sendEmailAccessExist(user.toJSON(), deal.toJSON(), logged)
       } else if (existUsername && !existEmail) {
@@ -1355,7 +1355,7 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
 
         await createTimeline({
           ...timeline,
-          name: '[Cuenta] se creó la cuenta en Moodle [Username] ' + user.username
+          name: '[Cuenta] se creó la cuenta en Moodle'
         })
         await sendEmailAccess(user.toJSON(), deal.toJSON(), logged)
       }
@@ -1367,7 +1367,7 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
     if (existID) {
       await createTimeline({
         ...timeline,
-        name: '[Cuenta] la cuenta existente en Moodle [Username] ' + user.username
+        name: '[Cuenta] la cuenta existente en Moodle'
       })
       await sendEmailAccessExist(user.toJSON(), deal.toJSON(), logged)
     }
@@ -1380,7 +1380,7 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
         await createEnrolUser({ course, user, deal })
         await createTimeline({
           ...timeline,
-          name: `[Matricula] ${course.name} [User] ${user.username}`
+          name: `[Matricula] ${course.name}`
         })
         return course
       })

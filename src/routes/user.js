@@ -24,6 +24,14 @@ router
   .put(Api.updateDniUser)
 
 router
+  .route('/users/account/:id')
+  .put(Api.updateAccountUser)
+
+router
+  .route('/users/account/moodle/:id')
+  .put(Api.updateAccountUserMoodle)
+
+router
   .route('/users/photo/:id')
   .put(Api.updatePhotoUser)
 

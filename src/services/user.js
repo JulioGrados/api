@@ -13,6 +13,36 @@ const { loginUser } = require('./auth')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
 const uniqid = require('uniqid')
 
+const moodle_client = require('moodle-client')
+const { wwwroot, token, service } = require('config').moodle
+
+const init = moodle_client.init({
+  wwwroot,
+  token,
+  service
+})
+
+const {
+  deleteUsers
+} = require('config').moodle.functions
+
+const actionMoodle = (method, wsfunction, args = {}) => {
+  return init.then(function (client) {
+    return client
+      .call({
+        wsfunction,
+        method,
+        args
+      })
+      .then(function (info) {
+        return info
+      })
+      .catch(function (err) {
+        throw err
+      })
+  })
+}
+
 const listUsers = async params => {
   console.log('--------------------------------------------------------')
   console.log('USERS')
@@ -72,6 +102,27 @@ const updateUserStage = async (userId, body, loggedUser) => {
 const updateDniUser = async (userId, body, loggedUser) => {
   delete body.dni
   const user = await userDB.updateDni(userId, body)
+  return user
+}
+
+const updateAccountUser = async (userId, body, loggedUser) => {
+  delete body.username
+  delete body.password
+  const user = await userDB.updateAccount(userId, body)
+  return user
+}
+
+const updateAccountUserMoodle = async (userId, body, loggedUser) => {
+  delete body.username
+  delete body.password
+  
+  const userDelete = await actionMoodle('POST', deleteUsers, {
+    userids: [body.moodleId]
+  })
+  console.log('userDelete', userDelete)
+  
+  delete body.moodleId
+  const user = await userDB.updateAccountMoodle(userId, body)
   return user
 }
 
@@ -353,6 +404,8 @@ module.exports = {
   updateUser,
   updateUserStage,
   updateDniUser,
+  updateAccountUser,
+  updateAccountUserMoodle,
   updatePhotoUser,
   detailUser,
   deleteUser,
