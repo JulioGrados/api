@@ -631,8 +631,21 @@ const editExistDeal = async (deal, user, body) => {
   const dataDeal = await addInitialStatusAgain(deal)
   // console.log('dataDeal', dataDeal)
   if (!dataDeal.assessor) {
-    dataDeal.assessor = await assignedAssessor(body.courses)
-    incProspects(dataDeal)
+    const assessor = await assignedPosition()
+    const assessorAssigned = {
+      username: assessor.username,
+      ref: assessor
+    }
+    dataDeal.assessor = assessorAssigned
+  } else {
+    if (dataDeal.assessor && dataDeal.assessor.ref && dataDeal.assessor.ref.status === false) {
+      const assessor = await assignedPosition()
+      const assessorAssigned = {
+        username: assessor.username,
+        ref: assessor
+      }
+      dataDeal.assessor = assessorAssigned
+    }
   }
   
   dataDeal.students[0]
