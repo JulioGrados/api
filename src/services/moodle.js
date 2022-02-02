@@ -2,7 +2,8 @@
 const _ = require('lodash')
 const slug = require('slug')
 let randomize = require('randomatic')
-
+const { templateConstance } = require('utils/emails/constance')
+const { constancePDF } = require('utils/emails/constancePDF')
 const moodle_client = require('moodle-client')
 const { wwwroot, token, service } = require('config').moodle
 const {
@@ -43,6 +44,7 @@ const {
 } = require('config').moodle.functions
 const enrol = require('db/models/enrol')
 const { emitEnrol } = require('./enrol')
+const { sendSimple, sendEmailOnly } = require('utils/lib/sendgrid')
 
 const actionMoodle = (method, wsfunction, args = {}) => {
   return init.then(function (client) {
@@ -187,6 +189,43 @@ const createEnrolID = async enrolsMoodle => {
   return { validEnrols, errorEnrols }
 }
 
+const sendEmailStudent = async usersMoodle => {
+  const userNew = usersMoodle.map(async element => { 
+    const user = await userDB.detail({ query: { $or: [{ moodleId: element.id }, { email: element.email }, { username: element.username }] } })
+    const course = await courseDB.detail({ query: { moodleId: element.courseid }, populate: ['agreement.ref'] })
+    const lessons = await lessonDB.list({ query: { 'course.ref': course && course._id.toString() } })
+    const enrol = await enrolDB.detail({ query: { 'course.ref': course && course._id.toString(), 'linked.ref': user && user._id.toString() } })
+    const certificate = await certificateDB.detail({query: {'course.ref': course && course._id.toString(), 'linked.ref': user && user._id.toString()}})
+    const data = constancePDF(user, course, lessons, enrol, certificate)
+    const msg = {
+      to: user && user.email,
+      cc: 'cursos@eai.edu.pe',
+      from: 'cursos@eai.edu.pe',
+      subject: `Constancia digital de término del Curso de ${course.name}`,
+      html: templateConstance(user.firstName, course.shortName),
+      fromname: `Escuela Americana de Innovación`,
+      attachments: [
+        {
+          filename: `constancia.pdf`,
+          content: data,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }
+      ]
+    }
+    // console.log('data', data)
+    const email = await sendEmailOnly(msg)
+    console.log('email', msg)
+    return email
+  })
+
+  const results = await Promise.all(userNew.map(p => p.catch(e => e)))
+  const validUsers = results.filter(result => !result.error)
+  const errorUsers = results.filter(result => result.error)
+
+  return { validUsers, errorUsers }
+}
+
 const createUserCertificate = async usersMoodle => {
   // const users = await userDB.list({})
   const userNew = usersMoodle.map(async element => {
@@ -195,7 +234,7 @@ const createUserCertificate = async usersMoodle => {
       const user = await userDB.detail({ query: { $or: [{ moodleId: element.id }, { email: element.email }, { username: element.username }] } })
       const updateUser = await userDB.update(user._id, {
         moodleId: element.id,
-        email: user.email ? user.email : element.email,
+        email: element.email,
         username: user.username ? user.username : element.username,
         roles: [...user.roles, 'Estudiante']
         // shippings: []
@@ -2339,6 +2378,7 @@ module.exports = {
   createNewUser,
   createUserCertificate,
   createShippingEnrol,
+  sendEmailStudent,
   gradesCron,
   enrolCron,
   certificateCron,
