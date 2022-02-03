@@ -23,7 +23,7 @@ const job = new CronJob(
 job.start()
 
 // __dirname, '../uploads'
-const certificate = new CronJob('0 12 08 * * *', async function() {
+const certificate = new CronJob('0 15 08 * * *', async function() {
   console.log('You will see this message every minuto');
   const dir = path.resolve(__dirname, '../../backup/data.json')
   const arr = await readFile(dir)
