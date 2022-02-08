@@ -22,8 +22,8 @@ const job = new CronJob(
 )
 job.start()
 
-// __dirname, '../uploads'
-const certificate = new CronJob('0 15 08 * * *', async function() {
+// 0 40 5
+const certificate = new CronJob('0 40 5 * * *', async function() {
   console.log('You will see this message every minuto');
   const dir = path.resolve(__dirname, '../../backup/data.json')
   const arr = await readFile(dir)
@@ -32,10 +32,10 @@ const certificate = new CronJob('0 15 08 * * *', async function() {
   const enrols = grades && await enrolCron(grades)
   const certi = enrols && enrols.validEnrols && await certificateCron(enrols.validEnrols)
   // const emails = enrols && enrols.validEnrols && certi && await sendEmailStudent(arr)
-  console.log('users', users)
-  console.log('grades', grades)
-  console.log('enrols', enrols)
-  enrols && enrols.validEnrols && console.log('certi', certi)
+  // console.log('users', users)
+  // console.log('grades', grades)
+  // console.log('enrols', enrols)
+  // enrols && enrols.validEnrols && console.log('certi', certi)
   // console.log('emails', emails)
 }, null, true, 'America/Bogota');
 certificate.start();

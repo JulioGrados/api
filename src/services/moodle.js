@@ -45,6 +45,7 @@ const {
 const enrol = require('db/models/enrol')
 const { emitEnrol } = require('./enrol')
 const { sendSimple, sendEmailOnly } = require('utils/lib/sendgrid')
+const { getImagetoBase64 } = require('utils/functions/imagetobase64')
 
 const actionMoodle = (method, wsfunction, args = {}) => {
   return init.then(function (client) {
@@ -195,7 +196,8 @@ const sendEmailStudent = async usersMoodle => {
     const course = await courseDB.detail({ query: { moodleId: element.courseid }, populate: ['agreement.ref'] })
     const lessons = await lessonDB.list({ query: { 'course.ref': course && course._id.toString() } })
     const enrol = await enrolDB.detail({ query: { 'course.ref': course && course._id.toString(), 'linked.ref': user && user._id.toString() } })
-    const certificate = await certificateDB.detail({query: {'course.ref': course && course._id.toString(), 'linked.ref': user && user._id.toString()}})
+    const certificate = await certificateDB.detail({ query: { 'course.ref': course && course._id.toString(), 'linked.ref': user && user._id.toString() } })
+    // const logo = await getImagetoBase64('https://dash.eai.edu.pe/static/img/logo.png')
     const data = constancePDF(user, course, lessons, enrol, certificate)
     const msg = {
       to: user && user.email,
@@ -215,7 +217,7 @@ const sendEmailStudent = async usersMoodle => {
     }
     // console.log('data', data)
     const email = await sendEmailOnly(msg)
-    console.log('email', msg)
+    // console.log('email', msg)
     return email
   })
 
