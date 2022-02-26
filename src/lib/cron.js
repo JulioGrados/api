@@ -9,9 +9,12 @@ const { createUserCertificate,
         gradesCron,
         enrolCron,
         certificateCron,
-        sendEmailStudent} = require('../services/moodle')
+        createPdfStudent,
+        sendEmailStudent,
+        deleteFilesPdf} = require('../services/moodle')
 
 const { createAddressEnrol } = require('../services/enrol')
+const { portfolioFile } = require('utils/functions/portfolio')
 
 const job = new CronJob(
   '0 0 7 * * *',
@@ -31,14 +34,36 @@ const certificate = new CronJob('0 40 5 * * *', async function() {
   const grades = await gradesCron(arr)
   const enrols = grades && await enrolCron(grades)
   const certi = enrols && enrols.validEnrols && await certificateCron(enrols.validEnrols)
-  // const emails = enrols && enrols.validEnrols && certi && await sendEmailStudent(arr)
+  const filterArr = arr.filter(element => element.courseid == '89' || element.courseid == '174')
+  const emails = enrols && enrols.validEnrols && certi && await createPdfStudent(filterArr)
   // console.log('users', users)
   // console.log('grades', grades)
   // console.log('enrols', enrols)
   // enrols && enrols.validEnrols && console.log('certi', certi)
-  // console.log('emails', emails)
+  console.log('emails', emails)
 }, null, true, 'America/Bogota');
 certificate.start();
+
+const files = new CronJob('0 50 5 * * *', async function() {
+  console.log('You will see this message every minuto');
+  const files = await portfolioFile('/certificates/free/')
+  const filterFiles = files.filter(file => file.includes('.pdf'))
+  const dir = path.resolve(__dirname, '../../backup/data.json')
+  const arr = await readFile(dir)
+  const filterArr = arr.filter(element => element.courseid == '89' || element.courseid == '174')
+  console.log('filterFiles', filterFiles)
+  console.log('filterArr', filterArr)
+  const send = await sendEmailStudent(filterFiles, filterArr)
+}, null, true, 'America/Bogota');
+files.start();
+
+const deletes = new CronJob('0 0 6 * * *', async function() {
+  console.log('You will see this message every minuto');
+  const files = await portfolioFile('/certificates/free/')
+  const filterFiles = files.filter(file => file.includes('.pdf'))
+  const send = await deleteFilesPdf(filterFiles)
+}, null, true, 'America/Bogota');
+deletes.start();
 
 const enrol = new CronJob('0 0 19 * * *', async function() {
   console.log('You will see this message every minuto');
@@ -62,7 +87,8 @@ module.exports = {
   job,
   enrol,
   certificate,
-  address
+  address,
+  files
 }
 
 //0 0 * * 0 /usr/bin/mysqldump -u root --databases manvicio_ertmdl > /var/backups/moodle/moodle-"$(date +"%m-%d-%Y %H-%M")".sql
