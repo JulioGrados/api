@@ -255,7 +255,7 @@ const sendEmailStudent = async (files, usersMoodle) => {
         to: user && user.email,
         cc: 'cursos@eai.edu.pe',
         from: 'cursos@eai.edu.pe',
-        subject: `Constancia digital de término del ${course.name}`,
+        subject: `Certificado digital del ${course.name}`,
         html: templateConstance(user.firstName, course.shortName),
         fromname: `Escuela Americana de Innovación`,
         attachments: [
