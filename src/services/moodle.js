@@ -17,7 +17,7 @@ const {
   chapterDB,
   testimonyDB
 } = require('../db')
-const { enrolDB } = require('db/lib')
+const { enrolDB, dealDB } = require('db/lib')
 
 const { calculateProm, calculatePromBoth } = require('utils/functions/enrol')
 
@@ -49,6 +49,7 @@ const { sendSimple, sendEmailOnly } = require('utils/lib/sendgrid')
 const { deletefile } = require('utils/functions/deletefile')
 const { MEDIA_PATH } = require('utils/files/path')
 const { pdfbs64 } = require('utils/functions/pdfbs64')
+const { createEmail, createEmailOnly } = require('./email')
 
 const actionMoodle = (method, wsfunction, args = {}) => {
   return init.then(function (client) {
@@ -222,9 +223,32 @@ const sendEmailStudent = async (files, usersMoodle) => {
     const course = await courseDB.detail({ query: { moodleId: element.courseid }, populate: ['agreement.ref'] })
     const lastNameUser = lastNameSpace(user)
     const slugUrl = `certificado-${slug(course.name.toLowerCase())}-${slug((lastNameUser + ', ' + user.firstName).toLowerCase())}.pdf`
-    console.log('slugUrl', slugUrl)
+    
     const search = files.includes(slugUrl)
-    console.log('search', search)
+    const deals = await dealDB.list({
+      query: {
+        students: {
+          $elemMatch: {
+            'student.ref': user._id.toString()
+          }
+        }
+      },
+      populate: [ 'client']
+    })
+
+    let deal
+    deals.forEach(element => {
+      const students = element.students
+      const student = students.find(item => item.student.ref.toString() === user._id.toString())
+      const courses = student.courses
+      const filtered = courses.find(item => item.ref.toString() === course._id.toString())
+      if (filtered) {
+        deal = element
+      }
+    })
+
+    console.log('user', user)
+
     if (search) {
       const data = await pdfbs64(slugUrl)
       const msg = {
@@ -242,6 +266,39 @@ const sendEmailStudent = async (files, usersMoodle) => {
             disposition: 'attachment'
           }
         ]
+      }
+      if (deal) {
+        const body = {
+          linked: {
+            names: deal.client.names,
+            _id: deal.client._id
+          },
+          assigned: {
+            username: deal.assessor.username,
+            ref: deal.assessor.ref
+          },
+          subject: msg.subject,
+          to: msg.to,
+          content: msg.html,
+          from: msg.from,
+          fromname: msg.fromname,
+          preheader: msg.subject,
+          deal: deal,
+          attachments: msg.attachments
+        }
+        const emailSend = createEmail(body)
+      } else {
+        const body = {
+          subject: msg.subject,
+          to: msg.to,
+          content: msg.html,
+          from: msg.from,
+          fromname: msg.fromname,
+          preheader: msg.subject,
+          deal: deal,
+          attachments: msg.attachments
+        }
+        const emailSend = createEmailOnly(body)
       }
       // console.log('msg', msg)
       const email = await sendEmailOnly(msg)
