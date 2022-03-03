@@ -2499,7 +2499,8 @@ const scoreStudentsCron = async (courses) => {
     })
 
     const respEnrols = await createEnrolCourse(grades, course)
-
+    const certificates = await createCertificatesCourse(course)
+    
     return respEnrols
   })
   return scoreCourseStudent
