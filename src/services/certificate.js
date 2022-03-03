@@ -22,8 +22,8 @@ const createAdminCertificate = async (body, files, loggedUser) => {
 const updateAdminCertificate = async (certficateId, body, files, loggedUser) => {
   if (files) {
     for (const label in files) {
-      const certi = await certificateDB.detail({ query: { _id: certficateId }, populate: ['linked.ref', 'course.ref'] })
-      const route = await saveCustom(files[label], '/certificates', certi.course.ref.shortName, certi.linked.ref.names, certi.shortCode)
+      // const certi = await certificateDB.detail({ query: { _id: certficateId }, populate: ['linked.ref', 'course.ref'] })
+      const route = await saveFile(files[label], '/certificates')
       body[label] = route
     }
   }
