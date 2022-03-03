@@ -323,13 +323,21 @@ const createUserCertificate = async usersMoodle => {
     console.log(element)
     try {
       const user = await userDB.detail({ query: { $or: [{ moodleId: element.id }, { email: element.email }, { username: element.username }] } })
-      const updateUser = await userDB.update(user._id, {
-        moodleId: element.id,
-        email: element.email,
-        username: user.username ? user.username : element.username,
-        roles: [...user.roles, 'Estudiante']
-        // shippings: []
-      })
+      let updateUser
+      if (user.roles && user.roles.indexOf('Estudiante') > -1) {
+        updateUser = await userDB.update(user._id, {
+          moodleId: element.id,
+          email: element.email,
+          username: user.username ? user.username : element.username
+        })
+      } else {
+        updateUser = await userDB.update(user._id, {
+          moodleId: element.id,
+          email: element.email,
+          username: user.username ? user.username : element.username,
+          roles: [...user.roles, 'Estudiante']
+        })
+      }
       return updateUser
     } catch (error) {
       const data = {
@@ -341,9 +349,7 @@ const createUserCertificate = async usersMoodle => {
         email: element.email,
         country: element.country === 'PE' ? 'Perú' : '',
         city: element.city,
-        role: undefined,
         roles: ['Estudiante']
-        // shippings: []
       }
       const user = await userDB.create(data)
       return user
@@ -2464,6 +2470,107 @@ const testimoniesCourse = async ({ courseId }) => {
   return respTestimonies.validTestimonies
 }
 
+const scoreStudentsCron = async (courses) => {
+  const scoreCourseStudent = courses.map(async course => {
+    const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
+      courseid: course.moodleId
+    })
+    const respUsers = await createUserCertificate(usersMoodle)
+
+    let grades = []
+    await usersMoodle.reduce(async (promise, user) => {
+      await promise
+      const contents = await actionMoodle('POST', gradeUser, {
+        userid: user.id,
+        courseid: course.moodleId
+      })
+
+      console.log(contents.usergrades[0])
+      grades.push(contents.usergrades[0])
+    }, Promise.resolve())
+
+    grades.forEach(grade => {
+      let gradeFilter = grade.gradeitems.filter(
+        item =>
+          (item.itemname && item.itemname.indexOf('Evaluación') > -1) ||
+          (item.itemname && item.itemname.indexOf('Evaluacion') > -1)
+      )
+      grade.gradeitems = gradeFilter
+    })
+
+    const respEnrols = await createEnrolCourse(grades, course)
+
+    return respEnrols
+  })
+  return scoreCourseStudent
+}
+
+const examInModules = async (courses) => {
+  const examModulesStudent = courses.map(async course => {
+    let evaluations
+    if (course.typeOfEvaluation === 'exams') {
+      evaluations = await actionMoodle('POST', quizGetCourse, {
+        courseids: [course.moodleId]
+      })
+      evaluations = evaluations.quizzes
+    } else if (course.typeOfEvaluation === 'tasks') {
+      evaluations = await actionMoodle('POST', assignGetCourse, {
+        courseids: [course.moodleId]
+      })
+      evaluations = evaluations.courses[0].assignments
+    } else if (course.typeOfEvaluation === 'both') {
+      const examsBoth = await actionMoodle('POST', quizGetCourse, {
+        courseids: [course.moodleId]
+      })
+
+      const tasksBoth = await actionMoodle('POST', assignGetCourse, {
+        courseids: [course.moodleId]
+      })
+
+      const examsEnd = examsBoth.quizzes
+      const tasksEnd = tasksBoth.courses[0].assignments
+
+      const examsFilter = examsEnd.filter(
+        evaluation =>
+          (evaluation.name && evaluation.name.indexOf('Evaluación') > -1) ||
+          (evaluation.name && evaluation.name.indexOf('Evaluacion') > -1)
+      )
+      console.log('examsFilter', examsFilter)
+
+      const tasksFilter = tasksEnd.filter(
+        evaluation =>
+          (evaluation.name && evaluation.name.indexOf('Evaluación') > -1) ||
+          (evaluation.name && evaluation.name.indexOf('Evaluacion') > -1)
+      )
+      console.log('tasksFilter', tasksFilter)
+
+      const createExams = await createExamCourse(examsFilter, course)
+      const createTasks = await createTaskCourse(tasksFilter, course)
+
+      console.log('createExams', createExams)
+      console.log('createTasks', createTasks)
+    }
+    
+    const evaluationsFilter =
+      evaluations &&
+      evaluations.filter(
+        evaluation =>
+          (evaluation.name && evaluation.name.indexOf('Evaluación') > -1) ||
+          (evaluation.name && evaluation.name.indexOf('Evaluacion') > -1)
+      )
+    let createEvaluations
+    if (course.typeOfEvaluation === 'exams') {
+      createEvaluations = await createExamCourse(evaluationsFilter, course)
+    }
+    if (course.typeOfEvaluation === 'tasks') {
+      createEvaluations = await createTaskCourse(evaluationsFilter, course)
+    }
+
+    return createEvaluations
+  })
+  return examModulesStudent
+}
+
 module.exports = {
   createEnrolID,
   createNewUser,
@@ -2489,7 +2596,9 @@ module.exports = {
   modulesCourse,
   testimoniesCourse,
   createPdfStudent,
-  deleteFilesPdf
+  deleteFilesPdf,
+  scoreStudentsCron,
+  examInModules
 }
 
 // SELECT DISTINCT u.id AS userid, c.id AS courseid , ue.id AS enrolid, DATE_FORMAT(FROM_UNIXTIME(ue.timecreated-5*3600), '%e/%c/%Y') AS date FROM mdl_user uJOIN mdl_user_enrolments ue ON ue.userid = u.id
