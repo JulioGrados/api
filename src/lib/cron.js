@@ -14,12 +14,13 @@ const {
   sendEmailStudent,
   deleteFilesPdf,
   scoreStudentsCron,
+  scoreStudentsOnlyCron,
   examInModules
 } = require('../services/moodle')
 
 const { createAddressEnrol } = require('../services/enrol')
 const { portfolioFile } = require('utils/functions/portfolio')
-const { countDocuments, listCourses } = require('../services/course')
+const { countDocuments, listCourses, detailCourse } = require('../services/course')
 
 const job = new CronJob(
   '0 0 7 * * *',
@@ -30,121 +31,129 @@ const job = new CronJob(
 )
 job.start()
 
-const scoreone = new CronJob('0 30 9 * * *', async function() {
+const scoremasone = new CronJob('0 0 23 * * *', async function() {
+  console.log('You will see this message every minuto')
+  const course = await detailCourse({ query: { moodleId: 89 }})
+  const score = await scoreStudentsOnlyCron(course)
+  console.log('score', score)
+}, null, true, 'America/Bogota')
+scoremasone.start()
+
+const scoreone = new CronJob('0 0 2 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(0, count)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scoreone.start()
 
-const scoretwo = new CronJob('0 40 9 * * *', async function() {
+const scoretwo = new CronJob('0 20 2 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count, count*2)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scoretwo.start()
 
-const scorethree = new CronJob('0 50 9 * * *', async function() {
+const scorethree = new CronJob('0 40 2 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count*2, count*3)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scorethree.start()
 
-const scorefour = new CronJob('0 0 10 * * *', async function() {
+const scorefour = new CronJob('0 0 3 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count*3, count*4)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scorefour.start()
 
-const scorefive = new CronJob('0 10 10 * * *', async function() {
+const scorefive = new CronJob('0 20 3 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count*4, count*5)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scorefive.start()
 
-const scoresix = new CronJob('0 20 10 * * *', async function() {
+const scoresix = new CronJob('0 40 3 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count*5, count*6)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scoresix.start()
 
-const scoreseven = new CronJob('0 30 10 * * *', async function() {
+const scoreseven = new CronJob('0 0 4 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count*6, count*7)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scoreseven.start()
 
-const scoreseight = new CronJob('0 40 10 * * *', async function() {
+const scoreseight = new CronJob('0 20 4 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count*7, count*8)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scoreseight.start()
 
-const scoresnine = new CronJob('0 50 10 * * *', async function() {
+const scoresnine = new CronJob('0 40 4 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count*8, count*9)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
 scoresnine.start()
 
-const scoresten = new CronJob('0 0 11 * * *', async function() {
+const scoresten = new CronJob('0 0 5 * * *', async function() {
   console.log('You will see this message every minuto')
   const coursesCount = await countDocuments({ query: {} })
   const courses = await listCourses({ query: {}, sort: 'name' })
   const count = parseInt(coursesCount / 10)
   const arrCourse = courses.slice(count*9, coursesCount)
-  const filterCourse = arrCourse.filter(item => item.moodleId)
+  const filterCourse = arrCourse.filter(item => item.moodleId && item.moodleId !== 89 && item.moodleId !== 7 && item.moodleId !== 174 )
   const scores = await scoreStudentsCron(filterCourse)
   console.log('scores', scores)
 }, null, true, 'America/Bogota')
