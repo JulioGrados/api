@@ -7,7 +7,7 @@ const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
 const { createFindQuery } = require('utils/functions/user')
-const { createOrUpdateDeal, createDealUserOnly } = require('./deal')
+const { createOrUpdateDeal, createDealUserOnly, addOrUpdateUserDeal } = require('./deal')
 const { createTimeline } = require('./timeline')
 const { loginUser } = require('./auth')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
@@ -244,6 +244,67 @@ const createOrUpdateUser = async body => {
   return user
 }
 
+const addOrUpdateUser = async body => {
+  let user
+  body = validate(body)
+  try {
+    const params = createFindQuery(body)
+    // console.log('params', params.query)
+    const lead = await userDB.detail(params)
+    // console.log('lead', lead)
+    if (body.source && body.source === 'Facebook') {
+      let course = await searchCourse(body.courseId)
+      if (course) {
+        body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
+      }
+    }
+    
+    if (lead.roles && lead.roles.length) {
+      if (lead.roles.findIndex(role => role === 'Interesado') === -1) {
+        body.roles = ['Interesado', ...lead.roles]
+      }
+    } else {
+      body.roles = ['Interesado']
+    }
+    
+    if (lead.dni === body.dni) {
+      delete body.dni
+    }
+    // console.log('body', body)
+    user = await userDB.update(lead._id, { ...body })
+    // console.log('user', user)
+    await addOrUpdateUserDeal(user.toJSON(), body, lead, true)
+    return user
+  } catch (error) {
+    console.log('error', error)
+    if (error.status === 404) {
+      // console.log('nuevo lead', body)
+      body.roles = ['Interesado']
+      user = await userDB.create(body)
+      // courses en body
+      if (body.source && body.source === 'Facebook') {
+        let course = await searchCourse(body.courseId)
+        if (course) {
+          body.courses = [{ ...course.toJSON(), ref: course.toJSON() }]
+        }
+        body.origin = 'facebook lead'
+      } else {
+        body.origin = 'sitio web'
+      }
+      // console.log('body  nuevo', body)
+      createTimeline({
+        linked: user,
+        type: 'Cuenta',
+        name: 'Persona creada'
+      })
+      await addOrUpdateUserDeal(user.toJSON(), body)
+      return user
+    } else {
+      throw error
+    }
+  }
+}
+
 const createStudent = async body => {
   let user
   try {
@@ -410,6 +471,7 @@ module.exports = {
   detailUser,
   deleteUser,
   createOrUpdateUser,
+  addOrUpdateUser,
   createDealUser,
   emitLead,
   recoverPassword,

@@ -395,6 +395,52 @@ const createOrUpdateDeal = async (user, body, lead = {}, update = false) => {
   }
 }
 
+const addOrUpdateUserDeal = async (user, body, lead = {}, update = false) => {
+  const deal = await findDealUser(user)
+  // console.log('deal', deal)
+  // console.log('body', body)
+  if (deal) {
+    if (deal.status === 'Abierto') {
+      try {
+        const updateDeal = await editExistDealOpenCrm(deal.toJSON(), user, body)
+        return updateDeal
+      } catch (error) {
+        throw error  
+      }
+      
+    } else if (deal.status === 'Perdido') {
+      const updateDeal = await editExistDealCrm(deal.toJSON(), user, body)
+      update && (createTimeline({
+        linked: user,
+        assigned: updateDeal.assessor,
+        deal: updateDeal,
+        type: 'Deal',
+        name: `Actualizado: [Nombres]: ${lead.names ? lead.names : ''} - [Email]: ${lead.email ? lead.email : ''} - [Celular]: ${lead.mobile ? lead.mobile : ''} - [País]: ${lead.country ? lead.country : ''} - [Ciudad]: ${lead.city ? lead.city : ''}`
+      }))
+      return updateDeal
+    } else if (deal.status === 'Ganado') {
+      if (deal.statusPayment === 'Abierto') {
+        const InvalidError = CustomError('InvalidError', { message: 'El trato está asignado al área de tesorería. Contactar a tu supervisor para mayor información.', code: 'EINVLD', deal: { ...deal.toJSON() } }, CustomError.factory.expectReceive);
+        throw new InvalidError()
+      } else if (deal.statusPayment === 'Pago') {
+        const updateDeal = await editExistDealCrm(deal.toJSON(), user, body)
+        lead && (createTimeline({
+          linked: user,
+          assigned: updateDeal.assessor,
+          deal: updateDeal,
+          type: 'Deal',
+          name: `Actualizado: [Nombres]: ${lead.names ? lead.names : ''} - [Email]: ${lead.email ? lead.email : ''} - [Celular]: ${lead.mobile ? lead.mobile : ''} - [País]: ${lead.country ? lead.country : ''} - [Ciudad]: ${lead.city ? lead.city : ''}`
+        }))
+        return updateDeal
+      }
+    }
+  } else {
+    const deal = await createNewDealCrm(user, body)
+    createTimeline({ linked: user, deal:deal, type: 'Deal', name: 'Nuevo trato creado' })
+    return deal
+  }
+}
+
 const createDealUserOnly = async (user, body, lead = {}, update = false) => {
   const deal = await findDealUser(user)
   console.log('deal create', deal)
@@ -639,6 +685,158 @@ const editExistDeal = async (deal, user, body) => {
     dataDeal.assessor = assessorAssigned
   } else {
     if (dataDeal.assessor && dataDeal.assessor.ref && dataDeal.assessor.ref.status === false) {
+      const assessor = await assignedPosition()
+      const assessorAssigned = {
+        username: assessor.username,
+        ref: assessor
+      }
+      dataDeal.assessor = assessorAssigned
+    }
+  }
+  
+  dataDeal.students[0]
+    ? dataDeal.students[0].courses = prepareCourses(
+        user,
+        dataDeal,
+        dataDeal.students[0].courses,
+        castCoursePrice(body.courses, body.currency),
+        body.source
+      )
+    : {
+        ...dataDeal,
+        client: user,
+        students: [
+          {
+            student: {...user, ref: user},
+            courses: prepareCourses(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
+          }
+        ]
+    }
+  
+  const infoDeal = {
+    ...dataDeal,
+    money: castMoneyDeal(body.currency)
+  }
+  const updateDeal = await dealDB.update(deal._id, {
+    ...infoDeal
+  })
+  console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
+  emitDeal(updateDeal)
+  addCall(user, updateDeal)
+  return updateDeal
+}
+
+const createNewDealCrm = async (user, body) => {
+  console.log('createNewDealCrm')
+  const dataDeal = await addInitialStatus(body)
+  const userAssessor = await userDB.detail({ query: { roles: 'Asesor', username: body.assessor.username } })
+  if (userAssessor.status) {
+    const assessorAssigned = {
+      username: body.assessor.username,
+      ref: body.assessor.ref
+    }
+    dataDeal.assessor = assessorAssigned
+  } else {
+    const assessor = await assignedPosition()
+    const assessorAssigned = {
+      username: assessor.username,
+      ref: assessor
+    }
+    dataDeal.assessor = assessorAssigned
+  }
+
+  // console.log('dataDeal', dataDeal)
+
+  const deal = await dealDB.create({
+    ...dataDeal,
+    client: user,
+    money: castMoneyDeal(body.currency),
+    students: [
+      {
+        student: {...user, ref: user},
+        courses: castCoursePrice(body.courses, body.currency)
+      }
+    ]
+  })
+  
+  await addCall(user, deal, body.courses)
+  await prepareCourses(user, deal.toJSON(), [], body.courses, body.source)
+  await incProspects(dataDeal)
+  emitDeal(deal)
+  return deal
+}
+
+const editExistDealCrm = async (deal, user, body) => {
+  const dataDeal = await addInitialStatusAgain(deal)
+  console.log('dataDeal', dataDeal)
+  console.log('user', user)
+  console.log('body', body)
+  const userAssessor = await userDB.detail({ query: { roles: 'Asesor', username: body.assessor.username } })
+  if (userAssessor.status) {
+    const assessorAssigned = {
+      username: body.assessor.username,
+      ref: body.assessor.ref
+    }
+    dataDeal.assessor = assessorAssigned
+  } else {
+    const assessor = await assignedPosition()
+    const assessorAssigned = {
+      username: assessor.username,
+      ref: assessor
+    }
+    dataDeal.assessor = assessorAssigned
+  }
+  
+  dataDeal.students[0]
+    ? dataDeal.students[0].courses = prepareCourses(
+        user,
+        dataDeal,
+        dataDeal.students[0].courses,
+        castCoursePrice(body.courses, body.currency),
+        body.source
+      )
+    : {
+        ...dataDeal,
+        client: user,
+        students: [
+          {
+            student: {...user, ref: user},
+            courses: prepareCourses(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
+          }
+        ]
+    }
+  
+  const infoDeal = {
+    ...dataDeal,
+    money: castMoneyDeal(body.currency)
+  }
+  const updateDeal = await dealDB.update(deal._id, {
+    ...infoDeal
+  })
+  console.log('dataDeal.students[0].courses', dataDeal.students[0].courses && dataDeal.students[0].courses)
+  emitDeal(updateDeal)
+  addCall(user, updateDeal)
+  return updateDeal
+}
+
+const editExistDealOpenCrm = async (deal, user, body) => {
+  const dataDeal = await addInitialStatusAgain(deal)
+  console.log('dataDeal', dataDeal)
+  console.log('user', user)
+  console.log('body', body)
+  const userAssessorDeal = await userDB.detail({ query: { roles: 'Asesor', username: dataDeal.assessor.username } })
+  const userAssessorBody = await userDB.detail({ query: { roles: 'Asesor', username: body.assessor.username } })
+  if (userAssessorDeal.status) {
+    const InvalidError = CustomError('CastError', { message: 'Este trato esta actualmente asignado a otra asesora.', code: 'EINVLD' }, CustomError.factory.expectReceive)
+    throw new InvalidError()
+  } else {
+    if (userAssessorBody.status) {
+      const assessorAssigned = {
+        username: body.assessor.username,
+        ref: body.assessor.ref
+      }
+      dataDeal.assessor = assessorAssigned
+    } else {
       const assessor = await assignedPosition()
       const assessorAssigned = {
         username: assessor.username,
@@ -1585,6 +1783,7 @@ module.exports = {
   detailDeal,
   deleteDeal,
   createOrUpdateDeal,
+  addOrUpdateUserDeal,
   createDealUserOnly,
   incProspects,
   addInitialStatus,

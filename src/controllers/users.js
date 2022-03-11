@@ -164,6 +164,32 @@ const createOrUpdateUser = async (req, res, next) => {
   }
 }
 
+const addOrUpdateUser = async (req, res, next) => {
+  const body = req.body
+  console.log('req.body', req.body)
+  try {
+    if (body.source && body.source === 'Facebook') {
+      const number = body.phone && body.phone.charAt(0) === '+' ? body.phone.substring(1) : body.phone
+      const phone = number && number.length > 6 ? searchCodeNumber(number) : number
+      
+      if (!phone.country) {
+        body.mobile = number ? number : ''
+        body.mobile = body.mobile.replace(/ /g, '')
+      } else {
+        body.mobileCode = phone ? phone.code : ''
+        body.mobile = number ? number.replace(phone.code, '') : ''
+        body.mobile = body.mobile.replace(/ /g, '')
+        body.country = phone ? phone.country && phone.country.name : ''
+      }
+    } 
+    const user = await service.addOrUpdateUser(body)
+    return res.status(201).json(user)
+  } catch (error) {
+    console.log('error--------------------', error)
+    next(error)
+  }
+}
+
 const createStudent = async (req, res, next) => {
   const body = req.body
   try {
@@ -211,6 +237,7 @@ module.exports = {
   deleteUser,
   listTeachers,
   createOrUpdateUser,
+  addOrUpdateUser,
   recoverPassword,
   createStudent
 }

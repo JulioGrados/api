@@ -48,6 +48,10 @@ const detailCertificate = async params => {
   return certificate
 }
 
+const migrateAgreements = async params => {
+  
+}
+
 const deleteCertificate = async (certificateId, loggedUser) => {
   const certificate = await certificateDB.remove(certificateId)
   return certificate
@@ -61,6 +65,7 @@ const countDocuments = async params => {
 module.exports = {
   countDocuments,
   listCertificates,
+  migrateAgreements,
   createCertificate,
   createAdminCertificate,
   updateAdminCertificate,
