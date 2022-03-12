@@ -2,10 +2,22 @@
 
 const { certificateDB } = require('../db')
 const { saveFile, saveCustom } = require('utils/files/save')
+const { courseDB } = require('db/lib')
 
 const listCertificates = async params => {
   const certificates = await certificateDB.list(params)
   return certificates
+}
+
+const listDealAgreements = async (course, loggedUser) => {
+  try {
+    const courseFind = await courseDB.detail({ query: { _id: course._id } })
+    const certificates = await certificateDB.list({ query: { 'course.ref': courseFind } })
+    console.log('certificates', certificates)
+    return certificates
+  } catch (error) {
+    throw error
+  }
 }
 
 const createAdminCertificate = async (body, files, loggedUser) => {
@@ -48,10 +60,6 @@ const detailCertificate = async params => {
   return certificate
 }
 
-const migrateAgreements = async params => {
-  
-}
-
 const deleteCertificate = async (certificateId, loggedUser) => {
   const certificate = await certificateDB.remove(certificateId)
   return certificate
@@ -65,7 +73,7 @@ const countDocuments = async params => {
 module.exports = {
   countDocuments,
   listCertificates,
-  migrateAgreements,
+  listDealAgreements,
   createCertificate,
   createAdminCertificate,
   updateAdminCertificate,

@@ -181,7 +181,8 @@ const addOrUpdateUser = async (req, res, next) => {
         body.mobile = body.mobile.replace(/ /g, '')
         body.country = phone ? phone.country && phone.country.name : ''
       }
-    } 
+    }
+    body.source = body.origin
     const user = await service.addOrUpdateUser(body)
     return res.status(201).json(user)
   } catch (error) {

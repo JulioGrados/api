@@ -13,6 +13,10 @@ router
   .post(Api.createCertificate)
 
 router
+  .route('/certificates/deal/agreements')
+  .post(Api.listDealAgreements)
+
+router
   .route('/certificates/admin')
   .post(Api.createAdminCertificate)
 

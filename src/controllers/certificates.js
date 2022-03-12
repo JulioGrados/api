@@ -7,6 +7,16 @@ const listCertificates = async (req, res) => {
   return res.status(200).json(certificates)
 }
 
+const listDealAgreements = async (req, res, next) => {
+  const course = req.body
+  try {
+    const certificate = await service.listDealAgreements(course, req.user)
+    return res.status(201).json(certificate)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const createAdminCertificate = async (req, res, next) => {
   const body = JSON.parse(req.body.data)
   const files = req.files
@@ -113,6 +123,7 @@ const countDocuments = async (req, res) => {
 module.exports = {
   countDocuments,
   listCertificates,
+  listDealAgreements,
   createCertificate,
   createAdminCertificate,
   updateAdminCertificate,
