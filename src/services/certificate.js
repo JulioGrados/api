@@ -2,19 +2,66 @@
 
 const { certificateDB } = require('../db')
 const { saveFile, saveCustom } = require('utils/files/save')
-const { courseDB } = require('db/lib')
+const { courseDB, dealDB } = require('db/lib')
 
 const listCertificates = async params => {
   const certificates = await certificateDB.list(params)
   return certificates
 }
 
-const listDealAgreements = async (course, loggedUser) => {
+const listDealAgreements = async (params, loggedUser) => {
   try {
-    const courseFind = await courseDB.detail({ query: { _id: course._id } })
+    const courseFind = await courseDB.detail({ query: { _id: params['course.ref'] } })
     const certificates = await certificateDB.list({ query: { 'course.ref': courseFind } })
-    console.log('certificates', certificates)
-    return certificates
+    const migrate = certificates.map( async certificate => {
+      // console.log('certificate', certificate)
+      let certificateUpdate
+      const deals = await dealDB.list({
+        query: {
+          students: {
+            $elemMatch: {
+              'student.ref': certificate.linked.ref.toString()
+            }
+          }
+        },
+        populate: [ 'client']
+      })
+      let deal
+      deals.find( element => {
+        const students = element.students
+        const student = students.find(item => item.student.ref.toString() === certificate.linked.ref.toString())
+        const courses = student.courses
+        const filtered = courses.find(item => item.ref.toString() === courseFind._id.toString())
+        if (filtered && filtered.agreement) {
+          deal = filtered
+        }
+      })
+
+      if (!deal) {
+        certificateUpdate = await certificateDB.update( certificate._id.toString(), {
+          agreement: {
+            institution: courseFind.agreement.institution,
+            ref: courseFind.agreement.ref
+          }
+        })
+        console.log('no entro', certificateUpdate)
+      } else {
+        certificateUpdate = await certificateDB.update( certificate._id.toString(), {
+          agreement: {
+            institution: deal.agreement.institution,
+            ref: deal.agreement.ref
+          }
+        })
+        console.log('entro', certificateUpdate)
+      }
+
+      return await certificateDB.detail({
+        query: { _id: certificateUpdate._id.toString() },
+        populate: ['linked.ref', 'course.ref', 'agreement.ref']
+      })
+    })
+    const results = await Promise.all(migrate.map(p => p.catch(e => e)))
+    return results
   } catch (error) {
     throw error
   }

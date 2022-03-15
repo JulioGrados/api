@@ -14,7 +14,7 @@ router
 
 router
   .route('/certificates/deal/agreements')
-  .post(Api.listDealAgreements)
+  .get(Api.listDealAgreements)
 
 router
   .route('/certificates/admin')

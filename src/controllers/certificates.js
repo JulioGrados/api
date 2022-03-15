@@ -8,10 +8,10 @@ const listCertificates = async (req, res) => {
 }
 
 const listDealAgreements = async (req, res, next) => {
-  const course = req.body
+  const params = JSON.parse(req.query.query)
   try {
-    const certificate = await service.listDealAgreements(course, req.user)
-    return res.status(201).json(certificate)
+    const certificates = await service.listDealAgreements(params, req.user)
+    return res.status(200).json(certificates)
   } catch (error) {
     next(error)
   }
