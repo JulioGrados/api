@@ -1639,6 +1639,41 @@ const certificateCron = async (arr) => {
     } catch (error) {
       console.log('error', error)
     }
+
+    const deals = await dealDB.list({
+      query: {
+        students: {
+          $elemMatch: {
+            'student.ref': enrol.linked.ref.toString()
+          }
+        }
+      },
+      populate: [ 'client']
+    })
+    
+    let deal
+    deals.find( element => {
+      const students = element.students
+      const student = students.find(item => item.student.ref.toString() === enrol.linked.ref.toString())
+      const courses = student.courses
+      const filtered = courses.find(item => item.ref.toString() === enrol.course.ref.toString())
+      if (filtered && filtered.agreement && filtered.agreement.ref) {
+        deal = filtered
+      }
+    })
+    
+    let agreement
+    if (!deal) {
+      agreement = {
+        institution: course.agreement.institution,
+        ref: course.agreement.ref
+      }
+    } else {
+      agreement = {
+        institution: deal.agreement.institution,
+        ref: deal.agreement.ref
+      }
+    }
     
     if (certificate) {
       try {
@@ -1651,10 +1686,12 @@ const certificateCron = async (arr) => {
         })
 
         if (enrol.linked) {
-          await certificateDB.update(certificate._id, {
+          const certiUpdate = await certificateDB.update(certificate._id, {
             linked: enrol.linked,
-            score: enrol.score
+            score: enrol.score,
+            agreement: agreement
           })
+          console.log('Se actualizó enrol con certificado que existe:', certiUpdate)
         }
         console.log('Se actualizó enrol con certificado que existe:', certi)
         return certi
@@ -1688,12 +1725,13 @@ const certificateCron = async (arr) => {
         moodleId: course && course.moodleId,
         enrol: enrol && enrol._id,
         score: enrol.finalScore,
-        date: new Date()
+        date: new Date(),
+        agreement: agreement
       }
 
       try {
         const certi = await certificateDB.create(data)
-
+        console.log('Se creo certificado:', certi)
         await enrolDB.update(enrol._id, {
           certificate: {
             ...certi.toJSON(),

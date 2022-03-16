@@ -31,13 +31,13 @@ const job = new CronJob(
 )
 job.start()
 
-const scoremasone = new CronJob('0 0 23 * * *', async function() {
-  console.log('You will see this message every minuto')
-  const course = await detailCourse({ query: { moodleId: 89 }})
-  const score = await scoreStudentsOnlyCron(course)
-  console.log('score', score)
-}, null, true, 'America/Bogota')
-scoremasone.start()
+// const scoremasone = new CronJob('0 0 23 * * *', async function() {
+//   console.log('You will see this message every minuto')
+//   const course = await detailCourse({ query: { moodleId: 89 }})
+//   const score = await scoreStudentsOnlyCron(course)
+//   console.log('score', score)
+// }, null, true, 'America/Bogota')
+// scoremasone.start()
 
 const scoreone = new CronJob('0 0 2 * * *', async function() {
   console.log('You will see this message every minuto')
@@ -170,10 +170,10 @@ const certificate = new CronJob('0 40 5 * * *', async function() {
   const certi = enrols && enrols.validEnrols && await certificateCron(enrols.validEnrols)
   const filterArr = arr.filter(element => element.courseid == '89' || element.courseid == '174')
   const emails = enrols && enrols.validEnrols && certi && await createPdfStudent(filterArr)
-  // console.log('users', users)
-  // console.log('grades', grades)
-  // console.log('enrols', enrols)
-  // enrols && enrols.validEnrols && console.log('certi', certi)
+  console.log('users', users)
+  console.log('grades', grades)
+  console.log('enrols', enrols)
+  enrols && enrols.validEnrols && console.log('certi', certi)
   console.log('emails', emails)
 }, null, true, 'America/Bogota');
 certificate.start();
