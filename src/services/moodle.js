@@ -247,7 +247,9 @@ const sendEmailStudent = async (files, usersMoodle) => {
       }
     })
 
-    console.log('user', user)
+    // console.log('user', user)
+    // console.log('search', search)
+    // console.log('deal', deal)
 
     if (search) {
       const data = await pdfbs64(slugUrl)
@@ -286,7 +288,8 @@ const sendEmailStudent = async (files, usersMoodle) => {
           deal: deal,
           attachments: msg.attachments
         }
-        const emailSend = createEmail(body)
+        const emailSend = await createEmail(body)
+        console.log('emailSend', emailSend)
       } else {
         const body = {
           subject: msg.subject,
@@ -295,10 +298,10 @@ const sendEmailStudent = async (files, usersMoodle) => {
           from: msg.from,
           fromname: msg.fromname,
           preheader: msg.subject,
-          deal: deal,
           attachments: msg.attachments
         }
-        const emailSend = createEmailOnly(body)
+        const emailSend = await createEmailOnly(body)
+        console.log('emailSend', emailSend)
       }
       // console.log('msg', msg)
       const email = await sendEmailOnly(msg)
