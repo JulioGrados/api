@@ -435,7 +435,7 @@ const addOrUpdateUserDeal = async (user, body, lead = {}, update = false) => {
       }
     }
   } else {
-    const deal = await createNewDealCrm(user, body)
+    const deal = await createNewDealOnly(user, body)
     createTimeline({ linked: user, deal:deal, type: 'Deal', name: 'Nuevo trato creado' })
     return deal
   }
@@ -788,7 +788,7 @@ const editExistDealCrm = async (deal, user, body) => {
   }
   
   dataDeal.students[0]
-    ? dataDeal.students[0].courses = prepareCourses(
+    ? dataDeal.students[0].courses = prepareCoursesOnly(
         user,
         dataDeal,
         dataDeal.students[0].courses,
@@ -801,7 +801,7 @@ const editExistDealCrm = async (deal, user, body) => {
         students: [
           {
             student: {...user, ref: user},
-            courses: prepareCourses(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
+            courses: prepareCoursesOnly(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
           }
         ]
     }
@@ -847,7 +847,7 @@ const editExistDealOpenCrm = async (deal, user, body) => {
   }
   
   dataDeal.students[0]
-    ? dataDeal.students[0].courses = prepareCourses(
+    ? dataDeal.students[0].courses = prepareCoursesOnly(
         user,
         dataDeal,
         dataDeal.students[0].courses,
@@ -860,7 +860,7 @@ const editExistDealOpenCrm = async (deal, user, body) => {
         students: [
           {
             student: {...user, ref: user},
-            courses: prepareCourses(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
+            courses: prepareCoursesOnly(user, dataDeal, [], castCoursePrice(body.courses, body.currency), body.source)
           }
         ]
     }
