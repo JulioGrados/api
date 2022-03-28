@@ -197,18 +197,58 @@ const getItems = async orders => {
         quantity: parseFloat('1.0000'),
         price: parseFloat((order.amount - igv).toFixed(4)),
         price_tax: parseFloat((order.amount).toFixed(4)),
+        tax_total_item: parseFloat(igv.toFixed(2)),
+        tax_unit_item: parseFloat(igv.toFixed(4)),
+        description: course.name,
+        system_id: course.moodleId,
+        correlative: (index + 1).toString(),
+        discount: '0.0000',
+        type: '2002',
+        igv_percentage: '18.0000',
         unit: 'ZZ',
         unit_pdf: 'UND',
         sunat_tax_code: '10',
-        tax_total_item: parseFloat(igv.toFixed(2)),
-        tax_unit_item: parseFloat(igv.toFixed(4)),
-        type_igv: '10',
-        igv_percentage: '18.0000',
+        isc_unit_item: 0.0000,
+        isc_total_item: 0.00,
+        isc_code: null,
+        isc_percentage: 0,
+        icbper: 0.00,
+        referencial_unit_value: 0.00,
+        detail: order.amount.toString()
+      }
+    })
+  )
+}
+
+const getItemsExonerated = async orders => {
+  return await Promise.all(
+    orders.map(async (order, index) => {
+      const tax = order.amount / 1.18
+      const igv = parseFloat((order.amount - tax).toFixed(4))
+      const course = await courseDB.detail({ query: { _id: order.course.ref } })
+      
+      return {
+        quantity: parseFloat('1.0000'),
+        price: parseFloat((order.amount).toFixed(4)),
+        price_tax: parseFloat((order.amount).toFixed(4)),
+        tax_total_item: 0.0000,
+        tax_unit_item: 0.0000,
         description: course.name,
-        detail: order.amount.toString(),
         system_id: course.moodleId,
         correlative: (index + 1).toString(),
-        type: '2002'
+        discount: '0.0000',
+        type: '2002',
+        igv_percentage: '0.0000',
+        unit: 'ZZ',
+        unit_pdf: 'UND',
+        sunat_tax_code: '20',
+        isc_unit_item: 0.0000,
+        isc_total_item: 0.00,
+        isc_code: null,
+        isc_percentage: 0,
+        icbper: 0.00,
+        referencial_unit_value: 0.00,
+        detail: order.amount.toString()
       }
     })
   )
@@ -223,7 +263,7 @@ const createFacture = async (receiptId, body, request) => {
           const count = await receiptDB.count({ query: { isFacture: true } })
           // const note = await receiptDB.count({ query: { isNoteCreditFac: true }})
           const company = await companyDB.detail({ query: { ruc: body.ruc } })
-          const items = await getItems(body.orders)
+          const items = body.exonerated ? await getItemsExonerated(body.orders) : await getItems(body.orders)
           const ticket = payloadFacture({
             receipt: body,
             items: items,
@@ -330,7 +370,7 @@ const createFacture = async (receiptId, body, request) => {
           const count = await receiptDB.count({ query: { isTicket: true } })
           // const note = await receiptDB.count({ query: { isNoteCreditTic: true }})
           const { firstName, lastName, dni, document } = body 
-          const items = await getItems(body.orders)
+          const items = body.exonerated ? await getItemsExonerated(body.orders) : await getItems(body.orders)
           const ticket = payloadTicket({
             receipt: body,
             items: items,
