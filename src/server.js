@@ -14,8 +14,46 @@ const Sentry = require("@sentry/node")
 const Tracing = require("@sentry/tracing")
 
 const { authHandler } = require('./auth')
+// const { zadarma_express_handler } = require("utils/functions/zadarma")
 
 const server = express()
+
+// zadarma_express_handler.on('NOTIFY_START', (request, response) => {
+  
+//   console.log('request index start', request);
+
+//   response.set('Content-Type', 'application/json');
+//   //res.json({"ivr_play": "ID"})
+//   //res.json({"redirect": "ID", ["return_timeout": TIMEOUT]})
+//   //res.json({"hangup": 1})
+//   //res.json({"ivr_saypopular": 1, "language": "en"})
+
+//   res.json({
+//     "ivr_saynumber": "123",
+//     "language": "en"
+//   })
+
+//   res.end()
+// });
+
+
+// zadarma_express_handler.on('NOTIFY_END', request => {
+//   let all_calls_before_clear_storage = zadarma_express_handler.get_temporary_storage();
+//   zadarma_express_handler.clear_temporary_storage();
+//   console.log(request);
+// });
+
+
+// zadarma_express_handler.on('NOTIFY_OUT_START', request => {
+//     console.log('request server out', request);
+    
+// });
+
+// zadarma_express_handler.on('NOTIFY_OUT_END', request => {
+//   zadarma_express_handler.clear_temporary_storage(request.pbx_call_id);
+//   console.log(request);
+// });
+
 
 Sentry.init({
   dsn: "https://f8ecda879746464c8a65fb5118ad664f@o667393.ingest.sentry.io/5766631",

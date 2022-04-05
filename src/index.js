@@ -18,7 +18,6 @@ const main = async () => {
   connectIO(serverApp)
   handleMessage(`[Api Server] running in port ${config.server.port}`, filePath)
 }
-
 process.on('uncaughtException', error => console.log(error))
 process.on('unhandledRejection', error => console.log(error))
 
