@@ -29,12 +29,11 @@ const getMain = async (req, res, next) => {
 const getBalance = async (req, res, next) => {
   console.log('holaaa')
   let balance = await api({
-    api_method: '/v1/request/callback/',
+    http_method: 'POST',
+    api_method: '/v1/sms/send/',
     params: {
-      from: '573009114314',
-      to: '+51949002838',
-      sip: '100',
-      predicted: 'predicted'
+      number: '+51984480719',
+      message: 'Ya no comas huevo en el desayuno, laganas'
     }
   })
   console.log('balance', balance.data)
