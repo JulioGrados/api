@@ -9,6 +9,7 @@ const {
   examDB,
   taskDB,
   certificateDB,
+  dealDB,
   enrolDB
 } = require('../db')
 
@@ -59,6 +60,64 @@ const actionMoodle = (method, wsfunction, args = {}) => {
 const listEnrols = async params => {
   const enrols = await enrolDB.list(params)
   return enrols
+}
+
+const listEnrolsAgreements = async (params, loggedUser) => {
+  try {
+    const courseFind = await courseDB.detail({ query: { _id: params['course.ref'] } })
+    const enrols = await enrolDB.list({ query: { 'course.ref': courseFind } })
+    const migrate = enrols.map( async enrol => {
+      // console.log('enrol', enrol)
+      let enrolUpdate
+      const deals = await dealDB.list({
+        query: {
+          students: {
+            $elemMatch: {
+              'student.ref': enrol.linked.ref.toString()
+            }
+          }
+        },
+        populate: [ 'client']
+      })
+      let deal
+      deals.find( element => {
+        const students = element.students
+        const student = students.find(item => item.student.ref.toString() === enrol.linked.ref.toString())
+        const courses = student.courses
+        const filtered = courses.find(item => item.ref.toString() === courseFind._id.toString())
+        if (filtered && filtered.agreement) {
+          deal = filtered
+        }
+      })
+
+      if (!deal) {
+        enrolUpdate = await enrolDB.update( enrol._id.toString(), {
+          agreement: {
+            institution: courseFind.agreement.institution,
+            ref: courseFind.agreement.ref
+          }
+        })
+        console.log('no entro', enrolUpdate)
+      } else {
+        enrolUpdate = await enrolDB.update( enrol._id.toString(), {
+          agreement: {
+            institution: deal.agreement.institution,
+            ref: deal.agreement.ref
+          }
+        })
+        console.log('entro', enrolUpdate)
+      }
+
+      return await enrolDB.detail({
+        query: { _id: enrolUpdate._id.toString() },
+        populate: ['linked.ref', 'course.ref', 'agreement.ref']
+      })
+    })
+    const results = await Promise.all(migrate.map(p => p.catch(e => e)))
+    return results
+  } catch (error) {
+    throw error
+  }
 }
 
 const listRatings = async params => {
@@ -487,6 +546,7 @@ const emitEnrol = enrol => {
 module.exports = {
   countDocuments,
   listEnrols,
+  listEnrolsAgreements,
   listRatings,
   createEnrol,
   createEmailEnrol,

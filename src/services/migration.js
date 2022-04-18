@@ -4,11 +4,11 @@ const toSlug = require('slug')
 const cheerio = require('cheerio')
 const _ = require('lodash')
 const moment = require('moment-timezone')
-const { downloadFile } = require('utils/files/save')
+const { downloadFile, saveFileName } = require('utils/files/save')
 const { compareOnlySimilarity } = require('utils/functions/text')
 const { sqlConsult } = require('utils/functions/sql')
 const { calculateProm } = require('utils/functions/enrol')
-const { saveCustom } = require('utils/files/save')
+const { saveCustom, saveFile } = require('utils/files/save')
 const { createUser } = require('./user')
 const {
   userDB,
@@ -34,20 +34,47 @@ const { orderDB, saleDB, voucherDB, receiptDB } = require('db/lib')
 const migrateAdminCertificates = async (files, body) => {
   const result = await Promise.all(
     files.map(async (file, index) => {
-      const name = file.name
-      const code = name.substring(name.length - 12, name.length - 4)
-      const certificate = await certificateDB.detail({query: {shortCode: code}, populate: ['linked.ref', 'course.ref']})
-      if (certificate) {
-        try {
-          const route = await saveCustom(file, '/certificates', certificate.course.ref.shortName, certificate.linked.ref.names, certificate.shortCode)
-          const updateCertficate = await certificateDB.update(certificate._id, {
-            file: route
-          })
-          return {
-            ...updateCertficate.toJSON(),
-            success: true
+      const ext = file.name.split('.').pop()
+      if (ext === 'jpg' || ext === 'png' || ext === 'jpeg') {
+        const filter = file.name.replace('.' + ext, '')
+        const part = filter.substring(filter.length, filter.length - 2)
+        const code = filter.substring(filter.length - 4, filter.length - 12)
+        console.log('part', part)
+        console.log('code', code)
+        console.log(file.name)
+        const certificate = await certificateDB.detail({query: {shortCode: code}, populate: ['linked.ref', 'course.ref']})
+        if (certificate) {
+          try {
+            const route = await saveFileName(file, '/certificates', code + '-' + part + '.' + ext)
+            if (part === 'p1') {
+              const updateCertficate = await certificateDB.update(certificate._id, {
+                file1: route
+              })
+              return {
+                ...updateCertficate.toJSON(),
+                success: true
+              }
+            } else if (part === 'p2') {
+              const updateCertficate = await certificateDB.update(certificate._id, {
+                file2: route
+              })
+              return {
+                ...updateCertficate.toJSON(),
+                success: true
+              }
+            } else {
+              return {
+                success: false,
+                code: 'Parte mal escrita'
+              }
+            }
+          } catch (error) {
+            return {
+              success: false,
+              code: code
+            }
           }
-        } catch (error) {
+        } else {
           return {
             success: false,
             code: code
@@ -56,8 +83,8 @@ const migrateAdminCertificates = async (files, body) => {
       } else {
         return {
           success: false,
-          code: code
-        }
+          code: 'No es un tipo imagen'
+        }        
       }
     })
   )

@@ -65,6 +65,16 @@ const createEnrol = async (req, res, next) => {
   }
 }
 
+const listEnrolsAgreements = async (req, res, next) => {
+  const params = JSON.parse(req.query.query)
+  try {
+    const enrols = await service.listEnrolsAgreements(params, req.user)
+    return res.status(200).json(enrols)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const updateEnrol = async (req, res, next) => {
   const enrolId = req.params.id
   try {
@@ -123,6 +133,7 @@ const countDocuments = async (req, res) => {
 module.exports = {
   countDocuments,
   listEnrols,
+  listEnrolsAgreements,
   listRatings,
   createEnrol,
   updateEnrol,

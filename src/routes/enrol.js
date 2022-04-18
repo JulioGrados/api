@@ -18,6 +18,10 @@ router
   .get(Api.listRatings)
 
 router
+  .route('/enrols/agreements')
+  .get(Api.listEnrolsAgreements)
+
+router
   .route('/enrols/:id')
   .get(Api.detailEnrol)
   .put(Api.updateEnrol)
