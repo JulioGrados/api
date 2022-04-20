@@ -255,7 +255,7 @@ const updateDeal = async (dealId, body, loggedUser) => {
     populate: { path: 'client' }
   })
   // console.log('deal', deal)
-  const enrolAgreement = await studentsEnrolAgreement(body.students)
+  const enrolAgreement = await studentsEnrolAgreement(deal.students)
   console.log('enrolAgreement', enrolAgreement)
   const dataDeal = await changeStatus(body, deal, loggedUser, body)
   // console.log('dataDeal', dataDeal)
