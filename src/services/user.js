@@ -7,7 +7,7 @@ const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
 const { createFindQuery } = require('utils/functions/user')
-const { createUserMoodle, deleteUsersMoodle } = require('utils/functions/moodle')
+const { deleteUsersMoodle } = require('utils/functions/moodle')
 const { createOrUpdateDeal, createDealUserOnly, addOrUpdateUserDeal } = require('./deal')
 const { createTimeline } = require('./timeline')
 const { loginUser } = require('./auth')
@@ -30,28 +30,6 @@ const createUser = async (body, file, loggedUser) => {
   body.password = body.password ? generateHash(body.password) : undefined
   const user = await userDB.create(body)
   return user
-}
-
-const createNewUserMoodle = async (user) => {
-
-  const dataUser = {
-    email: user.email,
-    firstname: user.firstName,
-    lastname: user.lastName,
-    username: user.username,
-    password: user.password
-  }
-  console.log('dataUser', dataUser)
-  const userMoodle = await createUserMoodle(dataUser) // utils
-    
-  console.log('userMoodle', userMoodle)
-  if (userMoodle && userMoodle.length) {
-    await userDB.update(user._id, { moodleId: userMoodle[0].id })
-  } else {
-    const InvalidError = CustomError('CastError', { message: 'No se pudo crear el usuario de Moodle, por un parametro invalido', code: 'EINVLD' }, CustomError.factory.expectReceive)
-    throw new InvalidError()
-  }
-  return userMoodle[0]
 }
 
 const updateUser = async (userId, body, file, loggedUser) => {
@@ -453,7 +431,6 @@ module.exports = {
   countDocuments,
   listUsers,
   createUser,
-  createNewUserMoodle,
   updateUser,
   updateUserStage,
   updateDniUser,

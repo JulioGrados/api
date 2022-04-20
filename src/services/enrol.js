@@ -16,7 +16,7 @@ const { getSocket } = require('../lib/io')
 const { calculateProm, calculatePromBoth } = require('utils/functions/enrol')
 const { sendEmail } = require('utils/lib/sendgrid')
 const { gradeUserMoodle, feedbackGetQuizMoodle, feedbackListCourseMoodle, getCoursesMoodle, enrolCourseMoodle } = require('utils/functions/moodle')
-const { createNewUserMoodle } = require('./user')
+const { createNewUserMoodle } = require('../functions/createNewUserMoodle')
 const { studentsEnrolAgreement } = require('../functions/enrolAgreement')
 const { findMoodleCourse } = require('../functions/findMoodleCourse')
 

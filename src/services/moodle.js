@@ -22,7 +22,7 @@ const {
   feedbackListCourseMoodle,
   assignGetCourseMoodle
  } = require('utils/functions/moodle')
-const { createNewUserMoodle } = require('./user')
+const { createNewUserMoodle } = require('../functions/createNewUserMoodle')
 const { emitEnrol } = require('./enrol')
 const { createEmail, createEmailOnly } = require('./email')
 const { findMoodleCourse } = require('../functions/findMoodleCourse')
