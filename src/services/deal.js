@@ -4,8 +4,7 @@ const _ = require('lodash')
 const moment = require('moment-timezone')
 const CustomError = require('custom-error-instance')
 const { generateHash } = require('utils/functions/auth')
-
-const { dealDB, userDB, progressDB, callDB, emailDB, saleDB, timelineDB, whastsappDB } = require('../db')
+const { searchUsername, searchEmail, searchID, searchUser } = require('utils/functions/moodle')
 
 const courseFunc = require('utils/functions/course')
 const { payloadToData } = require('utils/functions/user')
@@ -15,14 +14,18 @@ const { sendMailTemplate } = require('utils/lib/sendgrid')
 const { MEDIA_PATH } = require('utils/files/path')
 const { createEmail } = require('./email')
 const { getSocket } = require('../lib/io')
-const { createNewUser, createEnrolUser, searchUser, searchUsername, searchEmail, searchID } = require('./moodle')
+const { createNewUserMoodle } = require('./user')
+const { createEnrolUserMoodle } = require('./enrol')
 const { templateCertificate } = require('utils/emails/certificate')
-
+const { studentsEnrolAgreement } = require('../functions/enrolAgreement')
 let randomize = require('randomatic')
-const { receiptDB } = require('db/lib')
 const { templateAccess } = require('utils/emails/access')
 const { templateAccessClient } = require('utils/emails/accessClient')
 const currenciesData = require('utils/functions/currencies')
+
+const { receiptDB, enrolDB } = require('db/lib')
+const { dealDB, userDB, progressDB, callDB, emailDB, saleDB, timelineDB, whastsappDB } = require('../db')
+
 
 
 const listDeals = async params => {
@@ -246,12 +249,14 @@ const updateDealOne = async (dealId, body, loggedUser) => {
 
 const updateDeal = async (dealId, body, loggedUser) => {
   // console.log('dealId', dealId)
-  // console.log('body', body)
+  console.log('body', body)
   const deal = await dealDB.detail({
     query: { _id: dealId },
     populate: { path: 'client' }
   })
   // console.log('deal', deal)
+  const enrolAgreement = await studentsEnrolAgreement(body.students)
+  console.log('enrolAgreement', enrolAgreement)
   const dataDeal = await changeStatus(body, deal, loggedUser, body)
   // console.log('dataDeal', dataDeal)
   const updateDeal = await dealDB.update(dealId, dataDeal)
@@ -971,8 +976,6 @@ const getPosition = (assessors) => {
   return {position, initial}
 }
 
-
-
 const assignedAssessor = async courses => {
   const coursesId = courses.map(course => course._id)
   const assessors = await userDB.list({
@@ -1435,7 +1438,7 @@ const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) =>
       throw err
     }
     
-    const moodleUser = await createNewUser({
+    const moodleUser = await createNewUserMoodle({
       ...user.toJSON(),
       username: student.username,
       password: code
@@ -1460,7 +1463,7 @@ const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) =>
     const coursesEnrol = await Promise.all(
       courses.map(async course => {
         user.password = code
-        await createEnrolUser({ course, user, deal })
+        await createEnrolUserMoodle({ course, user, deal })
         await createTimeline({
           ...timeline,
           name: `[Matricula] ${course.name}`
@@ -1490,6 +1493,7 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
   let user = await userDB.detail({
     query: { _id: student && student.ref && student.ref._id }
   })
+  console.log('user', user)
   const timeline = {
     linked: {
       ...user.toJSON(),
@@ -1503,18 +1507,18 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
     type: 'Curso'
   }
 
-  // console.log('timeline', timeline)
+  console.log('timeline', timeline)
   const code = randomize('0', 8)
   
   if (!user.moodleId) {
-    // console.log('registrar usuario moodle')
+    console.log('registrar usuario moodle', user)
     const existUsername = await searchUsername({
       username: user.username
     })
-    // console.log('existUsername', existUsername)
-    const existEmail = await searchEmail({
-      email: user.email
-    })
+    console.log('existUsername', existUsername)
+    const existEmail = await searchEmail(
+      user.email
+    )
     // console.log('existEmail', existEmail)
     if (existUsername && existEmail) {
       if (existUsername.id === existEmail.id) {
@@ -1549,13 +1553,14 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
         const InvalidError = CustomError('InvalidError', { message: 'El username, ya existe en moodle.', code: 'EINVLD' }, CustomError.factory.expectReceive)
         throw new InvalidError()
       } else {
-        // console.log('entro aquí')
-        const moodleUser = await createNewUser({
+        console.log('entro aquí')
+        const userCreateData = {
           ...user.toJSON(),
           username: student.username,
           password: code
-        })
-        // console.log('moodleUser', moodleUser)
+        }
+        const moodleUser = await createNewUserMoodle(userCreateData)
+        console.log('moodleUser', moodleUser)
         const dataUser = {
           username: student.username || undefined,
           password: student.password ? generateHash(code) : undefined,
@@ -1588,7 +1593,7 @@ const addCoursesMoodleUpdate = async (student, courses, dealId, loggedUser, logg
     const coursesEnrol = await Promise.all(
       courses.map(async course => {
         user.password = code
-        await createEnrolUser({ course, user, deal })
+        await createEnrolUserMoodle({ course, user, deal })
         await createTimeline({
           ...timeline,
           name: `[Matricula] ${course.name}`
@@ -1707,45 +1712,21 @@ const sendEmailAccessExist = async (user, deal, logged) => {
 
 const enrolStudents = async ({ item, dealId, loggedUser }, logged) => {
   try {
-    // const users = await Promise.all(
-    //   students.map(async item => {
-    //     const student = item.student && item.student.ref ? item.student.ref : item.student
-    //     const id = student && student.ref ? student.ref._id : student._id
-    //     const user = await userDB.update(id, {
-    //       username: student.username,
-    //       firstName: student.firstName,
-    //       lastName: student.lastName,
-    //       names: student.names,
-    //       email: student.email,
-    //       dni: student.dni
-    //     })
-    //     return user
-    //   })
-    // )
     console.log('item', item)
     const student = item.student && item.student.ref ? item.student.ref : item.student
     const id = student && student.ref ? student.ref._id : student._id
+    const rolesUser = await userDB.detail({ query: { _id: id } })
+    console.log('rolesUser', rolesUser)
     const user = await userDB.update(id, {
       username: student.username,
       firstName: student.firstName,
       lastName: student.lastName,
       names: student.names,
       email: student.email,
-      dni: student.dni
+      dni: student.dni,
+      roles: [...rolesUser.roles, 'Estudiante']
     })
     console.log('user', user)
-    // const enrols = await Promise.all(
-    //   students.map(async item => {
-    //     const courses = await addCoursesMoodleUpdate(
-    //       item.student,
-    //       item.courses,
-    //       dealId,
-    //       loggedUser,
-    //       logged
-    //     )
-    //     return courses
-    //   })
-    // )
 
     const enrols = await addCoursesMoodleUpdate(
       item.student,

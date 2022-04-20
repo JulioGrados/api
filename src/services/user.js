@@ -7,41 +7,12 @@ const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
 const { saveFile } = require('utils/files/save')
 const { createFindQuery } = require('utils/functions/user')
+const { createUserMoodle, deleteUsersMoodle } = require('utils/functions/moodle')
 const { createOrUpdateDeal, createDealUserOnly, addOrUpdateUserDeal } = require('./deal')
 const { createTimeline } = require('./timeline')
 const { loginUser } = require('./auth')
 const { sendMailTemplate } = require('utils/lib/sendgrid')
 const uniqid = require('uniqid')
-
-const moodle_client = require('moodle-client')
-const { wwwroot, token, service } = require('config').moodle
-
-const init = moodle_client.init({
-  wwwroot,
-  token,
-  service
-})
-
-const {
-  deleteUsers
-} = require('config').moodle.functions
-
-const actionMoodle = (method, wsfunction, args = {}) => {
-  return init.then(function (client) {
-    return client
-      .call({
-        wsfunction,
-        method,
-        args
-      })
-      .then(function (info) {
-        return info
-      })
-      .catch(function (err) {
-        throw err
-      })
-  })
-}
 
 const listUsers = async params => {
   console.log('--------------------------------------------------------')
@@ -59,6 +30,28 @@ const createUser = async (body, file, loggedUser) => {
   body.password = body.password ? generateHash(body.password) : undefined
   const user = await userDB.create(body)
   return user
+}
+
+const createNewUserMoodle = async (user) => {
+
+  const dataUser = {
+    email: user.email,
+    firstname: user.firstName,
+    lastname: user.lastName,
+    username: user.username,
+    password: user.password
+  }
+  console.log('dataUser', dataUser)
+  const userMoodle = await createUserMoodle(dataUser) // utils
+    
+  console.log('userMoodle', userMoodle)
+  if (userMoodle && userMoodle.length) {
+    await userDB.update(user._id, { moodleId: userMoodle[0].id })
+  } else {
+    const InvalidError = CustomError('CastError', { message: 'No se pudo crear el usuario de Moodle, por un parametro invalido', code: 'EINVLD' }, CustomError.factory.expectReceive)
+    throw new InvalidError()
+  }
+  return userMoodle[0]
 }
 
 const updateUser = async (userId, body, file, loggedUser) => {
@@ -116,9 +109,7 @@ const updateAccountUserMoodle = async (userId, body, loggedUser) => {
   delete body.username
   delete body.password
   
-  const userDelete = await actionMoodle('POST', deleteUsers, {
-    userids: [body.moodleId]
-  })
+  const userDelete = await deleteUsersMoodle(body.moodleId)
   console.log('userDelete', userDelete)
   
   delete body.moodleId
@@ -462,6 +453,7 @@ module.exports = {
   countDocuments,
   listUsers,
   createUser,
+  createNewUserMoodle,
   updateUser,
   updateUserStage,
   updateDniUser,

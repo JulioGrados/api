@@ -5,131 +5,31 @@ let randomize = require('randomatic')
 const { templateConstance } = require('utils/emails/constance')
 const { lastNameSpace } = require('utils/emails/constancePDF')
 const { constancePDF } = require('utils/emails/constancePDF')
-const moodle_client = require('moodle-client')
-const { wwwroot, token, service } = require('config').moodle
-const {
-  userDB,
-  courseDB,
-  examDB,
-  taskDB,
-  certificateDB,
-  lessonDB,
-  chapterDB,
-  testimonyDB
-} = require('../db')
-const { enrolDB, dealDB } = require('db/lib')
-
 const { calculateProm, calculatePromBoth } = require('utils/functions/enrol')
-
-const init = moodle_client.init({
-  wwwroot,
-  token,
-  service
-})
-
-const {
-  getCourses,
-  enrolCourse,
-  createUser,
-  userField,
-  coursesUser,
-  // unenrolUsers,
-  gradeUser,
-  enrolGetCourse,
-  quizGetCourse,
-  assignGetCourse,
-  moduleGetCourse,
-  feedbackGetQuiz,
-  feedbackListCourse,
-  // enrolMethods
-} = require('config').moodle.functions
-const enrol = require('db/models/enrol')
-const { emitEnrol } = require('./enrol')
-const { sendSimple, sendEmailOnly } = require('utils/lib/sendgrid')
+const { sendEmailOnly } = require('utils/lib/sendgrid')
 const { deletefile } = require('utils/functions/deletefile')
-const { MEDIA_PATH } = require('utils/files/path')
 const { pdfbs64 } = require('utils/functions/pdfbs64')
+const { 
+  enrolCourseMoodle,
+  createUserMoodle,
+  coursesForUserMoodle,
+  gradeUserMoodle,
+  getCoursesMoodle,
+  moduleGetCourseMoodle,
+  enrolGetCourseMoodle,
+  quizGetCourseMoodle,
+  feedbackGetQuizMoodle,
+  feedbackListCourseMoodle,
+  assignGetCourseMoodle
+ } = require('utils/functions/moodle')
+const { createNewUserMoodle } = require('./user')
+const { emitEnrol } = require('./enrol')
 const { createEmail, createEmailOnly } = require('./email')
+const { findMoodleCourse } = require('../functions/findMoodleCourse')
+const { userDB, courseDB, examDB, taskDB, certificateDB, lessonDB, chapterDB, testimonyDB, dealDB, enrolDB } = require('../db')
+const { studentsEnrolAgreement } = require('../functions/enrolAgreement')
 
-const actionMoodle = (method, wsfunction, args = {}) => {
-  return init.then(function (client) {
-    return client
-      .call({
-        wsfunction,
-        method,
-        args
-      })
-      .then(function (info) {
-        return info
-      })
-      .catch(function (err) {
-        throw err
-      })
-  })
-}
-
-const getCourseForUser = async userId => {
-  try {
-    const coursesForUser = await actionMoodle('GET', coursesUser, {
-      userid: userId
-    })
-
-    return coursesForUser
-  } catch (error) {
-    console.log('error coursesUser', error)
-    return []
-  }
-}
-
-const getUsersForField = async (name, value) => {
-  const field = name // 'email'
-  const values = [value] // ['Halanoca29@hotmail.com']
-
-  // Las variables enviadas a la función deben ser field con el atributo y values con un array que contenga el valor del atributo
-  console.log('field', field)
-  console.log('values', values)
-  const userMoodle = await actionMoodle('GET', userField, {
-    field,
-    values
-  })
-
-  console.log('userMoodle', userMoodle)
-  return userMoodle[0]
-}
-
-const searchUser = async ({ username, email }) => {
-  let user
-  if (username) {
-    user = await getUsersForField('username', username)
-    if (user) {
-      return { type: 'username', user }
-    }
-  }
-  if (email) {
-    user = await getUsersForField('email', email)
-    if (user) {
-      return { type: 'email', user }
-    }
-  }
-  return { user: undefined }
-}
-
-const searchID = async ({ id }) => {
-  const user = await getUsersForField('id', id)
-  return user
-}
-
-const searchUsername = async ({ username }) => {
-  const user = await getUsersForField('username', username)
-  return user
-}
-
-const searchEmail = async ({ email }) => {
-  const user = await getUsersForField('email', email)
-  return user
-}
-
-const createNewUser = async user => {
+const createNewUser = async (user) => {
 
   const dataUser = {
     email: user.email,
@@ -139,9 +39,8 @@ const createNewUser = async user => {
     password: user.password
   }
   console.log('dataUser', dataUser)
-  const userMoodle = await actionMoodle('POST', createUser, {
-    users: [dataUser]
-  })
+  const userMoodle = await createUserMoodle(dataUser) // utils
+    
   console.log('userMoodle', userMoodle)
   if (userMoodle && userMoodle.length) {
     await userDB.update(user._id, { moodleId: userMoodle[0].id })
@@ -488,9 +387,7 @@ const usersMoodle = async ({ courseId }) => {
     throw error
   }
 
-  const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
-    courseid: courseId
-  })
+  const usersMoodle = await enrolGetCourseMoodle(courseId) //utils
   const respUsers = await createUserCourse(usersMoodle, course)
 
   if (respUsers.errorUsers.length > 0) {
@@ -1685,6 +1582,7 @@ const certificateCron = async (arr) => {
             ...certificate.toJSON(),
             ref: certificate._id
           },
+          agreement: agreement,
           isFinished: true
         })
 
@@ -1738,7 +1636,8 @@ const certificateCron = async (arr) => {
         await enrolDB.update(enrol._id, {
           certificate: {
             ...certi.toJSON(),
-            ref: certi._id
+            ref: certi._id,
+            agreement: agreement
           }
         })
         console.log('Se creó certificado y actualizó enrol:', certi)
@@ -1835,18 +1734,14 @@ const createCertificatesCourse = async course => {
 const createShippingUser = async course => {
   const users = await userDB.list({})
 
-  const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
-    courseids: [course.moodleId]
-  })
-
+  const feedBackCourse = await feedbackListCourseMoodle(course.moodleId) //utils
+  
   const feedback = feedBackCourse.feedbacks.find(
     item => item.name.indexOf('certificado') > -1
   )
 
   if (feedback) {
-    const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
-      feedbackid: feedback.id
-    })
+    const feedBackModule = await feedbackGetQuizMoodle(feedback.id) //utils
 
     const newsFeedBack = feedBackModule.attempts.map(async element => {
       const user = users.find(
@@ -1925,17 +1820,13 @@ const createShippingEnrol = async course => {
     populate: [ 'linked.ref']
   })
   
-  const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
-    courseids: [course.courseId]
-  })
+  const feedBackCourse = await feedbackListCourseMoodle(course.courseId)//utils
 
   const feedback = feedBackCourse.feedbacks.find(
     item => item.name.indexOf('certificado') > -1
   )
   if (feedback) {
-    const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
-      feedbackid: feedback.id
-    })
+    const feedBackModule = await feedbackGetQuizMoodle(feedback.id) //utils
 
     const newsFeedBack = feedBackModule.attempts.map(async element => {
       const enrol = enrols.find(
@@ -1992,10 +1883,7 @@ const usersGrades = async ({ courseId, usersMoodle }) => {
   let grades = []
   await usersMoodle.reduce(async (promise, user) => {
     await promise
-    const contents = await actionMoodle('POST', gradeUser, {
-      userid: user.moodleId,
-      courseid: courseId
-    })
+    const contents = await gradeUserMoodle(user.moodleId, courseId) //utils
 
     console.log(contents.usergrades[0])
     grades.push(contents.usergrades[0])
@@ -2017,11 +1905,7 @@ const gradesCron = async ( arr ) => {
   let grades = []
   await arr.reduce(async (promise, item) => {
     await promise
-    const contents = await actionMoodle('POST', gradeUser, {
-      userid: item.id,
-      courseid: item.courseid
-    })
-
+    const contents = await gradeUserMoodle(item.id, item.courseid) //utils
     console.log(contents.usergrades[0])
     grades.push(contents.usergrades[0])
   }, Promise.resolve())
@@ -2047,23 +1931,14 @@ const evaluationMoodle = async ({ courseId }) => {
 
   let evaluations
   if (course.typeOfEvaluation === 'exams') {
-    evaluations = await actionMoodle('POST', quizGetCourse, {
-      courseids: [courseId]
-    })
+    evaluations = await quizGetCourseMoodle(courseId) //utils
     evaluations = evaluations.quizzes
   } else if (course.typeOfEvaluation === 'tasks') {
-    evaluations = await actionMoodle('POST', assignGetCourse, {
-      courseids: [courseId]
-    })
+    evaluations = await assignGetCourseMoodle(courseId) //utils
     evaluations = evaluations.courses[0].assignments
   } else if (course.typeOfEvaluation === 'both') {
-    const examsBoth = await actionMoodle('POST', quizGetCourse, {
-      courseids: [courseId]
-    })
-
-    const tasksBoth = await actionMoodle('POST', assignGetCourse, {
-      courseids: [courseId]
-    })
+    const examsBoth = await quizGetCourseMoodle(courseId) //utils
+    const tasksBoth = await assignGetCourseMoodle(courseId)//utils
 
     const examsEnd = examsBoth.quizzes
     const tasksEnd = tasksBoth.courses[0].assignments
@@ -2156,9 +2031,8 @@ const certificateMoodle = async ({ courseId }) => {
 }
 
 const gradeNewCertificate = async ({ courseId }) => {
-  const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
-    courseid: courseId
-  })
+  const usersMoodle = await enrolGetCourseMoodle(courseId) //utils
+    
   let course
   try {
     course = await courseDB.detail({ query: { moodleId: courseId } })
@@ -2175,11 +2049,7 @@ const gradeNewCertificate = async ({ courseId }) => {
   let grades = []
   await usersMoodle.reduce(async (promise, user) => {
     await promise
-    const contents = await actionMoodle('POST', gradeUser, {
-      userid: user.id,
-      courseid: courseId
-    })
-
+    const contents = await gradeUserMoodle(user.id, courseId)//utils
     console.log(contents.usergrades[0])
     grades.push(contents.usergrades[0])
   }, Promise.resolve())
@@ -2195,23 +2065,14 @@ const gradeNewCertificate = async ({ courseId }) => {
 
   let evaluations
   if (course.typeOfEvaluation === 'exams') {
-    evaluations = await actionMoodle('POST', quizGetCourse, {
-      courseids: [courseId]
-    })
+    evaluations = await quizGetCourseMoodle(courseId) //utils
     evaluations = evaluations.quizzes
   } else if (course.typeOfEvaluation === 'tasks') {
-    evaluations = await actionMoodle('POST', assignGetCourse, {
-      courseids: [courseId]
-    })
+    evaluations = await assignGetCourseMoodle(courseId) //utils
     evaluations = evaluations.courses[0].assignments
   } else if (course.typeOfEvaluation === 'both') {
-    const examsBoth = await actionMoodle('POST', quizGetCourse, {
-      courseids: [courseId]
-    })
-
-    const tasksBoth = await actionMoodle('POST', assignGetCourse, {
-      courseids: [courseId]
-    })
+    const examsBoth = await quizGetCourseMoodle(courseId) //utils
+    const tasksBoth = await assignGetCourseMoodle(courseId) //utils
 
     const examsEnd = examsBoth.quizzes
     const tasksEnd = tasksBoth.courses[0].assignments
@@ -2582,9 +2443,7 @@ const listModulesCourse = async (courseId, modulesFilter) => {
 }
 
 const modulesCourse = async ({ courseId }) => {
-  const feedBackModule = await actionMoodle('GET', moduleGetCourse, {
-    courseid: courseId
-  })
+  const feedBackModule = await moduleGetCourseMoodle(courseId) //utils
 
   const modulesFilter = feedBackModule.filter(
     item => item.name !== 'General' && item.visible === 1
@@ -2605,25 +2464,6 @@ const modulesCourse = async ({ courseId }) => {
   return respModules.validModules
 }
 
-const findMoodleCourse = async course => {
-  const courses = await actionMoodle('GET', getCourses)
-  const courseEnroll = courses.find(item => item.fullname === course.name)
-  if (!courseEnroll) {
-    const error = {
-      status: 404,
-      message: 'No se encontro el curso en Moodle'
-    }
-    throw error
-  } else {
-    const courseId = course.ref._id || course.ref || course._id
-    await courseDB.update(courseId, {
-      moodleId: courseEnroll.id
-    })
-  }
-
-  return courseEnroll
-}
-
 const createEnrolUser = async ({ user, course, deal }) => {
   let courseId
   if (course.ref && course.ref.moodleId) {
@@ -2638,7 +2478,7 @@ const createEnrolUser = async ({ user, course, deal }) => {
   if (user.moodleId) {
     userId = user.moodleId
   } else {
-    const newUser = await createNewUser(user)
+    const newUser = await createNewUserMoodle(user)
     userId = newUser.id
   }
 
@@ -2648,9 +2488,7 @@ const createEnrolUser = async ({ user, course, deal }) => {
     courseid: parseInt(courseId)
   }
 
-  await actionMoodle('POST', enrolCourse, {
-    enrolments: [enroll]
-  })
+  await enrolCourseMoodle(enroll)
   
   try {
     const enrol = await enrolDB.detail({ query: { 'linked.ref': user._id, 'course.ref': course._id } })
@@ -2679,7 +2517,8 @@ const createEnrolUser = async ({ user, course, deal }) => {
     emitEnrol(enrolSearch)
     console.log('enrol nuevo', enrol)
   }
-
+  const updateEnrol = await studentsEnrolAgreement(deal.students)
+  console.log('updateEnrol', updateEnrol)
   return true
 }
 
@@ -2692,9 +2531,7 @@ const createTestimonies = async (feedBackCourse, course) => {
   )
 
   if (feedback) {
-    const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
-      feedbackid: feedback.id
-    })
+    const feedBackModule = await feedbackGetQuizMoodle(feedback.id) //utils
 
     const newsFeedBack = feedBackModule.attempts.map(async element => {
       const user = users.find(
@@ -2806,9 +2643,7 @@ const testimoniesCourse = async ({ courseId }) => {
 
   console.log('course', course)
 
-  const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
-    courseids: [course.moodleId]
-  })
+  const feedBackCourse = await feedbackListCourseMoodle(course.moodleId) //utils
 
   const respTestimonies = await createTestimonies(feedBackCourse, course)
 
@@ -2822,19 +2657,13 @@ const testimoniesCourse = async ({ courseId }) => {
 
 const scoreStudentsCron = async (courses) => {
   const scoreCourseStudent = courses.map(async course => {
-    const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
-      courseid: course.moodleId
-    })
+    const usersMoodle = await enrolGetCourseMoodle(course.moodleId) //utils
     const respUsers = await createUserCertificate(usersMoodle)
 
     let grades = []
     await usersMoodle.reduce(async (promise, user) => {
       await promise
-      const contents = await actionMoodle('POST', gradeUser, {
-        userid: user.id,
-        courseid: course.moodleId
-      })
-
+      const contents = await gradeUserMoodle(user.id,course.moodleId) //utils
       console.log(contents.usergrades[0])
       grades.push(contents.usergrades[0])
     }, Promise.resolve())
@@ -2855,19 +2684,13 @@ const scoreStudentsCron = async (courses) => {
 }
 
 const scoreStudentsOnlyCron = async (course) => {
-  const usersMoodle = await actionMoodle('POST', enrolGetCourse, {
-    courseid: course.moodleId
-  })
+  const usersMoodle = await enrolGetCourseMoodle(course.moodleId) //utils
   const respUsers = await createUserCertificate(usersMoodle)
 
   let grades = []
   await usersMoodle.reduce(async (promise, user) => {
     await promise
-    const contents = await actionMoodle('POST', gradeUser, {
-      userid: user.id,
-      courseid: course.moodleId
-    })
-
+    const contents = await gradeUserMoodle(user.id,course.moodleId) //utils
     console.log(contents.usergrades[0])
     grades.push(contents.usergrades[0])
   }, Promise.resolve())
@@ -2889,23 +2712,14 @@ const examInModules = async (courses) => {
   const examModulesStudent = courses.map(async course => {
     let evaluations
     if (course.typeOfEvaluation === 'exams') {
-      evaluations = await actionMoodle('POST', quizGetCourse, {
-        courseids: [course.moodleId]
-      })
+      evaluations = await quizGetCourseMoodle(course.moodleId) //utils
       evaluations = evaluations.quizzes
     } else if (course.typeOfEvaluation === 'tasks') {
-      evaluations = await actionMoodle('POST', assignGetCourse, {
-        courseids: [course.moodleId]
-      })
+      evaluations = await assignGetCourseMoodle(course.moodleId) //utils
       evaluations = evaluations.courses[0].assignments
     } else if (course.typeOfEvaluation === 'both') {
-      const examsBoth = await actionMoodle('POST', quizGetCourse, {
-        courseids: [course.moodleId]
-      })
-
-      const tasksBoth = await actionMoodle('POST', assignGetCourse, {
-        courseids: [course.moodleId]
-      })
+      const examsBoth = await quizGetCourseMoodle(course.moodleId) //utils
+      const tasksBoth = await assignGetCourseMoodle(course.moodleId) //utils
 
       const examsEnd = examsBoth.quizzes
       const tasksEnd = tasksBoth.courses[0].assignments
@@ -2951,7 +2765,12 @@ const examInModules = async (courses) => {
   return examModulesStudent
 }
 
+const emailEnrol = (email) => {
+  console.log('email', email)
+}
+
 module.exports = {
+  emailEnrol,
   createEnrolID,
   createNewUser,
   createUserCertificate,
@@ -2966,12 +2785,6 @@ module.exports = {
   evaluationMoodle,
   enrolMoodle,
   certificateMoodle,
-  getUsersForField,
-  getCourseForUser,
-  searchUser,
-  searchUsername,
-  searchEmail,
-  searchID,
   gradeNewCertificate,
   modulesCourse,
   testimoniesCourse,
@@ -2981,14 +2794,3 @@ module.exports = {
   scoreStudentsOnlyCron,
   examInModules
 }
-
-// SELECT DISTINCT u.id AS userid, c.id AS courseid , ue.id AS enrolid, DATE_FORMAT(FROM_UNIXTIME(ue.timecreated-5*3600), '%e/%c/%Y') AS date FROM mdl_user uJOIN mdl_user_enrolments ue ON ue.userid = u.id
-// JOIN mdl_enrol e ON e.id = ue.enrolid
-// JOIN mdl_role_assignments ra ON ra.userid = u.id
-// JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50
-// JOIN mdl_course c ON c.id = ct.instanceid AND e.courseid = c.id
-// JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student'
-// WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0 AND ue.status = 0
-// AND DATE_FORMAT(FROM_UNIXTIME(ue.timecreated - 5 * 3600), '%e/%c/%Y') = DATE_FORMAT(NOW(), '%e/%c/%Y');
-
-// /usr/bin/mysql -u root --database manvicio_ertmdl --execute="SELECT json_arrayagg(json_object( 'user', u.id, 'course', c.id, 'enrol', ue.id)) AS '' FROM (mdl_user u JOIN mdl_user_enrolments ue ON ue.userid = u.id JOIN mdl_enrol e ON e.id = ue.enrolid JOIN mdl_role_assignments ra ON ra.userid = u.id JOIN mdl_context ct ON ct.id = ra.contextid AND ct.contextlevel = 50 JOIN mdl_course c ON c.id = ct.instanceid AND e.courseid = c.id JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'student') WHERE (e.status = 0 AND u.suspended = 0 AND u.deleted = 0 AND ue.status = 0 AND DATE_FORMAT(FROM_UNIXTIME(ue.timecreated-5*3600),'%e/%c/%Y')='20/7/2021');"

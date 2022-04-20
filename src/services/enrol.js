@@ -1,14 +1,11 @@
 'use strict'
-const fs = require('fs');
-const moodle_client = require('moodle-client')
+const fs = require('fs')
 const CustomError = require('custom-error-instance')
-const { wwwroot, token, service } = require('config').moodle
 const {
   userDB,
   courseDB,
   examDB,
   taskDB,
-  certificateDB,
   dealDB,
   enrolDB
 } = require('../db')
@@ -18,44 +15,10 @@ const { createEmailOnly } = require('./email')
 const { getSocket } = require('../lib/io')
 const { calculateProm, calculatePromBoth } = require('utils/functions/enrol')
 const { sendEmail } = require('utils/lib/sendgrid')
-
-const init = moodle_client.init({
-  wwwroot,
-  token,
-  service
-})
-
-const {
-  getCourses,
-  enrolCourse,
-  createUser,
-  userField,
-  coursesUser,
-  gradeUser,
-  enrolGetCourse,
-  quizGetCourse,
-  assignGetCourse,
-  moduleGetCourse,
-  feedbackGetQuiz,
-  feedbackListCourse
-} = require('config').moodle.functions
-
-const actionMoodle = (method, wsfunction, args = {}) => {
-  return init.then(function (client) {
-    return client
-      .call({
-        wsfunction,
-        method,
-        args
-      })
-      .then(function (info) {
-        return info
-      })
-      .catch(function (err) {
-        throw err
-      })
-  })
-}
+const { gradeUserMoodle, feedbackGetQuizMoodle, feedbackListCourseMoodle, getCoursesMoodle, enrolCourseMoodle } = require('utils/functions/moodle')
+const { createNewUserMoodle } = require('./user')
+const { studentsEnrolAgreement } = require('../functions/enrolAgreement')
+const { findMoodleCourse } = require('../functions/findMoodleCourse')
 
 const listEnrols = async params => {
   const enrols = await enrolDB.list(params)
@@ -130,6 +93,64 @@ const createEnrol = async (body, loggedUser) => {
   return enrol
 }
 
+const createEnrolUserMoodle = async ({ user, course, deal }) => {
+  let courseId
+  if (course.ref && course.ref.moodleId) {
+    courseId = course.ref.moodleId
+  } else {
+    const courseEnroll = await findMoodleCourse(course)
+    courseId = courseEnroll.id
+  }
+
+  let userId
+  
+  if (user.moodleId) {
+    userId = user.moodleId
+  } else {
+    const newUser = await createNewUserMoodle(user)
+    userId = newUser.id
+  }
+
+  const enroll = {
+    roleid: '5',
+    userid: parseInt(userId),
+    courseid: parseInt(courseId)
+  }
+
+  await enrolCourseMoodle(enroll)
+  
+  try {
+    const enrol = await enrolDB.detail({ query: { 'linked.ref': user._id, 'course.ref': course._id } })
+    console.log('enrol', enrol)
+  } catch (error) {
+    const enrol = await enrolDB.create({
+      linked: {
+        ...user.toJSON(),
+        ref: user
+      },
+      course: {
+        ...course,
+        ref: course
+      }
+    })
+    const enrolDetail = await enrolDB.detail({ query: { _id: enrol._id }, populate: ['linked.ref', 'course.ref'] })
+    const tesorero = await userDB.detail({
+      query: {
+        roles: 'Tesorero'
+      }
+    })
+    const enrolSearch = {
+      ...enrolDetail.toJSON(),
+      assigned: {...tesorero.toJSON()}
+    }
+    emitEnrol(enrolSearch)
+    console.log('enrol nuevo', enrol)
+  }
+  const updateEnrol = await studentsEnrolAgreement(deal.students)
+  console.log('updateEnrol', updateEnrol)
+  return true
+}
+
 const createEmailEnrol = async (body) => {
   const msg = {
     to: body.to,
@@ -196,10 +217,7 @@ const updateMoodle = async (enrolId, body, loggedUser) => {
 
   if (user && user.moodleId) {
     
-    const contents = await actionMoodle('POST', gradeUser, {
-      userid: user.moodleId,
-      courseid: course.moodleId
-    })
+    const contents = await gradeUserMoodle(user.moodleId,course.moodleId)
     console.log('contents', contents)
     let gradeFilter = contents.usergrades[0].gradeitems.filter(
       item =>
@@ -452,18 +470,14 @@ const createAddressEnrol = async arr => {
 
     // console.log('enrol', enrol)
 
-    const feedBackCourse = await actionMoodle('GET', feedbackListCourse, {
-      courseids: [element.courseid]
-    })
+    const feedBackCourse = await feedbackListCourseMoodle(element.courseid)
     
     const feedback = feedBackCourse.feedbacks.find(
       item => item.name.indexOf('certificado') > -1
     )
 
     if (feedback) {
-      const feedBackModule = await actionMoodle('GET', feedbackGetQuiz, {
-        feedbackid: feedback.id
-      })
+      const feedBackModule = await feedbackGetQuizMoodle(feedback.id)
 
       const newsFeedBack = feedBackModule.attempts.find(element => 
         (parseInt(user.moodleId) === parseInt(element.userid))
@@ -551,6 +565,7 @@ module.exports = {
   createEnrol,
   createEmailEnrol,
   createAddressEnrol,
+  createEnrolUserMoodle,
   updateEnrol,
   updateMoodle,
   detailEnrol,
