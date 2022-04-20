@@ -18,7 +18,7 @@ const createNewUserMoodle = async (user) => {
   if (userMoodle && userMoodle.length) {
     await userDB.update(user._id, { moodleId: userMoodle[0].id })
   } else {
-    const InvalidError = customErrorInstance('CastError', { message: 'No se pudo crear el usuario de Moodle, por un parametro invalido', code: 'EINVLD' }, CustomError.factory.expectReceive)
+    const InvalidError = CustomError('CastError', { message: 'No se pudo crear el usuario de Moodle, por un parametro invalido', code: 'EINVLD' }, CustomError.factory.expectReceive)
     throw new InvalidError()
   }
   return userMoodle[0]
