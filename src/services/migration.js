@@ -37,8 +37,8 @@ const migrateAdminCertificates = async (files, body) => {
       const ext = file.name.split('.').pop()
       if (ext === 'jpg' || ext === 'png' || ext === 'jpeg') {
         const filter = file.name.replace('.' + ext, '')
-        const part = filter.substring(filter.length, filter.length - 2)
-        const code = filter.substring(filter.length - 4, filter.length - 12)
+        const part = filter.substring(filter.length, filter.length - 1)
+        const code = filter.substring(filter.length - 2, 0)
         console.log('part', part)
         console.log('code', code)
         console.log(file.name)
@@ -46,7 +46,7 @@ const migrateAdminCertificates = async (files, body) => {
         if (certificate) {
           try {
             const route = await saveFileName(file, '/certificates', code + '-' + part + '.' + ext)
-            if (part === 'p1') {
+            if (part === '1') {
               const updateCertficate = await certificateDB.update(certificate._id, {
                 file1: route
               })
@@ -54,7 +54,7 @@ const migrateAdminCertificates = async (files, body) => {
                 ...updateCertficate.toJSON(),
                 success: true
               }
-            } else if (part === 'p2') {
+            } else if (part === '2') {
               const updateCertficate = await certificateDB.update(certificate._id, {
                 file2: route
               })
