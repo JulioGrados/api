@@ -15,7 +15,7 @@ const listRatings = async (req, res, next) => {
       let evaluations = enrol && enrol.course && enrol.course.ref ? enrol.course.ref.numberEvaluation : 0
       if (evaluations <= 10) { evaluations = 70 } else { evaluations = evaluations * 7 }
       
-      info._id = enrol && enrol._id
+      info._id = enrol && enrol.certificate ? enrol.certificate.ref && enrol.certificate.ref._id : enrols._id
       info.processing = enrol && enrol.certificate && enrol.certificate.ref ? enrol.certificate.ref.createdAt : ''
       info.end = enrol && enrol.certificate && enrol.certificate.ref ? enrol.certificate.ref.date : ''
       info.dateStart = evaluations ? evaluations * (24 * 60 * 60 * 1000) : ''
