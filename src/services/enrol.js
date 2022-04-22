@@ -88,6 +88,11 @@ const listRatings = async params => {
   return enrols
 }
 
+const listGeneral = async params => {
+  const enrols = await enrolDB.general(params)
+  return enrols
+}
+
 const createEnrol = async (body, loggedUser) => {
   const enrol = await enrolDB.create(body)
   return enrol
@@ -562,6 +567,7 @@ module.exports = {
   listEnrols,
   listEnrolsAgreements,
   listRatings,
+  listGeneral,
   createEnrol,
   createEmailEnrol,
   createAddressEnrol,

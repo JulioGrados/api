@@ -47,6 +47,15 @@ const listRatings = async (req, res, next) => {
   }
 }
 
+const listGeneral = async (req, res, next) => {
+  try {
+    const enrols = await service.listGeneral(req.query)
+    return res.status(200).json(enrols)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const sendEnrolEmail = async (req, res, next) => {
   try {
     const enrol = await service.createEmailEnrol(req.body)
@@ -135,6 +144,7 @@ module.exports = {
   listEnrols,
   listEnrolsAgreements,
   listRatings,
+  listGeneral,
   createEnrol,
   updateEnrol,
   updateMoodleEnrol,
