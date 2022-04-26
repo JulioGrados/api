@@ -28,14 +28,21 @@ const getMain = async (req, res, next) => {
 
 const getBalance = async (req, res, next) => {
   console.log('holaaa')
-  let balance = await api({
-    http_method: 'POST',
-    api_method: '/v1/sms/send/',
+  // let balance = await api({
+  //   http_method: 'POST',
+  //   api_method: '/v1/sms/send/',
+  //   params: {
+  //     number: '+51984480719',
+  //     message: 'Ya no comas huevo en el desayuno, laganas'
+  //   }
+  // })
+  const balance = await api({
+    api_method: '/v1/webrtc/get_key/',
     params: {
-      number: '+51984480719',
-      message: 'Ya no comas huevo en el desayuno, laganas'
+        sip: '100'
+        // to: '+51949002838'
     }
-  })
+  });
   console.log('balance', balance.data)
   res.send(balance.data)
 }

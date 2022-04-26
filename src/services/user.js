@@ -5,6 +5,7 @@ const CustomError = require('custom-error-instance')
 const { userDB, courseDB, dealDB, timetableDB } = require('../db')
 const { getSocket } = require('../lib/io')
 const { generateHash } = require('utils').auth
+const { api } = require('utils/functions/zadarma')
 const { saveFile } = require('utils/files/save')
 const { createFindQuery } = require('utils/functions/user')
 const { deleteUsersMoodle } = require('utils/functions/moodle')
@@ -427,6 +428,38 @@ const saveImage = async (user, file) => {
   return user
 }
 
+const saveTokenZadarma = async () => {
+  const usersAssessor = await userDB.list({ query: { roles: 'Asesor', isZadarma: true } })
+  const usersUpdate = usersAssessor.map(async user => {
+    if (user.zadarma && user.zadarma.annexed) {
+      try {
+        const balance = await api({
+          api_method: '/v1/webrtc/get_key/',
+          params: {
+              sip: user.zadarma.annexed
+          }
+        })
+
+        const updateUser = await userDB.update(user._id.toString(), {
+          zadarma: {
+            annexed: user.zadarma.annexed,
+            token: balance.data.key
+          }
+        })
+        console.log('updateUser', updateUser)
+        return updateUser
+      } catch (error) {
+        throw error
+      }
+    } 
+  })
+  const results = await Promise.all(usersUpdate.map(p => p.catch(e => e)))
+  const validUsers = results.filter(result => !result.error)
+  const errorUsers = results.filter(result => result.error)
+
+  return { validUsers, errorUsers }
+}
+
 module.exports = {
   countDocuments,
   listUsers,
@@ -444,5 +477,6 @@ module.exports = {
   createDealUser,
   emitLead,
   recoverPassword,
-  createStudent
+  createStudent,
+  saveTokenZadarma
 }

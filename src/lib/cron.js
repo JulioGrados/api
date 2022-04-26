@@ -21,6 +21,7 @@ const {
 const { createAddressEnrol } = require('../services/enrol')
 const { portfolioFile } = require('utils/functions/portfolio')
 const { countDocuments, listCourses, detailCourse } = require('../services/course')
+const { saveTokenZadarma } = require('../services/user')
 
 const job = new CronJob(
   '0 0 7 * * *',
@@ -199,6 +200,13 @@ const deletes = new CronJob('0 0 6 * * *', async function() {
 }, null, true, 'America/Bogota');
 deletes.start();
 
+const zadarma = new CronJob('0 10 6 * * *', async function() {
+  console.log('You will see this message every minuto');
+  const usersZadarma = await saveTokenZadarma()
+  console.log('usersZadarma', usersZadarma)
+}, null, true, 'America/Bogota');
+zadarma.start();
+
 const enrol = new CronJob('0 0 19 * * *', async function() {
   console.log('You will see this message every minuto');
   const dir = path.resolve(__dirname, '../../backup/enrol.json')
@@ -285,6 +293,7 @@ examinmodulesfive.start()
 module.exports = {
   job,
   enrol,
+  zadarma,
   certificate,
   address,
   files
