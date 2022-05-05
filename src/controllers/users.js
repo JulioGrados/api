@@ -233,6 +233,7 @@ module.exports = {
   updateDniUser,
   updateAccountUser,
   updateAccountUserMoodle,
+  searchCodeNumber,
   updatePhotoUser,
   detailUser,
   deleteUser,

@@ -7,6 +7,7 @@ const CustomError = require('custom-error-instance')
 const { getSocket } = require('../lib/io')
 const { getNewActivityState, getFullDate } = require('utils/functions/call')
 const { userDB } = require('db/lib')
+const { searchCodeNumber } = require('../controllers/users')
 
 const listCalls = async params => {
   console.log('--------------------------------------------------------')
@@ -40,16 +41,32 @@ const updateStatusCall = async (body, loggedCall) => {
   return call
 }
 
+const updateStatusZadarmaCall = async (body, loggedCall) => {
+  const deal = await searchZadarmaDeal(body)
+  const dataCall = await prepareZadarmaCall(body, deal)
+  console.log('dataCall', dataCall)
+  const call = await callDB.create(dataCall)
+  console.log('call', call)
+  emitCall(call)
+  return call
+}
+
 const updateStrangerCall = async (body) => {
   const called = body.called
   const calling = body.calling
   const phone = body.direction === 'OUT' ? called.substring(4, called.length) : called
+  let codes
+  if (body.direction === 'OUT') {
+    codes = searchCodeNumber(called.toString())
+  }
   const dataCall = {
     direction: body.direction,
     cdrid: body.cdrid,
     callingname: body.callingname,
     calling: calling,
     called: phone,
+    code: codes ? codes.code : '',
+    country: codes ? codes.country.code : '',
     status: getStatusCalls(body.status),
     duration: body.duration,
     billseconds: body.billseconds,
@@ -60,6 +77,34 @@ const updateStrangerCall = async (body) => {
       .add(1, 'minutes')
       .format('HH:mm'),
     date: moment(body.dialtime)
+  }
+
+  const call = await callDB.create(dataCall)
+  return call
+}
+
+const updateStrangerZadarmaCall = async (body) => {
+  const phone = body.destination && (body.destination[0] === '+') ? parseInt(body.destination.replace('+', ''), 10) : parseInt(body.destination, 10)
+  const { code, country } = phone && searchCodeNumber(phone.toString())
+
+  const dataCall = {
+    direction: 'OUT',
+    cdrid: body.pbx_call_id,
+    callingname: body.internal,
+    calling: body.internal,
+    called: phone && phone.toString().replace(code, ''),
+    code: code,
+    country: country.code,
+    status: getStatusZadarmaCalls(body.disposition),
+    duration: body.duration,
+    billseconds: body.duration,
+    price: '-',
+    isCompleted: true,
+    service: true,
+    hour: moment(body.call_start)
+      .add(1, 'minutes')
+      .format('HH:mm'),
+    date: moment(body.call_start)
   }
 
   const call = await callDB.create(dataCall)
@@ -115,6 +160,55 @@ const popUpCall = async (body, loggedCall) => {
   }
 }
 
+const popUpZadarmaCall = async (body, loggedCall) => {
+  const assessors = await userDB.list({
+    query: {
+      roles: 'Asesor'
+    }
+  })
+
+  const receptionist = assessors.find(assessor => assessor.roles && assessor.roles.includes('Recepcionista') === true)
+  // const receptionist = await userDB.detail({
+  //   query: {
+  //     roles: 'Recepcionista'
+  //   }
+  // })
+  // console.log('receptionist', receptionist)
+  // Asesor que este activo de acuerdo al trato
+  // Activo, mandar la notificación
+  // Inactivo o no tiene trato a recepcionista 
+  
+  try {
+    const deal = await searchZadarmaDeal(body)
+    const dataDeal = {
+      ...deal.toJSON(),
+      exist: true
+    }
+
+    const assigend = deal && deal.assessor && deal.assessor.ref
+    const assessor = assigend && assessors.find(item => item._id.toString() === assigend.toString())
+
+    // console.log('assigend', assigend)
+    // console.log('assessor', assessor)
+    emitPopUp(dataDeal, receptionist)
+    
+    if ( assessor && assessor.status ) {
+      emitPopUp(dataDeal, assessor)
+    } 
+    // else {
+    //   emitPopUp(dataDeal, receptionist)
+    // }
+    
+    return deal
+  } catch (error) {
+    const dataDeal = {
+      calling: body.caller_id,
+      exist: false
+    }
+    emitPopUp(dataDeal, receptionist)
+  }
+}
+
 const detailCall = async params => {
   const call = await callDB.detail(params)
   return call
@@ -140,7 +234,12 @@ const prepareCall = async (body, deal) => {
   const called = body.called
   const calling = body.calling
   const phone = body.direction === 'OUT' ? called.substring(4, called.length) : called
-  
+
+  let codes
+  if (body.direction === 'OUT') {
+    codes = searchCodeNumber(called.toString())
+  }
+
   const number = lastCall ? lastCall.length + 1 : 1
   const dataCall = {
     name: `Llamada ${number}`,
@@ -150,6 +249,8 @@ const prepareCall = async (body, deal) => {
     callingname: body.callingname,
     calling: calling,
     called: phone,
+    code: codes && codes.code,
+    country: codes && codes.country.code,
     status: getStatusCalls(body.status),
     duration: body.duration,
     billseconds: body.billseconds,
@@ -160,6 +261,46 @@ const prepareCall = async (body, deal) => {
       .add(1, 'minutes')
       .format('HH:mm'),
     date: moment(body.dialtime),
+    assigned: deal.assessor,
+    linked: {
+      names: deal.client.names,
+      ref: deal.client._id
+    },
+    deal: deal._id
+  }
+  return dataCall
+}
+
+const prepareZadarmaCall = async (body, deal) => {
+  const lastCall = await callDB.list({
+    query: { deal: deal._id },
+    sort: '-createdAt'
+  })
+  
+  const phone = body.destination && (body.destination[0] === '+') ? parseInt(body.destination.replace('+', ''), 10) : parseInt(body.destination, 10)
+  const { code, country } = phone && searchCodeNumber(phone.toString())
+  
+  const number = lastCall ? lastCall.length + 1 : 1
+  const dataCall = {
+    name: `Llamada ${number}`,
+    number,
+    direction: 'OUT',
+    cdrid: body.pbx_call_id,
+    callingname: body.internal,
+    calling: body.internal,
+    called: phone && phone.toString().replace(code, ''),
+    status: getStatusZadarmaCalls(body.disposition),
+    duration: body.duration,
+    billseconds: body.duration,
+    price: '-',
+    isCompleted: true,
+    service: true,
+    code: code && code,
+    country: country && country.code,
+    hour: moment(body.call_start)
+      .add(1, 'minutes')
+      .format('HH:mm'),
+    date: moment(body.call_start),
     assigned: deal.assessor,
     linked: {
       names: deal.client.names,
@@ -184,6 +325,21 @@ const searchDeal = async (body) => {
   }
 }
 
+const searchZadarmaDeal = async (body) => {
+  const phone = (body.destination[0] === '+') ? parseInt(body.destination.replace('+', ''), 10) : parseInt(body.destination, 10)
+  const { code, country } = phone && searchCodeNumber(phone.toString())
+  console.log(phone.toString().replace(code, ''))
+  try {
+    const user = await userDB.detail({ query: { mobile: phone.toString().replace(code, '') } })
+    console.log('user', user)
+    const deal = await dealDB.detail({ query: { client: user._id }, populate: { path: 'client' } })
+    console.log('deal', deal)
+    return deal
+  } catch (error) {
+    throw error
+  }
+}
+
 const getStatusCalls = (event) => {
   
   switch (event) {
@@ -192,6 +348,22 @@ const getStatusCalls = (event) => {
     case 'CANCEL':
       return 'No contestó'
     case 'CONGESTION':
+      return 'Congestion'
+    default:
+      return event
+  }
+}
+
+const getStatusZadarmaCalls = (event) => {
+  
+  switch (event) {
+    case 'answered':
+      return 'Contestó'
+    case 'cancel':
+      return 'No contestó'
+    case 'failed':
+      return 'No contestó'
+    case 'congestion':
       return 'Congestion'
     default:
       return event
@@ -352,7 +524,10 @@ module.exports = {
   detailCall,
   deleteCall,
   popUpCall,
+  popUpZadarmaCall,
   getDelayCalls,
   updateStatusCall,
-  updateStrangerCall
+  updateStatusZadarmaCall,
+  updateStrangerCall,
+  updateStrangerZadarmaCall
 }

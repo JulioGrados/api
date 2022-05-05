@@ -17,7 +17,7 @@ const routesMoodle = require('./moodle')
 const routesAnura = require('./anura')
 const routesMigration = require('./migration')
 const routesTest = require('./test')
-const routesMain = require('./main')
+const routesZadarma = require('./zadarma')
 
 module.exports = server => {
   server.use('/api/open', routesAuth)
@@ -37,5 +37,5 @@ module.exports = server => {
   server.use('/api/open', routesAnura)
   server.use('/api/open', routesMigration)
   server.use('/api/open', routesTest)
-  server.use('/zadarma', routesMain)
+  server.use('/api/open', routesZadarma)
 }
