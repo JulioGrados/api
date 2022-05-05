@@ -200,7 +200,7 @@ const deletes = new CronJob('0 0 6 * * *', async function() {
 }, null, true, 'America/Bogota');
 deletes.start();
 
-const zadarma = new CronJob('0 10 6 * * *', async function() {
+const zadarma = new CronJob('0 12 10 * * *', async function() {
   console.log('You will see this message every minuto');
   const usersZadarma = await saveTokenZadarma()
   console.log('usersZadarma', usersZadarma)

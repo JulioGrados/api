@@ -5,6 +5,6 @@ const Api = require('../../controllers/zadarma')
 
 const router = new Router()
 
-router.route('/zadarma').get(Api.eventWebHookZadarma)
+router.route('/zadarma').post(Api.eventWebHookZadarma)
 
 module.exports = router
