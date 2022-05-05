@@ -55,18 +55,15 @@ const updateStrangerCall = async (body) => {
   const called = body.called
   const calling = body.calling
   const phone = body.direction === 'OUT' ? called.substring(4, called.length) : called
-  let codes
-  if (body.direction === 'OUT') {
-    codes = searchCodeNumber(called.toString())
-  }
+  
   const dataCall = {
     direction: body.direction,
     cdrid: body.cdrid,
     callingname: body.callingname,
     calling: calling,
     called: phone,
-    code: codes ? codes.code ? codes.code : '' : '',
-    country: codes ? codes.country ? codes.country.code : '' : '',
+    code: '51',
+    country: 'PE',
     status: getStatusCalls(body.status),
     duration: body.duration,
     billseconds: body.billseconds,
@@ -235,10 +232,7 @@ const prepareCall = async (body, deal) => {
   const calling = body.calling
   const phone = body.direction === 'OUT' ? called.substring(4, called.length) : called
 
-  let codes
-  if (body.direction === 'OUT') {
-    codes = searchCodeNumber(called.toString())
-  }
+  
 
   const number = lastCall ? lastCall.length + 1 : 1
   const dataCall = {
@@ -249,8 +243,8 @@ const prepareCall = async (body, deal) => {
     callingname: body.callingname,
     calling: calling,
     called: phone,
-    code: codes ? codes.code ? codes.code : '' : '',
-    country: codes ? codes.country ? codes.country.code : '' : '',
+    code: '51',
+    country: 'PE',
     status: getStatusCalls(body.status),
     duration: body.duration,
     billseconds: body.billseconds,
