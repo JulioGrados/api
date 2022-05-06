@@ -451,7 +451,10 @@ const saveTokenZadarma = async () => {
       } catch (error) {
         throw error
       }
-    } 
+    } else {
+      const InvalidError = CustomError('InvalidError', { message: 'El usuario no tiene anexo zadarma.', code: 'EINVLD', deal: {...deal.toJSON()} }, CustomError.factory.expectReceive);
+      throw new InvalidError()
+    }
   })
   const results = await Promise.all(usersUpdate.map(p => p.catch(e => e)))
   const validUsers = results.filter(result => !result.error)
