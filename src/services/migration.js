@@ -42,39 +42,32 @@ const migrateAdminCertificates = async (files, body) => {
         console.log('part', part)
         console.log('code', code)
         console.log(file.name)
-        const certificate = await certificateDB.detail({query: {shortCode: code}, populate: ['linked.ref', 'course.ref']})
-        if (certificate) {
-          try {
-            const route = await saveFileName(file, '/certificates', code + '-' + part + '.' + ext)
-            if (part === '1') {
-              const updateCertficate = await certificateDB.update(certificate._id, {
-                file1: route
-              })
-              return {
-                ...updateCertficate.toJSON(),
-                success: true
-              }
-            } else if (part === '2') {
-              const updateCertficate = await certificateDB.update(certificate._id, {
-                file2: route
-              })
-              return {
-                ...updateCertficate.toJSON(),
-                success: true
-              }
-            } else {
-              return {
-                success: false,
-                code: 'Parte mal escrita'
-              }
+        try {
+          const certificate = await certificateDB.detail({ query: { shortCode: code }, populate: ['linked.ref', 'course.ref'] })
+          const route = await saveFileName(file, '/certificates', code + '-' + part + '.' + ext)
+          if (part === '1') {
+            const updateCertficate = await certificateDB.update(certificate._id, {
+              file1: route
+            })
+            return {
+              ...updateCertficate.toJSON(),
+              success: true
             }
-          } catch (error) {
+          } else if (part === '2') {
+            const updateCertficate = await certificateDB.update(certificate._id, {
+              file2: route
+            })
+            return {
+              ...updateCertficate.toJSON(),
+              success: true
+            }
+          } else {
             return {
               success: false,
-              code: code
+              code: 'Parte mal escrita'
             }
           }
-        } else {
+        } catch (error) {
           return {
             success: false,
             code: code

@@ -1458,7 +1458,7 @@ const addCoursesMoodle = async (student, courses, dealId, loggedUser, logged) =>
     
     await sendEmailAccess(user.toJSON(), deal.toJSON(), logged)
   }
-  // console.log('registro de cursos')
+  console.log('registro de cursos')
   try {
     const coursesEnrol = await Promise.all(
       courses.map(async course => {

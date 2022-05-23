@@ -4,11 +4,13 @@ const studentsEnrolAgreement = async (students) => {
   const enrolAgreement = students.map(async (student) => {
     const user = student.student
     const courses = student.courses
-    
+    console.log('user enrol', user)
+    console.log('courses enrol', courses)
     const updateEnrolAgreement = courses.map(async (course) => {
-      console.log('course', course)
+      console.log('course enrol', course)
       try {
         const enrol = await enrolDB.detail({ query: { 'course.ref': course._id, 'linked.ref': user.ref } })
+        console.log('enrol new', enrol)
         return await enrolDB.update( enrol._id.toString(), {
           agreement: {
             institution: course.agreement ? course.agreement.institution : course.ref.agreement.institution,
