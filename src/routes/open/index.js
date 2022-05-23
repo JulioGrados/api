@@ -18,7 +18,6 @@ const routesAnura = require('./anura')
 const routesMigration = require('./migration')
 const routesTest = require('./test')
 const routesZadarma = require('./zadarma')
-const routesLeadgods = require('./leadgods')
 
 module.exports = server => {
   server.use('/api/open', routesAuth)
@@ -39,5 +38,4 @@ module.exports = server => {
   server.use('/api/open', routesMigration)
   server.use('/api/open', routesTest)
   server.use('/api/open', routesZadarma)
-  server.use('/api/open', routesLeadgods)
 }

@@ -32,7 +32,6 @@ const routesClaim = require('./claim')
 const routesSend = require('./send')
 const routesOrder = require('./order')
 const routesTimetable = require('./timetable')
-const routesLeadgods = require('./leadgods')
 
 module.exports = server => {
   server.use('/api', routesLog)
@@ -67,5 +66,4 @@ module.exports = server => {
   server.use('/api', routesSend)
   server.use('/api', routesOrder)
   server.use('/api', routesTimetable)
-  server.use('/api', routesLeadgods)
 }
