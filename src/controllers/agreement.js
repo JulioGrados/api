@@ -1,6 +1,5 @@
 'use strict'
 
-const { next } = require('cheerio/lib/api/traversing')
 const service = require('../services/agreement')
 
 const listAgreements = async (req, res) => {
