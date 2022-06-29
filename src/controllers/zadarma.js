@@ -7,6 +7,7 @@ const eventWebHookZadarma = async (req, res, next) => {
   // if (req.query.zd_echo) {res.send(req.query.zd_echo);}
   // else { res.send("Hi"); }
   console.log('req - zadarma', req.body)
+  req.body.callService = 'zadarma'
   const event = req.body
   if (event.event === 'NOTIFY_OUT_END' && event.destination ) {
     try {

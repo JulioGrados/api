@@ -69,6 +69,7 @@ const updateStrangerCall = async (body) => {
     billseconds: body.billseconds,
     price: body.price,
     isCompleted: true,
+    callService: body.callService ? body.callService : 'crm',
     service: true,
     hour: moment(body.dialtime)
       .add(1, 'minutes')
@@ -98,6 +99,7 @@ const updateStrangerZadarmaCall = async (body) => {
     price: '-',
     isCompleted: true,
     service: true,
+    callService: body.callService ? body.callService : 'crm',
     hour: moment(body.call_start)
       .add(1, 'minutes')
       .format('HH:mm'),
@@ -249,8 +251,10 @@ const prepareCall = async (body, deal) => {
     duration: body.duration,
     billseconds: body.billseconds,
     price: body.price,
+    callService: body.callService ? body.callService : 'crm',
     isCompleted: true,
     service: true,
+    
     hour: moment(body.dialtime)
       .add(1, 'minutes')
       .format('HH:mm'),
@@ -289,6 +293,7 @@ const prepareZadarmaCall = async (body, deal) => {
     price: '-',
     isCompleted: true,
     service: true,
+    callService: body.callService ? body.callService : 'crm',
     code: code && code,
     country: country && country.code,
     hour: moment(body.call_start)

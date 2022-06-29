@@ -4,6 +4,7 @@ const { updateStatusCall, updateStrangerCall, popUpCall } = require('../services
 
 const eventWebhook = async (req, res) => {
   //
+  req.body.callService = 'anura'
   const event = req.body
   
   try {
