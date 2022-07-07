@@ -26,6 +26,7 @@ const listRatings = async (req, res, next) => {
       info.linkedLastName = enrol && enrol.linked && enrol.linked.ref ? enrol.linked.ref.lastName : ''
       info.courseName = enrol && enrol.course && enrol.course.ref ? enrol.course.ref.name : ''
       info.agreement = enrol && enrol.agreement && enrol.agreement.institution ? enrol.agreement.institution : enrol.certificate.ref.agreement ? enrol.certificate.ref.agreement.institution : ''
+      info.modality = enrol && enrol.modality
       info.score = enrol && enrol.certificate && enrol.certificate.ref ? enrol.certificate.ref.score : ''
       info.code = enrol && enrol.certificate && enrol.certificate.ref ? enrol.certificate.ref.shortCode : ''
       info.delivery = enrol && enrol.shipping && enrol.shipping.date 

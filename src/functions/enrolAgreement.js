@@ -15,7 +15,8 @@ const studentsEnrolAgreement = async (students) => {
           agreement: {
             institution: course.agreement ? course.agreement.institution : course.ref.agreement.institution,
             ref: course.agreement ? course.agreement.ref : course.ref.agreement.ref
-          }
+          },
+          modality: course.modality ? course.modality : 'Físico'
         })
       } catch (error) {
         return error

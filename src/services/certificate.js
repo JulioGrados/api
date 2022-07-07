@@ -42,7 +42,8 @@ const listDealAgreements = async (params, loggedUser) => {
           agreement: {
             institution: courseFind.agreement.institution,
             ref: courseFind.agreement.ref
-          }
+          },
+          modality: 'Físico'
         })
         console.log('no entro', certificateUpdate)
       } else {
@@ -50,7 +51,8 @@ const listDealAgreements = async (params, loggedUser) => {
           agreement: {
             institution: deal.agreement.institution,
             ref: deal.agreement.ref
-          }
+          },
+          modality: deal.modality ? deal.modality : 'Físico'
         })
         console.log('entro', certificateUpdate)
       }
