@@ -1,6 +1,19 @@
 node_modules/
 package-lock.json
 .npmrc
+core
 
 #ngrok
 ngrok
+
+# File types to ignore
+*.exe
+*.bin
+*.jar
+*.war
+*.mp3
+*.mp4
+# Directories to ignore
+target/
+.build/
+.env/
